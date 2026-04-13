@@ -17,16 +17,18 @@ export default function UpdateProfileInformation({
 }) {
     const user = usePage().props.auth.user;
 
-    const { data, setData, patch, errors, processing, recentlySuccessful } =
+    const { data, setData, post, errors, processing, recentlySuccessful } =
         useForm({
+            _method: 'patch',
             name: user.name,
             email: user.email,
+            avatar: null as File | null,
         });
 
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
 
-        patch(route('profile.update'));
+        post(route('profile.update'), { preserveScroll: true });
     };
 
     return (
@@ -41,7 +43,38 @@ export default function UpdateProfileInformation({
                 </p>
             </header>
 
-            <form onSubmit={submit} className="mt-6 space-y-6">
+            <form onSubmit={submit} className="mt-6 space-y-6" encType="multipart/form-data">
+                {/* Avatar / Profile Photo Upload */}
+                <div className="flex items-center gap-6">
+                    <div className="shrink-0">
+                        {data.avatar ? (
+                            <img src={URL.createObjectURL(data.avatar)} alt="Avatar preview" className="object-cover w-16 h-16 rounded-full border border-gray-200 shadow-sm" />
+                        ) : user.avatar_url ? (
+                            <img src={user.avatar_url} alt="Current Avatar" className="object-cover w-16 h-16 rounded-full border border-gray-200 shadow-sm" />
+                        ) : (
+                            <div className="flex items-center justify-center w-16 h-16 rounded-full bg-indigo-100 text-indigo-600 font-bold text-xl border border-gray-200 shadow-sm">
+                                {user.name.charAt(0)}
+                            </div>
+                        )}
+                    </div>
+                    <div>
+                        <InputLabel htmlFor="avatar" value="Profile Photo (Optional)" />
+                        <input
+                            id="avatar"
+                            type="file"
+                            accept="image/*"
+                            className="mt-1 block w-full text-sm text-slate-500
+                                file:mr-4 file:py-2 file:px-4
+                                file:rounded-full file:border-0
+                                file:text-sm file:font-semibold
+                                file:bg-indigo-50 file:text-indigo-700
+                                hover:file:bg-indigo-100 dark:file:bg-indigo-900/50 dark:file:text-indigo-300 dark:text-slate-400"
+                            onChange={(e) => setData('avatar', e.target.files ? e.target.files[0] : null)}
+                        />
+                        <InputError className="mt-2" message={errors.avatar} />
+                    </div>
+                </div>
+
                 <div>
                     <InputLabel htmlFor="name" value="Name" />
 

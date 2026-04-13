@@ -33,6 +33,11 @@ export default function Login({
             <Head title="Log in" />
 
             <div className="mb-8 text-center">
+                <img 
+                    src="/images/Salira.png" 
+                    alt="SALIRA Logo" 
+                    className="mx-auto h-20 w-auto mb-4" 
+                />
                 <h1 className="text-3xl font-black text-indigo-600 dark:text-indigo-400 tracking-tighter mb-1">SALIRA</h1>
                 <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest leading-relaxed">
                     Sistem Absensi, Logistik, Inventaris, <br /> & Rekapitulasi Akademik

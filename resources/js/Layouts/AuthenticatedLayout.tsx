@@ -228,7 +228,7 @@ export default function Authenticated({
                 {/* Logo + Close */}
                 <div className="flex h-16 items-center justify-between px-5 border-b border-slate-100 dark:border-slate-700/60 flex-shrink-0">
                     <Link href={route('dashboard')} className="flex items-center gap-2" onClick={() => setSidebarOpen(false)}>
-                        <ApplicationLogo className="h-7 w-auto fill-current text-indigo-600 dark:text-indigo-400" />
+                        <img src="/images/Salira.png" alt="SALIRA Logo" className="h-7 w-auto" />
                         <span className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">
                             SALIRA
                         </span>
@@ -288,9 +288,13 @@ export default function Authenticated({
                 {/* Footer */}
                 <div className="border-t border-slate-100 dark:border-slate-700/60 p-4 flex-shrink-0">
                     <div className="flex items-center gap-3 px-2 py-1.5">
-                        <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-sm flex-shrink-0">
-                            {user.name.charAt(0)}
-                        </div>
+                        {user.avatar_url ? (
+                            <img src={user.avatar_url} alt="User Avatar" className="w-8 h-8 rounded-full object-cover flex-shrink-0 border border-slate-200 dark:border-slate-600" />
+                        ) : (
+                            <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-sm flex-shrink-0">
+                                {user.name.charAt(0)}
+                            </div>
+                        )}
                         <div className="flex-1 min-w-0">
                             <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">{user.name}</p>
                             <p className="text-xs text-slate-400 dark:text-slate-500 capitalize">{userRoles.join(', ') || 'Staff'}</p>
@@ -325,7 +329,7 @@ export default function Authenticated({
 
                     {/* Mobile: show logo */}
                     <div className="lg:hidden flex items-center gap-2">
-                        <ApplicationLogo className="h-7 w-auto fill-current text-indigo-600 dark:text-indigo-400" />
+                        <img src="/images/Salira.png" alt="SALIRA Logo" className="h-7 w-auto" />
                         <span className="text-lg font-bold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">SALIRA</span>
                     </div>
 
@@ -344,9 +348,13 @@ export default function Authenticated({
                         <Dropdown>
                             <Dropdown.Trigger>
                                 <button className="flex items-center gap-2 px-2 py-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                                    <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-sm flex-shrink-0">
-                                        {user.name.charAt(0)}
-                                    </div>
+                                    {user.avatar_url ? (
+                                        <img src={user.avatar_url} alt="User Avatar" className="w-8 h-8 rounded-full object-cover flex-shrink-0 border border-slate-200 dark:border-slate-600" />
+                                    ) : (
+                                        <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-sm flex-shrink-0">
+                                            {user.name.charAt(0)}
+                                        </div>
+                                    )}
                                     <div className="hidden sm:block text-left leading-tight">
                                         <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">{user.name}</div>
                                         <div className="text-xs text-slate-400 capitalize">{userRoles.join(', ') || 'Staff'}</div>

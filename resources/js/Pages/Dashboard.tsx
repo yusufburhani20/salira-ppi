@@ -238,7 +238,7 @@ export default function Dashboard({
                                     <div key={user.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors group cursor-default">
                                         <div className="relative shrink-0">
                                             <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-slate-700 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-black text-sm overflow-hidden border border-indigo-100 dark:border-slate-600">
-                                                {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" /> : user.name.charAt(0)}
+                                                {user.avatar ? <img src={`/storage/${user.avatar}`} className="w-full h-full object-cover" /> : user.name.charAt(0)}
                                             </div>
                                             <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-emerald-500 border-2 border-white dark:border-slate-800 rounded-full"></div>
                                         </div>
@@ -266,7 +266,7 @@ export default function Dashboard({
                                 {lastLogins?.map((user: any) => (
                                     <div key={user.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700/30 transition-colors group cursor-default">
                                         <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 font-bold text-sm overflow-hidden border border-slate-200 dark:border-slate-600 shrink-0">
-                                            {user.avatar ? <img src={user.avatar} className="w-full h-full object-cover" /> : user.name.charAt(0)}
+                                            {user.avatar ? <img src={`/storage/${user.avatar}`} className="w-full h-full object-cover" /> : user.name.charAt(0)}
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{user.name}</p>
@@ -387,7 +387,7 @@ function RankingRow({ item, rank, unit }: { item: any; rank: number; unit: strin
                 }
             </div>
             <div className="w-9 h-9 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-xs font-black text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-slate-600 overflow-hidden shrink-0">
-                {item.avatar ? <img src={item.avatar} className="w-full h-full object-cover" /> : item.name.charAt(0)}
+                {item.avatar ? <img src={`/storage/${item.avatar}`} className="w-full h-full object-cover" /> : item.name.charAt(0)}
             </div>
             <div className="flex-1 min-w-0">
                 <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{item.name}</p>

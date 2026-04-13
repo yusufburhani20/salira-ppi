@@ -28,15 +28,18 @@ export default {
                 sans: ['Inter', ...defaultTheme.fontFamily.sans],
             },
             colors: {
-                primary: '#4f46e5',
-                'primary-hover': '#4338ca',
+                primary: '#1576a7',
+                'primary-hover': '#115d84',
                 // Primary
                 indigo: {
-                    50: '#eef2ff',
-                    100: '#e0e7ff',
-                    500: '#6366f1', // Primary Core
-                    600: '#4f46e5',
-                    900: '#312e81',
+                    50: '#f0f9ff',
+                    100: '#e0f2fe',
+                    300: '#7dd3fc',
+                    400: '#38bdf8',
+                    500: '#0ea5e9',
+                    600: '#1576a7', // Primary Core
+                    800: '#075985',
+                    900: '#0c4a6e',
                 },
                 violet: {
                     500: '#8b5cf6', // Primary Accent
