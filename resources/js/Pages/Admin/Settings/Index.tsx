@@ -7,12 +7,14 @@ import { Cog6ToothIcon, PhotoIcon, BuildingOfficeIcon } from '@heroicons/react/2
 interface Settings {
     school_name: string;
     school_logo: string | null;
+    school_favicon: string | null;
 }
 
 export default function SettingIndex({ auth, settings }: PageProps<{ settings: Settings }>) {
     const { data, setData, post, processing, errors } = useForm({
         school_name: settings.school_name,
         school_logo: null as File | null,
+        school_favicon: null as File | null,
     });
 
     const submit = (e: React.FormEvent) => {
@@ -70,6 +72,30 @@ export default function SettingIndex({ auth, settings }: PageProps<{ settings: S
                                                     />
                                                     <p className="text-xs text-gray-400 mt-2">Maksimal 2MB (PNG, JPG, JPEG)</p>
                                                     {errors.school_logo && <p className="text-red-500 text-xs mt-1">{errors.school_logo}</p>}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="p-6 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-700">
+                                            <label className="block font-bold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
+                                                <PhotoIcon className="w-4 h-4" />
+                                                Favicon Website
+                                            </label>
+                                            
+                                            <div className="flex items-center gap-6">
+                                                {settings.school_favicon && (
+                                                    <div className="w-16 h-16 rounded-2xl overflow-hidden border bg-white flex items-center justify-center p-2">
+                                                        <img src={settings.school_favicon} alt="Favicon" className="max-w-full max-h-full object-contain" />
+                                                    </div>
+                                                )}
+                                                <div className="flex-1">
+                                                    <input 
+                                                        type="file"
+                                                        onChange={e => setData('school_favicon', e.target.files ? e.target.files[0] : null)}
+                                                        className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
+                                                    />
+                                                    <p className="text-xs text-gray-400 mt-2">Maksimal 1MB (ICO, PNG, SVG) - Rekomendasi 512x512</p>
+                                                    {errors.school_favicon && <p className="text-red-500 text-xs mt-1">{errors.school_favicon}</p>}
                                                 </div>
                                             </div>
                                         </div>

@@ -16,6 +16,7 @@ class SettingController extends Controller
             'settings' => [
                 'school_name' => Setting::get('school_name', 'SALIRA ACADEMY'),
                 'school_logo' => Setting::get('school_logo') ? Storage::url(Setting::get('school_logo')) : null,
+                'school_favicon' => Setting::get('school_favicon') ? Storage::url(Setting::get('school_favicon')) : null,
             ]
         ]);
     }
@@ -25,6 +26,7 @@ class SettingController extends Controller
         $request->validate([
             'school_name' => 'required|string|max:255',
             'school_logo' => 'nullable|image|max:2048',
+            'school_favicon' => 'nullable|image|mimes:ico,png,jpg,jpeg,svg|max:1024',
         ]);
 
         Setting::set('school_name', $request->school_name);
@@ -38,6 +40,16 @@ class SettingController extends Controller
 
             $path = $request->file('school_logo')->store('settings', 'public');
             Setting::set('school_logo', $path);
+        }
+
+        if ($request->hasFile('school_favicon')) {
+            $oldFavicon = Setting::get('school_favicon');
+            if ($oldFavicon) {
+                Storage::disk('public')->delete($oldFavicon);
+            }
+
+            $path = $request->file('school_favicon')->store('settings', 'public');
+            Setting::set('school_favicon', $path);
         }
 
         return back()->with('success', 'Pengaturan berhasil diperbarui');
