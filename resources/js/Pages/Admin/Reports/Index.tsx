@@ -2,10 +2,10 @@ import { PageProps } from '@/types';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm } from '@inertiajs/react';
 import React, { useState, useEffect } from 'react';
-import { 
-    DocumentChartBarIcon, 
-    AcademicCapIcon, 
-    BookOpenIcon, 
+import {
+    DocumentChartBarIcon,
+    AcademicCapIcon,
+    BookOpenIcon,
     UserGroupIcon,
     ArrowDownTrayIcon,
     FunnelIcon,
@@ -44,11 +44,11 @@ export default function ReportIndex({ auth, classes, subjects }: PageProps<{ cla
 
     const fetchReport = async () => {
         if (!data.academic_class_id && activeTab !== 'consultation') return;
-        
+
         setLoading(true);
         try {
             let url = '';
-            switch(activeTab) {
+            switch (activeTab) {
                 case 'attendance': url = route('admin.reports.attendance.data'); break;
                 case 'attendance_subject': url = route('admin.reports.attendance-subject.data'); break;
                 case 'assessment': url = route('admin.reports.assessments.data'); break;
@@ -87,7 +87,7 @@ export default function ReportIndex({ auth, classes, subjects }: PageProps<{ cla
 
             <div className="py-12">
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
-                    
+
                     {/* Tab Navigation */}
                     <div className="flex flex-wrap gap-2 overflow-x-auto pb-2">
                         {[
@@ -100,11 +100,10 @@ export default function ReportIndex({ auth, classes, subjects }: PageProps<{ cla
                             <button
                                 key={tab.id}
                                 onClick={() => setActiveTab(tab.id as any)}
-                                className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all shadow-sm ${
-                                    activeTab === tab.id 
-                                    ? 'bg-primary text-white scale-105 ring-4 ring-primary/20' 
-                                    : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50'
-                                }`}
+                                className={`flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all shadow-sm ${activeTab === tab.id
+                                        ? 'bg-primary text-white scale-105 ring-4 ring-primary/20'
+                                        : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-50'
+                                    }`}
                             >
                                 <tab.icon className="w-5 h-5" />
                                 {tab.label}
@@ -116,7 +115,7 @@ export default function ReportIndex({ auth, classes, subjects }: PageProps<{ cla
                     <div className="bg-white dark:bg-gray-800 p-8 rounded-3xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.05)] border border-gray-100 dark:border-gray-700/50 relative overflow-hidden">
                         <div className="absolute top-0 left-0 w-1 h-full bg-primary/40"></div>
                         <div className="space-y-8">
-                            
+
                             {/* Row 1: Academic Selection */}
                             <div className="space-y-4">
                                 <h4 className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">
@@ -126,7 +125,7 @@ export default function ReportIndex({ auth, classes, subjects }: PageProps<{ cla
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     {(activeTab !== 'consultation') && (
                                         <div className="relative">
-                                            <select 
+                                            <select
                                                 value={data.academic_class_id}
                                                 onChange={e => setData('academic_class_id', e.target.value)}
                                                 className="w-full h-12 pl-4 pr-10 rounded-xl border-gray-100 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-primary focus:border-primary transition-all appearance-none bg-no-repeat bg-[right_1rem_center] bg-[length:1em_1em]"
@@ -140,21 +139,21 @@ export default function ReportIndex({ auth, classes, subjects }: PageProps<{ cla
 
                                     {(activeTab === 'assessment' || activeTab === 'attendance_subject') && (
                                         <div className="relative">
-                                            <select 
+                                            <select
                                                 value={data.subject_id}
                                                 onChange={e => setData('subject_id', e.target.value)}
                                                 className="w-full h-12 pl-4 pr-10 rounded-xl border-gray-100 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-primary focus:border-primary transition-all appearance-none bg-no-repeat bg-[right_1rem_center] bg-[length:1em_1em]"
                                                 style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")` }}
                                             >
                                                 <option value="">-- Pilih Mapel --</option>
-                                                {subjects.filter((s: any) => data.class_id ? s.academic_classes?.some((ac: any) => ac.id.toString() === data.class_id.toString()) : false).map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                                {subjects.filter((s: any) => data.academic_class_id ? s.academic_classes?.some((ac: any) => ac.id.toString() === data.academic_class_id.toString()) : false).map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
                                             </select>
                                         </div>
                                     )}
 
                                     {activeTab === 'consultation' && (
-                                         <div className="relative">
-                                            <select 
+                                        <div className="relative">
+                                            <select
                                                 value={data.academic_class_id}
                                                 onChange={e => setData('academic_class_id', e.target.value)}
                                                 className="w-full h-12 pl-4 pr-10 rounded-xl border-gray-100 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-primary focus:border-primary transition-all appearance-none bg-no-repeat bg-[right_1rem_center] bg-[length:1em_1em]"
@@ -176,7 +175,7 @@ export default function ReportIndex({ auth, classes, subjects }: PageProps<{ cla
                                 </h4>
                                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 items-center">
                                     <div>
-                                        <select 
+                                        <select
                                             onChange={e => handleMonthChange(e.target.value)}
                                             className="w-full h-12 rounded-xl border-gray-100 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-primary focus:border-primary transition-all"
                                         >
@@ -187,15 +186,15 @@ export default function ReportIndex({ auth, classes, subjects }: PageProps<{ cla
                                         </select>
                                     </div>
                                     <div className="lg:col-span-2 flex items-center gap-2 h-12 bg-gray-50 dark:bg-gray-900/50 p-1 rounded-xl border border-gray-100 dark:border-gray-700">
-                                        <input 
-                                            type="date" 
+                                        <input
+                                            type="date"
                                             value={data.start_date}
                                             onChange={e => setData('start_date', e.target.value)}
                                             className="flex-1 h-full bg-transparent border-none text-[11px] focus:ring-0 dark:text-white"
                                         />
                                         <span className="text-gray-300 text-[10px] font-bold">SAMPAI</span>
-                                        <input 
-                                            type="date" 
+                                        <input
+                                            type="date"
                                             value={data.end_date}
                                             onChange={e => setData('end_date', e.target.value)}
                                             className="flex-1 h-full bg-transparent border-none text-[11px] focus:ring-0 dark:text-white"
@@ -203,7 +202,7 @@ export default function ReportIndex({ auth, classes, subjects }: PageProps<{ cla
                                     </div>
 
                                     <div className="flex gap-2">
-                                        <button 
+                                        <button
                                             onClick={fetchReport}
                                             disabled={loading || (!data.academic_class_id && activeTab !== 'consultation')}
                                             className="flex-1 h-12 bg-primary hover:bg-primary-hover text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/20 disabled:opacity-50 active:scale-95"
@@ -211,11 +210,11 @@ export default function ReportIndex({ auth, classes, subjects }: PageProps<{ cla
                                             {loading ? <div className="animate-spin h-4 w-4 border-2 border-white/30 border-t-white rounded-full"></div> : <FunnelIcon className="w-4 h-4" />}
                                             <span>Filter</span>
                                         </button>
-                                        <button 
+                                        <button
                                             onClick={() => {
                                                 const params = new URLSearchParams(data as any).toString();
                                                 let exportUrl = '';
-                                                switch(activeTab) {
+                                                switch (activeTab) {
                                                     case 'attendance': exportUrl = route('admin.reports.attendance.export'); break;
                                                     case 'attendance_subject': exportUrl = route('admin.reports.attendance-subject.export'); break;
                                                     case 'assessment': exportUrl = route('admin.reports.assessments.export'); break;
@@ -230,11 +229,11 @@ export default function ReportIndex({ auth, classes, subjects }: PageProps<{ cla
                                         >
                                             <ArrowDownTrayIcon className="w-5 h-5 text-emerald-400" />
                                         </button>
-                                        <button 
+                                        <button
                                             onClick={() => {
                                                 const params = new URLSearchParams(data as any).toString();
                                                 let pdfUrl = '';
-                                                switch(activeTab) {
+                                                switch (activeTab) {
                                                     case 'attendance': pdfUrl = route('admin.reports.attendance.pdf'); break;
                                                     case 'attendance_subject': pdfUrl = route('admin.reports.attendance-subject.pdf'); break;
                                                     case 'assessment': pdfUrl = route('admin.reports.assessments.pdf'); break;
@@ -282,7 +281,7 @@ export default function ReportIndex({ auth, classes, subjects }: PageProps<{ cla
 
 function AttendanceTable({ data }: { data: any }) {
     if (!data?.dates || !data?.report) return null;
-    
+
     return (
         <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-max">
@@ -291,7 +290,7 @@ function AttendanceTable({ data }: { data: any }) {
                         <th className="px-6 py-4 sticky left-0 bg-gray-50 dark:bg-gray-800 z-10 w-48 shadow-[2px_0px_5px_rgba(0,0,0,0.05)]">Nama Siswa</th>
                         {data.dates.map((date: string) => (
                             <th key={date} className="px-2 py-4 text-center border-l dark:border-gray-700 w-10">
-                                {new Date(date).toLocaleDateString('id-ID', {day: '2-digit'})}
+                                {new Date(date).toLocaleDateString('id-ID', { day: '2-digit' })}
                             </th>
                         ))}
                         <th className="px-4 py-4 text-center border-l dark:border-gray-700 bg-emerald-50/50 dark:bg-emerald-900/20 text-emerald-600">H</th>
@@ -310,18 +309,17 @@ function AttendanceTable({ data }: { data: any }) {
                             {data.dates.map((date: string) => {
                                 const status = row.daily?.[date] || '-';
                                 return (
-                                    <td key={date} className={`px-2 py-3 text-center border-l dark:border-gray-700 font-black ${
-                                        status === 'hadir' ? 'text-emerald-500' :
-                                        status === 'sakit' ? 'text-amber-500' :
-                                        status === 'izin' ? 'text-blue-500' :
-                                        status === 'alpha' ? 'text-rose-500 font-bold' :
-                                        status === 'terlambat' ? 'text-orange-500' : 'text-gray-200'
-                                    }`}>
-                                        {status === 'hadir' ? 'H' : 
-                                         status === 'sakit' ? 'S' : 
-                                         status === 'izin' ? 'I' : 
-                                         status === 'alpha' ? 'A' : 
-                                         status === 'terlambat' ? 'T' : '•'}
+                                    <td key={date} className={`px-2 py-3 text-center border-l dark:border-gray-700 font-black ${status === 'hadir' ? 'text-emerald-500' :
+                                            status === 'sakit' ? 'text-amber-500' :
+                                                status === 'izin' ? 'text-blue-500' :
+                                                    status === 'alpha' ? 'text-rose-500 font-bold' :
+                                                        status === 'terlambat' ? 'text-orange-500' : 'text-gray-200'
+                                        }`}>
+                                        {status === 'hadir' ? 'H' :
+                                            status === 'sakit' ? 'S' :
+                                                status === 'izin' ? 'I' :
+                                                    status === 'alpha' ? 'A' :
+                                                        status === 'terlambat' ? 'T' : '•'}
                                     </td>
                                 );
                             })}
@@ -356,11 +354,11 @@ function AssessmentTable({ data }: { data: any }) {
                     </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                    {data.assessments.length > 0 && 
+                    {data.assessments.length > 0 &&
                         DB_COLLECT_STUDENTS(data.assessments).map((studentName: string) => {
                             let total = 0;
                             let count = 0;
-                            
+
                             return (
                                 <tr key={studentName} className="hover:bg-gray-50/50 dark:hover:bg-gray-700/20 transition-colors">
                                     <td className="px-6 py-4 font-bold text-gray-900 dark:text-white sticky left-0 bg-white dark:bg-gray-800 z-10 shadow-[2px_0px_5px_rgba(0,0,0,0.05)] border-b dark:border-gray-700 uppercase text-xs">{studentName}</td>
@@ -459,11 +457,10 @@ function ConsultationTable({ data }: { data: any[] }) {
                                 <div className="text-[10px] text-gray-500 line-clamp-2 leading-relaxed font-medium italic">"{item.problem_description}"</div>
                             </td>
                             <td className="px-6 py-4 text-center text-[10px]">
-                                <span className={`px-2 py-1 rounded font-bold uppercase ${
-                                    item.follow_up_status === 'completed' ? 'bg-emerald-100 text-emerald-800' : 
-                                    item.follow_up_status === 'in_progress' ? 'bg-amber-100 text-amber-800' : 
-                                    'bg-rose-100 text-rose-800'
-                                }`}>
+                                <span className={`px-2 py-1 rounded font-bold uppercase ${item.follow_up_status === 'completed' ? 'bg-emerald-100 text-emerald-800' :
+                                        item.follow_up_status === 'in_progress' ? 'bg-amber-100 text-amber-800' :
+                                            'bg-rose-100 text-rose-800'
+                                    }`}>
                                     {item.follow_up_status}
                                 </span>
                             </td>
@@ -481,13 +478,13 @@ const FORMAT_DATE_ID = (dateStr: string) => {
     if (!dateStr) return '-';
     // Split date string to avoid timezone parsing issues (2026-04-12 -> [2026, 03, 12] for Date constructor)
     const [y, m, d] = dateStr.split('T')[0].split('-');
-    return new Date(parseInt(y), parseInt(m)-1, parseInt(d)).toLocaleDateString('id-ID', {day: '2-digit', month: 'short'});
+    return new Date(parseInt(y), parseInt(m) - 1, parseInt(d)).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
 };
 
 const FORMAT_DAY_ID = (dateStr: string) => {
     if (!dateStr) return '-';
     const [y, m, d] = dateStr.split('T')[0].split('-');
-    return new Date(parseInt(y), parseInt(m)-1, parseInt(d)).toLocaleDateString('id-ID', {weekday: 'long'});
+    return new Date(parseInt(y), parseInt(m) - 1, parseInt(d)).toLocaleDateString('id-ID', { weekday: 'long' });
 };
 
 const FORMAT_DATE_STR = (dateStr: string) => {
