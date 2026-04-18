@@ -97,8 +97,15 @@ class SubjectController extends Controller
         try {
             Excel::import(new SubjectImport, $request->file('file'));
             return back()->with('success', 'Data Mata Pelajaran berhasil diimport.');
+        } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
+            $failures = $e->failures();
+            $messages = [];
+            foreach ($failures as $failure) {
+                $messages[] = 'Baris ' . $failure->row() . ': ' . implode(', ', $failure->errors());
+            }
+            return back()->with('error', 'Validasi gagal: ' . implode(' | ', $messages));
         } catch (\Exception $e) {
-            return back()->with('error', 'Gagal mengimport data. Pastikan format file sesuai.');
+            return back()->with('error', 'Gagal mengimport data: ' . $e->getMessage());
         }
     }
 }
