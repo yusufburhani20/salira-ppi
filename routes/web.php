@@ -18,8 +18,8 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // Admin Group (Wait to apply Role middleware when needed, applied auth for now)
-    Route::prefix('admin')->name('admin.')->group(function () {
+    // Admin Group
+    Route::middleware(['role:Super Admin|Admin|Pimpinan'])->prefix('admin')->name('admin.')->group(function () {
         // Students
         Route::get('/students', [\App\Http\Controllers\Admin\StudentController::class, 'index'])->name('students.index');
         Route::post('/students', [\App\Http\Controllers\Admin\StudentController::class, 'store'])->name('students.store');
@@ -59,8 +59,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/attendances/export/excel', [\App\Http\Controllers\Admin\AttendanceController::class, 'exportExcel'])->name('attendances.export.excel');
         Route::get('/attendances/export/pdf', [\App\Http\Controllers\Admin\AttendanceController::class, 'exportPdf'])->name('attendances.export.pdf');
         
-        // Users
-        Route::resource('users', \App\Http\Controllers\Admin\UserController::class)->except(['show']);
+        // Users (Super Admin Only)
+        Route::middleware(['role:Super Admin'])->resource('users', \App\Http\Controllers\Admin\UserController::class)->except(['show']);
         
         // Approvals (Pimpinan & Admin)
         Route::get('/approvals', [\App\Http\Controllers\Admin\ApprovalController::class, 'index'])->name('approvals.index');
@@ -74,6 +74,11 @@ Route::middleware('auth')->group(function () {
             Route::get('/attendance/data', [\App\Http\Controllers\Admin\RecapController::class, 'attendanceData'])->name('attendance.data');
             Route::get('/attendance/export', [\App\Http\Controllers\Admin\RecapController::class, 'attendanceExport'])->name('attendance.export');
             Route::get('/attendance/pdf', [\App\Http\Controllers\Admin\RecapController::class, 'attendancePdf'])->name('attendance.pdf');
+            
+            // Attendance per Subject (Mapel)
+            Route::get('/attendance-subject/data', [\App\Http\Controllers\Admin\RecapController::class, 'attendanceSubjectData'])->name('attendance-subject.data');
+            Route::get('/attendance-subject/export', [\App\Http\Controllers\Admin\RecapController::class, 'attendanceSubjectExport'])->name('attendance-subject.export');
+            Route::get('/attendance-subject/pdf', [\App\Http\Controllers\Admin\RecapController::class, 'attendanceSubjectPdf'])->name('attendance-subject.pdf');
             
             // Assessments (Penilaian)
             Route::get('/assessments/data', [\App\Http\Controllers\Admin\RecapController::class, 'assessmentData'])->name('assessments.data');
@@ -89,6 +94,11 @@ Route::middleware('auth')->group(function () {
             Route::get('/consultations/data', [\App\Http\Controllers\Admin\RecapController::class, 'consultationData'])->name('consultations.data');
             Route::get('/consultations/export', [\App\Http\Controllers\Admin\RecapController::class, 'consultationExport'])->name('consultations.export');
             Route::get('/consultations/pdf', [\App\Http\Controllers\Admin\RecapController::class, 'consultationPdf'])->name('consultations.pdf');
+
+            // Student Resume (Laporan Orang Tua)
+            Route::get('/student-resume', [\App\Http\Controllers\Admin\StudentReportController::class, 'resume'])->name('student-resume');
+            Route::get('/student-resume/data', [\App\Http\Controllers\Admin\StudentReportController::class, 'resumeData'])->name('student-resume.data');
+            Route::get('/student-resume/pdf', [\App\Http\Controllers\Admin\StudentReportController::class, 'resumePdf'])->name('student-resume.pdf');
         });
 
         // Inventory Management
@@ -132,7 +142,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     // Teacher Routes
-    Route::middleware(['auth'])->prefix('teacher')->name('teacher.')->group(function () {
+    Route::middleware(['auth', 'role:Super Admin|Admin|Guru/Dosen'])->prefix('teacher')->name('teacher.')->group(function () {
         // Class Agendas
         Route::get('/agendas', [\App\Http\Controllers\Teacher\ClassAgendaController::class, 'index'])->name('agendas.index');
         Route::get('/agendas/create', [\App\Http\Controllers\Teacher\ClassAgendaController::class, 'create'])->name('agendas.create');

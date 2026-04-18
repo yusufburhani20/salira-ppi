@@ -9,6 +9,7 @@ import {
     ArrowUpTrayIcon, 
     ArrowDownTrayIcon,
     MagnifyingGlassIcon,
+    ChevronDownIcon,
 } from '@heroicons/react/24/outline';
 
 interface Subject {
@@ -16,6 +17,12 @@ interface Subject {
     code: string;
     name: string;
     description: string | null;
+    academic_classes?: { id: number; name: string }[];
+}
+
+interface AcademicClass {
+    id: number;
+    name: string;
 }
 
 interface PaginationLinks {
@@ -29,16 +36,18 @@ interface PaginatedData<T> {
     links: PaginationLinks[];
 }
 
-export default function SubjectIndex({ auth, subjects }: PageProps<{ subjects: PaginatedData<Subject> }>) {
+export default function SubjectIndex({ auth, subjects, classes }: PageProps<{ subjects: PaginatedData<Subject>, classes: AcademicClass[] }>) {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
+    const [isClassDropdownOpen, setIsClassDropdownOpen] = useState(false);
 
     const { data, setData, post, put, delete: destroy, reset, processing, errors } = useForm({
         code: '',
         name: '',
         description: '',
+        academic_class_ids: [] as number[],
     });
 
     const { data: importData, setData: setImportData, post: postImport, processing: importProcessing, errors: importErrors, reset: resetImport } = useForm({
@@ -47,15 +56,18 @@ export default function SubjectIndex({ auth, subjects }: PageProps<{ subjects: P
 
     const openAddModal = () => {
         reset();
+        setIsClassDropdownOpen(false);
         setIsAddModalOpen(true);
     };
 
     const openEditModal = (subject: Subject) => {
         setSelectedSubject(subject);
+        setIsClassDropdownOpen(false);
         setData({
             code: subject.code,
             name: subject.name,
             description: subject.description || '',
+            academic_class_ids: subject.academic_classes?.map(c => c.id) || [],
         });
         setIsEditModalOpen(true);
     };
@@ -99,6 +111,15 @@ export default function SubjectIndex({ auth, subjects }: PageProps<{ subjects: P
         });
     };
 
+    const handleClassToggle = (classId: number) => {
+        const currentIds = data.academic_class_ids;
+        if (currentIds.includes(classId)) {
+            setData('academic_class_ids', currentIds.filter(id => id !== classId));
+        } else {
+            setData('academic_class_ids', [...currentIds, classId]);
+        }
+    };
+
     return (
         <AuthenticatedLayout header={<h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Master Data Mata Pelajaran</h2>}>
             <Head title="Mata Pelajaran" />
@@ -140,6 +161,7 @@ export default function SubjectIndex({ auth, subjects }: PageProps<{ subjects: P
                                         <th className="px-6 py-4 font-bold text-gray-900 dark:text-white">Kode</th>
                                         <th className="px-6 py-4 font-bold text-gray-900 dark:text-white">Nama Mata Pelajaran</th>
                                         <th className="px-6 py-4 font-bold text-gray-900 dark:text-white">Deskripsi</th>
+                                        <th className="px-6 py-4 font-bold text-gray-900 dark:text-white">Diterapkan Di</th>
                                         <th className="px-6 py-4 font-bold text-gray-900 dark:text-white text-right">Aksi</th>
                                     </tr>
                                 </thead>
@@ -154,6 +176,19 @@ export default function SubjectIndex({ auth, subjects }: PageProps<{ subjects: P
                                                 <td className="px-6 py-4 whitespace-nowrap font-mono text-sm text-indigo-600 dark:text-indigo-400 font-bold">{subject.code}</td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-white font-medium">{subject.name}</td>
                                                 <td className="px-6 py-4 text-gray-500 dark:text-gray-400 text-sm max-w-md truncate">{subject.description || '-'}</td>
+                                                <td className="px-6 py-4 text-gray-500 dark:text-gray-400 text-xs">
+                                                    {subject.academic_classes && subject.academic_classes.length > 0 ? (
+                                                        <div className="flex flex-wrap gap-1">
+                                                            {subject.academic_classes.map(c => (
+                                                                <span key={c.id} className="px-2 py-1 bg-primary/10 text-primary rounded text-[10px] font-bold">
+                                                                    {c.name}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-rose-500 italic">Belum ada kelas</span>
+                                                    )}
+                                                </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-right space-x-2">
                                                     <button onClick={() => openEditModal(subject)} className="inline-flex p-2 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-900/20 rounded-lg transition-colors"><PencilSquareIcon className="w-5 h-5" /></button>
                                                     <button onClick={() => handleDelete(subject.id)} className="inline-flex p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"><TrashIcon className="w-5 h-5" /></button>
@@ -216,6 +251,41 @@ export default function SubjectIndex({ auth, subjects }: PageProps<{ subjects: P
                                         <textarea rows={3} value={data.description} onChange={e => setData('description', e.target.value)} className="w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:border-primary focus:ring-primary shadow-sm" placeholder="Keterangan mata pelajaran..."></textarea>
                                         {errors.description && <p className="text-red-500 text-xs mt-1">{errors.description}</p>}
                                     </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Pilih Kelas yang Mempelajari Mapel Ini</label>
+                                        <div className="relative">
+                                            <div 
+                                                onClick={() => setIsClassDropdownOpen(!isClassDropdownOpen)}
+                                                className="w-full flex justify-between items-center px-4 py-2.5 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg shadow-sm cursor-pointer hover:border-primary transition-colors"
+                                            >
+                                                <span className="text-sm text-gray-700 dark:text-gray-300 truncate">
+                                                    {data.academic_class_ids.length > 0 
+                                                        ? `${data.academic_class_ids.length} kelas dipilih` 
+                                                        : '-- Pilih Kelas --'}
+                                                </span>
+                                                <ChevronDownIcon className={`w-5 h-5 text-gray-400 transition-transform ${isClassDropdownOpen ? 'rotate-180' : ''}`} />
+                                            </div>
+
+                                            {isClassDropdownOpen && (
+                                                <div className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                                                    <div className="p-2 space-y-1">
+                                                        {classes.map(c => (
+                                                            <label key={c.id} className="flex items-center px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-700/50 rounded cursor-pointer transition-colors">
+                                                                <input 
+                                                                    type="checkbox" 
+                                                                    checked={data.academic_class_ids.includes(c.id)}
+                                                                    onChange={() => handleClassToggle(c.id)}
+                                                                    className="rounded border-gray-300 text-primary shadow-sm focus:ring-primary"
+                                                                />
+                                                                <span className="ml-3 text-sm text-gray-700 dark:text-gray-300">{c.name}</span>
+                                                            </label>
+                                                        ))}
+                                                        {classes.length === 0 && <p className="text-xs text-amber-500 p-2">Belum ada data kelas di sistem.</p>}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
                                 </div>
                                 <div className="p-6 bg-gray-50 dark:bg-gray-700/50 flex justify-end space-x-3">
                                     <button type="button" onClick={() => { setIsAddModalOpen(false); setIsEditModalOpen(false); }} className="px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-100 transition-colors">Batal</button>
@@ -240,7 +310,7 @@ export default function SubjectIndex({ auth, subjects }: PageProps<{ subjects: P
                                 </div>
                                 <div className="p-6 space-y-4">
                                     <div className="p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg text-indigo-700 dark:text-indigo-400 text-xs flex justify-between items-center">
-                                        <span>Format Excel harus memiliki kolom: **kode**, **nama_mata_pelajaran**, **deskripsi**.</span>
+                                        <span>Format Excel harus memiliki kolom: **kode**, **nama_mata_pelajaran**, **deskripsi**, **id_kelas_dipisahkan_koma** (opsional).</span>
                                         <a href={route('admin.subjects.template')} className="font-bold underline hover:text-indigo-800">Unduh Template</a>
                                     </div>
                                     <div>

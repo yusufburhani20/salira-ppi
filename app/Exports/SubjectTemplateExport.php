@@ -13,6 +13,7 @@ class SubjectTemplateExport implements WithHeadings, ShouldAutoSize
             'kode',
             'nama_mata_pelajaran',
             'deskripsi',
+            'id_kelas_dipisahkan_koma',
         ];
     }
 }

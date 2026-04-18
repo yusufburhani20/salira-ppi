@@ -11,7 +11,7 @@ class SubjectExport implements FromCollection, WithHeadings, WithMapping
 {
     public function collection()
     {
-        return Subject::all();
+        return Subject::with('academicClasses')->get();
     }
 
     public function headings(): array
@@ -21,6 +21,8 @@ class SubjectExport implements FromCollection, WithHeadings, WithMapping
             'Kode',
             'Nama Mata Pelajaran',
             'Deskripsi',
+            'Diterapkan Di Kelas (Nama)',
+            'Diterapkan Di Kelas (ID)',
             'Dibuat Pada',
         ];
     }
@@ -32,6 +34,8 @@ class SubjectExport implements FromCollection, WithHeadings, WithMapping
             $subject->code,
             $subject->name,
             $subject->description,
+            $subject->academicClasses->pluck('name')->implode(', '),
+            $subject->academicClasses->pluck('id')->implode(','),
             $subject->created_at->format('Y-m-d H:i:s'),
         ];
     }

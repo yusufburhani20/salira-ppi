@@ -136,7 +136,7 @@ export default function AssessmentForm({ auth, classes, students: initialStudent
                                         className="w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:border-primary focus:ring-primary shadow-sm"
                                     >
                                         <option value="">Pilih Mata Pelajaran</option>
-                                        {subjects.map(subject => (
+                                        {subjects.filter((s: any) => data.academic_class_id ? s.academic_classes?.some((ac: any) => ac.id.toString() === data.academic_class_id.toString()) : false).map((subject: any) => (
                                             <option key={subject.id} value={subject.id}>{subject.name}</option>
                                         ))}
                                     </select>

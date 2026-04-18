@@ -15,9 +15,12 @@ class SubjectController extends Controller
 {
     public function index()
     {
-        $subjects = Subject::latest()->paginate(15);
+        $subjects = Subject::with('academicClasses')->latest()->paginate(15);
+        $classes = \App\Models\AcademicClass::all();
+        
         return Inertia::render('Admin/Subjects/Index', [
-            'subjects' => $subjects
+            'subjects' => $subjects,
+            'classes' => $classes,
         ]);
     }
 
@@ -27,9 +30,19 @@ class SubjectController extends Controller
             'code' => 'required|string|unique:subjects,code',
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'academic_class_ids' => 'nullable|array',
+            'academic_class_ids.*' => 'exists:academic_classes,id',
         ]);
 
-        Subject::create($validated);
+        $subject = Subject::create([
+            'code' => $validated['code'],
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
+        ]);
+
+        if (isset($validated['academic_class_ids'])) {
+            $subject->academicClasses()->sync($validated['academic_class_ids']);
+        }
 
         return back()->with('success', 'Mata Pelajaran berhasil ditambahkan.');
     }
@@ -40,9 +53,21 @@ class SubjectController extends Controller
             'code' => 'required|string|unique:subjects,code,' . $subject->id,
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'academic_class_ids' => 'nullable|array',
+            'academic_class_ids.*' => 'exists:academic_classes,id',
         ]);
 
-        $subject->update($validated);
+        $subject->update([
+            'code' => $validated['code'],
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
+        ]);
+
+        if (isset($validated['academic_class_ids'])) {
+            $subject->academicClasses()->sync($validated['academic_class_ids']);
+        } else {
+            $subject->academicClasses()->sync([]);
+        }
 
         return back()->with('success', 'Mata Pelajaran berhasil diperbarui.');
     }

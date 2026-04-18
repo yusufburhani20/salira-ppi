@@ -133,7 +133,7 @@ export default function AgendaEdit({ agenda, classes, subjects = [] }: { agenda:
                                     required
                                 >
                                     <option value="">-- Pilih Mata Pelajaran --</option>
-                                    {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                    {subjects.filter((s: any) => data.academic_class_id ? s.academic_classes?.some((ac: any) => ac.id.toString() === data.academic_class_id.toString()) : false).map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
                                 </select>
                                 {errors.subject_id && <p className="text-red-500 text-xs mt-1">{errors.subject_id}</p>}
                             </div>

@@ -15,6 +15,10 @@ class SettingController extends Controller
         return Inertia::render('Admin/Settings/Index', [
             'settings' => [
                 'school_name' => Setting::get('school_name', 'SALIRA ACADEMY'),
+                'school_address' => Setting::get('school_address', ''),
+                'school_phone' => Setting::get('school_phone', ''),
+                'school_email' => Setting::get('school_email', ''),
+                'report_location' => Setting::get('report_location', 'Kota'),
                 'school_logo' => Setting::get('school_logo') ? Storage::url(Setting::get('school_logo')) : null,
                 'school_favicon' => Setting::get('school_favicon') ? Storage::url(Setting::get('school_favicon')) : null,
             ]
@@ -25,11 +29,19 @@ class SettingController extends Controller
     {
         $request->validate([
             'school_name' => 'required|string|max:255',
+            'school_address' => 'nullable|string',
+            'school_phone' => 'nullable|string|max:50',
+            'school_email' => 'nullable|email|max:100',
+            'report_location' => 'nullable|string|max:100',
             'school_logo' => 'nullable|image|max:2048',
             'school_favicon' => 'nullable|image|mimes:ico,png,jpg,jpeg,svg|max:1024',
         ]);
 
         Setting::set('school_name', $request->school_name);
+        Setting::set('school_address', $request->school_address);
+        Setting::set('school_phone', $request->school_phone);
+        Setting::set('school_email', $request->school_email);
+        Setting::set('report_location', $request->report_location);
 
         if ($request->hasFile('school_logo')) {
             // Delete old logo

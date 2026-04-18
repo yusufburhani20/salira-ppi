@@ -43,7 +43,7 @@ class ClassAgendaController extends Controller
         
         return Inertia::render('Teacher/Agendas/Create', [
             'classes' => $classes,
-            'subjects' => Subject::all(),
+            'subjects' => Subject::with('academicClasses:id')->orderBy('name')->get(),
         ]);
     }
 
@@ -122,7 +122,7 @@ class ClassAgendaController extends Controller
         return Inertia::render('Teacher/Agendas/Edit', [
             'agenda' => $agenda,
             'classes' => $classes,
-            'subjects' => Subject::all(),
+            'subjects' => Subject::with('academicClasses:id')->orderBy('name')->get(),
         ]);
     }
 

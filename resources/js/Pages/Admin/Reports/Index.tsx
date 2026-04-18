@@ -24,9 +24,10 @@ interface Subject {
 }
 
 export default function ReportIndex({ auth, classes, subjects }: PageProps<{ classes: AcademicClass[], subjects: Subject[] }>) {
-    const [activeTab, setActiveTab] = useState<'attendance' | 'assessment' | 'agenda' | 'consultation'>('attendance');
+    const [activeTab, setActiveTab] = useState<'attendance' | 'attendance_subject' | 'assessment' | 'agenda' | 'consultation'>('attendance');
     const [results, setResults] = useState<any>({
         attendance: null,
+        attendance_subject: null,
         assessment: null,
         agenda: null,
         consultation: null
@@ -49,6 +50,7 @@ export default function ReportIndex({ auth, classes, subjects }: PageProps<{ cla
             let url = '';
             switch(activeTab) {
                 case 'attendance': url = route('admin.reports.attendance.data'); break;
+                case 'attendance_subject': url = route('admin.reports.attendance-subject.data'); break;
                 case 'assessment': url = route('admin.reports.assessments.data'); break;
                 case 'agenda': url = route('admin.reports.agendas.data'); break;
                 case 'consultation': url = route('admin.reports.consultations.data'); break;
@@ -89,7 +91,8 @@ export default function ReportIndex({ auth, classes, subjects }: PageProps<{ cla
                     {/* Tab Navigation */}
                     <div className="flex flex-wrap gap-2 overflow-x-auto pb-2">
                         {[
-                            { id: 'attendance', label: 'Rekap Absensi', icon: UserGroupIcon },
+                            { id: 'attendance', label: 'Rekap Absensi (Umum)', icon: UserGroupIcon },
+                            { id: 'attendance_subject', label: 'Rekap Absensi (Mapel)', icon: AcademicCapIcon },
                             { id: 'assessment', label: 'Rekap Penilaian', icon: AcademicCapIcon },
                             { id: 'agenda', label: 'Jurnal Mengajar', icon: BookOpenIcon },
                             { id: 'consultation', label: 'Bimbingan Siswa', icon: DocumentChartBarIcon },
@@ -135,7 +138,7 @@ export default function ReportIndex({ auth, classes, subjects }: PageProps<{ cla
                                         </div>
                                     )}
 
-                                    {activeTab === 'assessment' && (
+                                    {(activeTab === 'assessment' || activeTab === 'attendance_subject') && (
                                         <div className="relative">
                                             <select 
                                                 value={data.subject_id}
@@ -144,7 +147,7 @@ export default function ReportIndex({ auth, classes, subjects }: PageProps<{ cla
                                                 style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")` }}
                                             >
                                                 <option value="">-- Pilih Mapel --</option>
-                                                {subjects.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                                {subjects.filter((s: any) => data.class_id ? s.academic_classes?.some((ac: any) => ac.id.toString() === data.class_id.toString()) : false).map((s: any) => <option key={s.id} value={s.id}>{s.name}</option>)}
                                             </select>
                                         </div>
                                     )}
@@ -214,6 +217,7 @@ export default function ReportIndex({ auth, classes, subjects }: PageProps<{ cla
                                                 let exportUrl = '';
                                                 switch(activeTab) {
                                                     case 'attendance': exportUrl = route('admin.reports.attendance.export'); break;
+                                                    case 'attendance_subject': exportUrl = route('admin.reports.attendance-subject.export'); break;
                                                     case 'assessment': exportUrl = route('admin.reports.assessments.export'); break;
                                                     case 'agenda': exportUrl = route('admin.reports.agendas.export'); break;
                                                     case 'consultation': exportUrl = route('admin.reports.consultations.export'); break;
@@ -232,6 +236,7 @@ export default function ReportIndex({ auth, classes, subjects }: PageProps<{ cla
                                                 let pdfUrl = '';
                                                 switch(activeTab) {
                                                     case 'attendance': pdfUrl = route('admin.reports.attendance.pdf'); break;
+                                                    case 'attendance_subject': pdfUrl = route('admin.reports.attendance-subject.pdf'); break;
                                                     case 'assessment': pdfUrl = route('admin.reports.assessments.pdf'); break;
                                                     case 'agenda': pdfUrl = route('admin.reports.agendas.pdf'); break;
                                                     case 'consultation': pdfUrl = route('admin.reports.consultations.pdf'); break;
@@ -260,6 +265,7 @@ export default function ReportIndex({ auth, classes, subjects }: PageProps<{ cla
                         ) : (
                             <div className="p-0">
                                 {activeTab === 'attendance' && <AttendanceTable data={results.attendance} />}
+                                {activeTab === 'attendance_subject' && <AttendanceTable data={results.attendance_subject} />}
                                 {activeTab === 'assessment' && <AssessmentTable data={results.assessment} />}
                                 {activeTab === 'agenda' && <AgendaTable data={results.agenda} />}
                                 {activeTab === 'consultation' && <ConsultationTable data={results.consultation} />}

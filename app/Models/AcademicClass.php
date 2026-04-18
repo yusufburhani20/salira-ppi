@@ -32,4 +32,9 @@ class AcademicClass extends Model
     {
         return $this->hasMany(StudentConsultation::class, 'class_id');
     }
+
+    public function subjects()
+    {
+        return $this->belongsToMany(Subject::class, 'academic_class_subject', 'academic_class_id', 'subject_id')->withTimestamps();
+    }
 }

@@ -24,7 +24,7 @@ class RecapController extends Controller
     public function index()
     {
         $classes = AcademicClass::with('academicYear')->get();
-        $subjects = Subject::all();
+        $subjects = Subject::with('academicClasses:id')->orderBy('name')->get();
         
         return Inertia::render('Admin/Reports/Index', [
             'classes' => $classes,
@@ -89,6 +89,75 @@ class RecapController extends Controller
             'dates' => $dates,
             'report' => $report,
             'class' => AcademicClass::find($classId)->name,
+            'range' => $start->format('d M Y') . ' - ' . $end->format('d M Y')
+        ]);
+    }
+
+    // --- Attendance Recap (Per Subject) ---
+    public function attendanceSubjectData(Request $request)
+    {
+        $request->validate([
+            'academic_class_id' => 'required|exists:academic_classes,id',
+            'subject_id' => 'required|exists:subjects,id',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+        ]);
+
+        $classId = $request->academic_class_id;
+        $subjectId = $request->subject_id;
+        $start = Carbon::parse($request->start_date)->startOfDay();
+        $end = Carbon::parse($request->end_date)->endOfDay();
+
+        // Ambil agenda kelas yang sesuai subject
+        $agendas = ClassAgenda::where('academic_class_id', $classId)
+            ->where('subject_id', $subjectId)
+            ->whereBetween('date', [$start, $end])
+            ->pluck('id');
+
+        $attendances = StudentAttendance::whereIn('class_agenda_id', $agendas)->get();
+
+        // Generate date range - Only show dates that have attendance data for THIS SUBJECT
+        $dates = $attendances->pluck('date')->map(function($d) {
+            return Carbon::parse($d)->format('Y-m-d');
+        })->unique()->sort()->values()->toArray();
+
+        $students = Student::whereHas('academicClasses', function($q) use ($classId) {
+            $q->where('academic_classes.id', $classId);
+        })->orderBy('name')->get();
+
+        $report = [];
+        foreach ($students as $student) {
+            $studentAtts = $attendances->where('student_id', $student->id);
+            
+            $daily = [];
+            foreach ($dates as $date) {
+                $att = $studentAtts->filter(function($item) use ($date) {
+                    return Carbon::parse($item->date)->format('Y-m-d') === $date;
+                })->first();
+                $daily[$date] = $att ? $att->status->value : '-';
+            }
+
+            $report[] = [
+                'id' => $student->id,
+                'name' => $student->name,
+                'daily' => $daily,
+                'summary' => [
+                    'hadir' => $studentAtts->where('status.value', 'hadir')->count(),
+                    'sakit' => $studentAtts->where('status.value', 'sakit')->count(),
+                    'izin' => $studentAtts->where('status.value', 'izin')->count(),
+                    'alpha' => $studentAtts->where('status.value', 'alpha')->count(),
+                    'terlambat' => $studentAtts->where('status.value', 'terlambat')->count(),
+                ]
+            ];
+        }
+
+        $subjectName = Subject::find($subjectId)->name;
+
+        return response()->json([
+            'dates' => $dates,
+            'report' => $report,
+            'class' => AcademicClass::find($classId)->name,
+            'subject' => $subjectName,
             'range' => $start->format('d M Y') . ' - ' . $end->format('d M Y')
         ]);
     }
@@ -173,6 +242,12 @@ class RecapController extends Controller
         return Excel::download(new \App\Exports\AttendanceRecapExport($data), 'rekap_absensi.xlsx');
     }
 
+    public function attendanceSubjectExport(Request $request)
+    {
+        $data = $this->attendanceSubjectData($request)->getData(true);
+        return Excel::download(new \App\Exports\AttendanceSubjectRecapExport($data), 'rekap_absensi_mapel.xlsx');
+    }
+
     public function assessmentExport(Request $request)
     {
         $data = $this->assessmentData($request)->getData(true);
@@ -215,6 +290,20 @@ class RecapController extends Controller
         ]))->setPaper('a4', 'landscape');
 
         return $pdf->stream('rekap_absensi.pdf');
+    }
+
+    public function attendanceSubjectPdf(Request $request)
+    {
+        $data = $this->attendanceSubjectData($request)->getData(true);
+        $settings = $this->getPdfSettings('Rekap Absensi Mata Pelajaran', $data['class'], $data['range'], $data['subject']);
+        
+        $pdf = Pdf::loadView('reports.attendance_subject_pdf', array_merge($settings, [
+            'dates' => $data['dates'],
+            'report' => $data['report'],
+            'subject' => $data['subject']
+        ]))->setPaper('a4', 'landscape');
+
+        return $pdf->stream('rekap_absensi_mapel.pdf');
     }
 
     public function assessmentPdf(Request $request)

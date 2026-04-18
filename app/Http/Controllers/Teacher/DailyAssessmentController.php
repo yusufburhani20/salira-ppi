@@ -22,7 +22,7 @@ class DailyAssessmentController extends Controller
             ->paginate(15);
 
         $classes = AcademicClass::all();
-        $subjects = Subject::all();
+        $subjects = Subject::with('academicClasses:id')->orderBy('name')->get();
 
         return Inertia::render('Teacher/Assessments/Index', [
             'assessments' => $assessments,
@@ -34,7 +34,7 @@ class DailyAssessmentController extends Controller
     public function create(Request $request)
     {
         $classes = AcademicClass::all();
-        $subjects = Subject::all();
+        $subjects = Subject::with('academicClasses:id')->orderBy('name')->get();
         $selectedClassId = $request->class_id;
         $students = [];
 
@@ -105,7 +105,7 @@ class DailyAssessmentController extends Controller
         }
 
         $classes = AcademicClass::all();
-        $subjects = Subject::all();
+        $subjects = Subject::with('academicClasses:id')->orderBy('name')->get();
 
         return Inertia::render('Teacher/Assessments/Form', [
             'assessment' => $assessment,

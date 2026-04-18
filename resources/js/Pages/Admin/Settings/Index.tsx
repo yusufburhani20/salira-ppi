@@ -6,6 +6,10 @@ import { Cog6ToothIcon, PhotoIcon, BuildingOfficeIcon } from '@heroicons/react/2
 
 interface Settings {
     school_name: string;
+    school_address: string;
+    school_phone: string;
+    school_email: string;
+    report_location: string;
     school_logo: string | null;
     school_favicon: string | null;
 }
@@ -13,6 +17,10 @@ interface Settings {
 export default function SettingIndex({ auth, settings }: PageProps<{ settings: Settings }>) {
     const { data, setData, post, processing, errors } = useForm({
         school_name: settings.school_name,
+        school_address: settings.school_address,
+        school_phone: settings.school_phone,
+        school_email: settings.school_email,
+        report_location: settings.report_location,
         school_logo: null as File | null,
         school_favicon: null as File | null,
     });
@@ -40,16 +48,66 @@ export default function SettingIndex({ auth, settings }: PageProps<{ settings: S
                                     </h3>
                                     
                                     <div className="space-y-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div>
+                                                <label className="block font-bold text-gray-700 dark:text-gray-300 mb-2">Nama Sekolah</label>
+                                                <input 
+                                                    type="text"
+                                                    value={data.school_name}
+                                                    onChange={e => setData('school_name', e.target.value)}
+                                                    className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                                                    placeholder="Masukkan nama resmi sekolah"
+                                                />
+                                                {errors.school_name && <p className="text-red-500 text-xs mt-1">{errors.school_name}</p>}
+                                            </div>
+
+                                            <div>
+                                                <label className="block font-bold text-gray-700 dark:text-gray-300 mb-2">Email Sekolah</label>
+                                                <input 
+                                                    type="email"
+                                                    value={data.school_email}
+                                                    onChange={e => setData('school_email', e.target.value)}
+                                                    className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                                                    placeholder="contoh@sekolah.sch.id"
+                                                />
+                                                {errors.school_email && <p className="text-red-500 text-xs mt-1">{errors.school_email}</p>}
+                                            </div>
+
+                                            <div>
+                                                <label className="block font-bold text-gray-700 dark:text-gray-300 mb-2">Telepon Sekolah</label>
+                                                <input 
+                                                    type="text"
+                                                    value={data.school_phone}
+                                                    onChange={e => setData('school_phone', e.target.value)}
+                                                    className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                                                    placeholder="021-xxxxxxx"
+                                                />
+                                                {errors.school_phone && <p className="text-red-500 text-xs mt-1">{errors.school_phone}</p>}
+                                            </div>
+
+                                            <div>
+                                                <label className="block font-bold text-gray-700 dark:text-gray-300 mb-2">Alamat Titimangsa (Untuk Laporan/PDF)</label>
+                                                <input 
+                                                    type="text"
+                                                    value={data.report_location}
+                                                    onChange={e => setData('report_location', e.target.value)}
+                                                    className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                                                    placeholder="Contoh: Tasikmalaya"
+                                                />
+                                                {errors.report_location && <p className="text-red-500 text-xs mt-1">{errors.report_location}</p>}
+                                            </div>
+                                        </div>
+
                                         <div>
-                                            <label className="block font-bold text-gray-700 dark:text-gray-300 mb-2">Nama Sekolah</label>
-                                            <input 
-                                                type="text"
-                                                value={data.school_name}
-                                                onChange={e => setData('school_name', e.target.value)}
+                                            <label className="block font-bold text-gray-700 dark:text-gray-300 mb-2">Alamat Lengkap Sekolah</label>
+                                            <textarea 
+                                                value={data.school_address}
+                                                onChange={e => setData('school_address', e.target.value)}
                                                 className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
-                                                placeholder="Masukkan nama resmi sekolah"
+                                                placeholder="Jalan, RT/RW, Desa, Kecamatan, Kota/Kabupaten, Provinsi"
+                                                rows={3}
                                             />
-                                            {errors.school_name && <p className="text-red-500 text-xs mt-1">{errors.school_name}</p>}
+                                            {errors.school_address && <p className="text-red-500 text-xs mt-1">{errors.school_address}</p>}
                                         </div>
 
                                         <div className="p-6 bg-gray-50 dark:bg-gray-900/50 rounded-2xl border-2 border-dashed border-gray-200 dark:border-gray-700">
