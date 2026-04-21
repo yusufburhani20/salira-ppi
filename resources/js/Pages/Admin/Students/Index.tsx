@@ -46,6 +46,7 @@ export default function StudentIndex({ students, filters, classes }: any) {
     const { data, setData, post, put, processing, errors, reset } = useForm({
         nisn: '', nis: '', name: '', gender: 'L' as string, status: 'active' as string,
         birth_place: '', birth_date: '', parent_name: '', parent_phone: '',
+        parent_email: '', parent_telegram_id: '',
         academic_class_id: '' as string,
     });
 
@@ -59,6 +60,7 @@ export default function StudentIndex({ students, filters, classes }: any) {
             gender: s.gender ?? 'L', status: s.status ?? 'active',
             birth_place: s.birth_place ?? '', birth_date: s.birth_date ?? '',
             parent_name: s.parent_name ?? '', parent_phone: s.parent_phone ?? '',
+            parent_email: s.parent_email ?? '', parent_telegram_id: s.parent_telegram_id ?? '',
             academic_class_id: s.academic_class_id ? String(s.academic_class_id) : '',
         });
         setShowForm(true);
@@ -269,6 +271,14 @@ export default function StudentIndex({ students, filters, classes }: any) {
                         </Field>
                         <Field label="No. HP Orang Tua" error={errors.parent_phone}>
                             <input className={ic} value={data.parent_phone} onChange={e => setData('parent_phone', e.target.value)} placeholder="08xxxxxxxxxx" />
+                        </Field>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <Field label="Email Orang Tua" error={errors.parent_email}>
+                            <input type="email" className={ic} value={data.parent_email} onChange={e => setData('parent_email', e.target.value)} placeholder="email@contoh.com" />
+                        </Field>
+                        <Field label="ID/No. Telegram Ortu" error={errors.parent_telegram_id}>
+                            <input className={ic} value={data.parent_telegram_id} onChange={e => setData('parent_telegram_id', e.target.value)} placeholder="@username / ID" />
                         </Field>
                     </div>
                     <div className="flex gap-3 pt-2">

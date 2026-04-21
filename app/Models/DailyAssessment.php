@@ -8,7 +8,7 @@ class DailyAssessment extends Model
 {
     protected $guarded = ['id'];
     protected $casts = [
-        'date' => 'date',
+        'date' => 'date:Y-m-d',
     ];
 
     public function teacher()

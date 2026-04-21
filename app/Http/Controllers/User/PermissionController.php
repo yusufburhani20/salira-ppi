@@ -49,7 +49,7 @@ class PermissionController extends Controller
             $taskPath = $request->file('task_file')->store('permissions', 'public');
         }
 
-        $request->user()->permissionRequests()->create([
+        $permission = $request->user()->permissionRequests()->create([
             'type' => $validated['type'],
             'start_date' => $validated['start_date'],
             'end_date' => $validated['end_date'],
@@ -59,8 +59,13 @@ class PermissionController extends Controller
             'task_file_path' => $taskPath,
         ]);
 
+        // Send Notification to Admins and Pimpinan
+        $admins = \App\Models\User::role(['Super Admin', 'Admin', 'Pimpinan'])->get();
+        \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\NewPermissionRequest($permission));
+
         return back()->with('success', 'Permission request submitted successfully. Awaiting approval.');
     }
+
 
     public function destroy(Request $request, PermissionRequest $permission)
     {

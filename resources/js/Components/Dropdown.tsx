@@ -7,6 +7,8 @@ import {
     SetStateAction,
     useContext,
     useState,
+    useRef,
+    useEffect,
 } from 'react';
 
 const DropDownContext = createContext<{
@@ -21,6 +23,20 @@ const DropDownContext = createContext<{
 
 const Dropdown = ({ children }: PropsWithChildren) => {
     const [open, setOpen] = useState(false);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleOutsideClick = (event: MouseEvent) => {
+            if (open && dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleOutsideClick);
+        return () => {
+            document.removeEventListener('mousedown', handleOutsideClick);
+        };
+    }, [open]);
 
     const toggleOpen = () => {
         setOpen((previousState) => !previousState);
@@ -28,37 +44,31 @@ const Dropdown = ({ children }: PropsWithChildren) => {
 
     return (
         <DropDownContext.Provider value={{ open, setOpen, toggleOpen }}>
-            <div className="relative">{children}</div>
+            <div ref={dropdownRef} className="relative">{children}</div>
         </DropDownContext.Provider>
     );
 };
 
 const Trigger = ({ children }: PropsWithChildren) => {
-    const { open, setOpen, toggleOpen } = useContext(DropDownContext);
+    const { toggleOpen } = useContext(DropDownContext);
 
     return (
-        <>
-            <div onClick={toggleOpen}>{children}</div>
-
-            {open && (
-                <div
-                    className="fixed inset-0 z-40"
-                    onClick={() => setOpen(false)}
-                ></div>
-            )}
-        </>
+        <div onClick={toggleOpen}>{children}</div>
     );
 };
+
 
 const Content = ({
     align = 'right',
     width = '48',
     contentClasses = 'py-1 bg-white dark:bg-gray-700',
+    closeOnClickInside = true,
     children,
 }: PropsWithChildren<{
     align?: 'left' | 'right';
-    width?: '48';
+    width?: '48' | '80' | '96';
     contentClasses?: string;
+    closeOnClickInside?: boolean;
 }>) => {
     const { open, setOpen } = useContext(DropDownContext);
 
@@ -74,6 +84,10 @@ const Content = ({
 
     if (width === '48') {
         widthClasses = 'w-48';
+    } else if (width === '80') {
+        widthClasses = 'w-80';
+    } else if (width === '96') {
+        widthClasses = 'w-96';
     }
 
     return (
@@ -89,7 +103,7 @@ const Content = ({
             >
                 <div
                     className={`absolute z-50 mt-2 rounded-md shadow-lg ${alignmentClasses} ${widthClasses}`}
-                    onClick={() => setOpen(false)}
+                    onClick={() => closeOnClickInside ? setOpen(false) : null}
                 >
                     <div
                         className={

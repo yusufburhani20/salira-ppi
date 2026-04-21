@@ -141,6 +141,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    
+    // Notifications
+    Route::get('/notifications', [\App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
+    Route::patch('/notifications/{id}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.markAsRead');
+    Route::patch('/notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.markAllAsRead');
+
     // Teacher Routes
     Route::middleware(['auth', 'role:Super Admin|Admin|Guru/Dosen'])->prefix('teacher')->name('teacher.')->group(function () {
         // Class Agendas
@@ -164,5 +170,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/consultations/students/{classId}', [\App\Http\Controllers\Teacher\ConsultationController::class, 'getStudents'])->name('consultations.students');
     });
 });
+
+// Telegram Webhook
+Route::post('/webhook/telegram', [\App\Http\Controllers\TelegramController::class, 'handle']);
 
 require __DIR__.'/auth.php';

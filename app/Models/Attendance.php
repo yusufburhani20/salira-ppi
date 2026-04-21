@@ -11,7 +11,7 @@ class Attendance extends Model
 {
     protected $guarded = ['id'];
     protected $casts = [
-        'date' => 'date',
+        'date' => 'date:Y-m-d',
         'status' => AttendanceStatus::class,
         'verification_status' => VerificationStatus::class,
         'latitude' => 'decimal:8',

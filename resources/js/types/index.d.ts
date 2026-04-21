@@ -6,6 +6,10 @@ export interface User {
     roles?: string[];
     avatar?: string | null;
     avatar_url?: string | null;
+    phone?: string | null;
+    telegram_id?: string | null;
+    nip?: string | null;
+    address?: string | null;
 }
 
 export type PageProps<

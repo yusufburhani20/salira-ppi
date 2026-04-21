@@ -51,6 +51,8 @@ class StudentController extends Controller
             'birth_date'        => 'nullable|date',
             'parent_name'       => 'nullable|string',
             'parent_phone'      => 'nullable|string',
+            'parent_email'      => 'nullable|email|max:255',
+            'parent_telegram_id' => 'nullable|string|max:100',
             'academic_class_id' => 'nullable|exists:academic_classes,id',
         ]);
 
@@ -76,6 +78,8 @@ class StudentController extends Controller
             'birth_date'        => 'nullable|date',
             'parent_name'       => 'nullable|string',
             'parent_phone'      => 'nullable|string',
+            'parent_email'      => 'nullable|email|max:255',
+            'parent_telegram_id' => 'nullable|string|max:100',
             'academic_class_id' => 'nullable|exists:academic_classes,id',
         ]);
 

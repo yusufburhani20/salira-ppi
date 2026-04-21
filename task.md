@@ -27,10 +27,17 @@
 ## Fase 2-8: Modules (after foundation)
 - [x] Modul Administrasi Kelas (Data Siswa & Data Kelas)
 - [x] Modul Manajemen Anggota Kelas (Include di Data Siswa)
-- [ ] Modul Absensi Geolocation
-- [ ] Modul Perizinan
-- [ ] Modul Absensi Siswa
-- [ ] Modul Agenda Kelas
-- [ ] Modul Konsultasi Guru Wali
-- [ ] Modul Inventaris Barcode
-- [ ] Modul Rekapitulasi
+- [x] Modul Absensi Geolocation
+- [x] Modul Perizinan
+- [x] Modul Absensi Siswa (via Jurnal Mengajar)
+- [x] Modul Agenda Kelas
+- [x] Modul Konsultasi Guru Wali
+- [x] Modul Inventaris Barcode
+- [x] Modul Rekapitulasi
+
+## Pengembangan Selanjutnya (Next)
+- [ ] Sistem Notifikasi (WhatsApp/Push/Email)
+- [ ] Portal Siswa & Orang Tua
+- [ ] Dashboard Analytics (Charts/Graphs)
+- [ ] PWA Support (Offline capabilities)
+- [ ] Otomatisasi Laporan (Scheduled Recap)

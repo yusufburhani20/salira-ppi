@@ -34,15 +34,30 @@ class RegisteredUserController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
-            'nip' => 'required|string|max:50',
+            'nip' => 'required|string|max:50|unique:'.User::class,
+            'phone' => 'required|string|max:20|unique:'.User::class,
+            'telegram_id' => 'nullable|string|max:100',
             'role' => 'required|string|in:Guru/Dosen,Staff/TU',
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+        ], [
+            'required' => ':attribute wajib diisi.',
+            'unique' => ':attribute ini sudah terdaftar. Silakan gunakan yang lain.',
+            'confirmed' => 'Konfirmasi kata sandi tidak cocok.',
+            'email' => 'Format email tidak valid.',
+        ], [
+            'name' => 'Nama Lengkap',
+            'email' => 'Email',
+            'nip' => 'NIP/NUPTK',
+            'phone' => 'No. HP',
+            'password' => 'Kata Sandi',
         ]);
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'nip' => $request->nip,
+            'phone' => $request->phone,
+            'telegram_id' => $request->telegram_id,
             'status' => \App\Enums\UserStatus::active,
             'password' => Hash::make($request->password),
         ]);

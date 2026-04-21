@@ -131,7 +131,7 @@ export default function ApprovalIndex({ auth, permissions }: PageProps<{ permiss
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium capitalize ${getStatusBadge(req.status)}`}>
                                                     {getStatusIcon(req.status)}
-                                                    {req.status}
+                                                    {req.status === 'approved' ? 'Diterima' : (req.status === 'rejected' ? 'Ditolak' : 'Pending')}
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-right space-x-2">
@@ -224,7 +224,7 @@ export default function ApprovalIndex({ auth, permissions }: PageProps<{ permiss
                                         <p className="text-sm text-gray-500">ID Pengajuan: #{selectedRequest.id}</p>
                                     </div>
                                     <div className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-widest ${getStatusBadge(selectedRequest.status)}`}>
-                                        {selectedRequest.status}
+                                        {selectedRequest.status === 'approved' ? 'Diterima' : (selectedRequest.status === 'rejected' ? 'Ditolak' : 'Pending')}
                                     </div>
                                 </div>
 

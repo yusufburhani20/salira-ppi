@@ -36,6 +36,9 @@ class ApprovalController extends Controller
             'rejection_reason' => $request->status === 'rejected' ? $request->rejection_reason : null,
         ]);
 
-        return back()->with('success', 'Permission request has been ' . $request->status . '.');
+        // Send Notification to the User
+        $approval->user->notify(new \App\Notifications\PermissionStatusChanged($approval));
+
+        return back()->with('success', 'Permohonan izin telah ' . ($request->status === 'approved' ? 'diterima' : 'ditolak') . '.');
     }
 }

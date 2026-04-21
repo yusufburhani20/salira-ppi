@@ -18,11 +18,22 @@ export default function UpdateProfileInformation({
     const user = usePage().props.auth.user;
 
     const { data, setData, post, errors, processing, recentlySuccessful } =
-        useForm({
+        useForm<{
+            _method: string;
+            name: string;
+            email: string;
+            phone: string;
+            telegram_id: string;
+            nip: string;
+            avatar: File | null;
+        }>({
             _method: 'patch',
             name: user.name,
             email: user.email,
-            avatar: null as File | null,
+            phone: user.phone || '',
+            telegram_id: user.telegram_id || '',
+            nip: user.nip || '',
+            avatar: null,
         });
 
     const submit: FormEventHandler = (e) => {
@@ -105,6 +116,48 @@ export default function UpdateProfileInformation({
                     />
 
                     <InputError className="mt-2" message={errors.email} />
+                </div>
+
+                <div>
+                    <InputLabel htmlFor="nip" value="NIP / NUPTK" />
+                    <TextInput
+                        id="nip"
+                        className="mt-1 block w-full"
+                        value={data.nip}
+                        onChange={(e) => setData('nip', e.target.value)}
+                        autoComplete="off"
+                    />
+                    <InputError className="mt-2" message={errors.nip} />
+                </div>
+
+                <div>
+                    <InputLabel htmlFor="phone" value="No. HP (Aktif)" />
+                    <TextInput
+                        id="phone"
+                        className="mt-1 block w-full"
+                        value={data.phone}
+                        onChange={(e) => setData('phone', e.target.value)}
+                        placeholder="08xxxxxxxxx"
+                    />
+                    <InputError className="mt-2" message={errors.phone} />
+                </div>
+
+                <div>
+                    <InputLabel htmlFor="telegram_id" value="ID / No. Telegram" />
+                    <TextInput
+                        id="telegram_id"
+                        className="mt-1 block w-full bg-slate-100 dark:bg-slate-800"
+                        value={data.telegram_id}
+                        onChange={(e) => setData('telegram_id', e.target.value)}
+                        placeholder="@username atau Chat ID"
+                        readOnly={!!user.telegram_id}
+                    />
+                    <p className="mt-1 text-xs text-slate-500">
+                        {user.telegram_id 
+                            ? "Sudah terhubung. Gunakan Bot Telegram untuk mengubah jika perlu." 
+                            : "Akan terisi otomatis saat Anda melakukan verifikasi di Bot Telegram."}
+                    </p>
+                    <InputError className="mt-2" message={errors.telegram_id} />
                 </div>
 
                 {mustVerifyEmail && user.email_verified_at === null && (

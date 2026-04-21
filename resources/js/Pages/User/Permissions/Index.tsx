@@ -138,7 +138,7 @@ export default function PermissionIndex({ auth, permissions, types }: PageProps<
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium capitalize ${getStatusBadge(req.status)}`}>
                                                         {getStatusIcon(req.status)}
-                                                        {req.status}
+                                                        {req.status === 'approved' ? 'Diterima' : (req.status === 'rejected' ? 'Ditolak' : 'Pending')}
                                                     </div>
                                                     {req.status === 'rejected' && req.rejection_reason && (
                                                         <p className="text-xs text-red-500 mt-1 max-w-[150px] truncate" title={req.rejection_reason}>

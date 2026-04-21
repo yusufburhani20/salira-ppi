@@ -16,6 +16,8 @@ export default function Authenticated({
     // Toast state management
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
+    const notifications = props.notifications as any;
+
     useEffect(() => {
         if (flash.success) {
             setToast({ message: flash.success, type: 'success' });
@@ -351,6 +353,75 @@ export default function Authenticated({
 
                     {/* Actions */}
                     <div className="flex items-center gap-2">
+                        {/* Notification Bell */}
+                        <Dropdown>
+                            <Dropdown.Trigger>
+                                <button className="relative p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 dark:text-slate-400 transition-colors">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+                                    {notifications?.unreadCount > 0 && (
+                                        <span className="absolute top-1.5 right-1.5 flex h-2.5 w-2.5">
+                                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                                            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500"></span>
+                                        </span>
+                                    )}
+                                </button>
+                            </Dropdown.Trigger>
+                            <Dropdown.Content align="right" width="80" closeOnClickInside={false} contentClasses="py-1 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 w-80 sm:w-96 shadow-xl rounded-xl">
+                                <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
+                                    <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">Notifikasi</h3>
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400">{notifications?.unreadCount || 0} Baru</span>
+                                </div>
+                                <div className="max-h-80 overflow-y-auto custom-scrollbar">
+                                    {notifications?.recent && notifications.recent.length > 0 ? (
+                                        notifications.recent.map((notif: any) => (
+                                            <div
+                                                key={notif.id}
+                                                className={`w-full text-left p-4 flex gap-3 border-b border-slate-50 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-colors ${!notif.read_at ? 'bg-indigo-50/50 dark:bg-indigo-900/10' : ''}`}
+                                            >
+                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${!notif.read_at ? 'bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400' : 'bg-slate-100 dark:bg-slate-700 text-slate-400'}`}>
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className={`text-sm leading-tight ${!notif.read_at ? 'font-semibold text-slate-800 dark:text-slate-200' : 'text-slate-600 dark:text-slate-400'}`}>{notif.data?.message || 'Pemberitahuan baru'}</p>
+                                                    <div className="flex items-center justify-between mt-1.5">
+                                                        <p className="text-[10px] text-slate-400">{new Date(notif.created_at).toLocaleDateString('id-ID', {day: 'numeric', month: 'short', hour: '2-digit', minute:'2-digit'})}</p>
+                                                        {!notif.read_at && (
+                                                            <Link
+                                                                href={route('notifications.markAsRead', notif.id)}
+                                                                method="patch"
+                                                                as="button"
+                                                                className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 transition-colors flex items-center gap-1"
+                                                            >
+                                                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                                                                Tandai dibaca
+                                                            </Link>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="p-6 text-center flex flex-col items-center justify-center gap-2">
+                                            <div className="w-12 h-12 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center">
+                                                <svg className="w-6 h-6 text-slate-300 dark:text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" /></svg>
+                                            </div>
+                                            <p className="text-sm text-slate-400 dark:text-slate-500 font-medium">Belum ada notifikasi baru</p>
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="flex flex-col border-t border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 rounded-b-xl overflow-hidden">
+                                    {notifications?.unreadCount > 0 && (
+                                        <Link href={route('notifications.markAllAsRead')} method="patch" as="button" className="p-2 border-b border-slate-100 dark:border-slate-700/50 text-center text-xs font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors py-2">
+                                            Tandai Semua Terbaca
+                                        </Link>
+                                    )}
+                                    <Link href={route('notifications.index')} className="p-2 text-center text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 hover:bg-slate-100 dark:hover:bg-slate-700/50 transition-colors py-2">
+                                        Lihat Semua Notifikasi
+                                    </Link>
+                                </div>
+                            </Dropdown.Content>
+                        </Dropdown>
+
                         <ThemeToggle />
                         <Dropdown>
                             <Dropdown.Trigger>

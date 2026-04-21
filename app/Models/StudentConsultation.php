@@ -11,8 +11,8 @@ class StudentConsultation extends Model
 {
     protected $guarded = ['id'];
     protected $casts = [
-        'consultation_date' => 'date',
-        'follow_up_date' => 'date',
+        'consultation_date' => 'date:Y-m-d',
+        'follow_up_date' => 'date:Y-m-d',
         'parent_contacted' => 'boolean',
         'category' => ConsultationCategory::class,
         'follow_up_status' => FollowUpStatus::class,

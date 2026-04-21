@@ -12,8 +12,8 @@ enum PermissionStatus: string
     {
         return match($this) {
             self::pending => 'Pending',
-            self::approved => 'Approved',
-            self::rejected => 'Rejected',
+            self::approved => 'Diterima',
+            self::rejected => 'Ditolak',
         };
     }
 }

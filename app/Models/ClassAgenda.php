@@ -9,7 +9,7 @@ class ClassAgenda extends Model
 {
     protected $guarded = ['id'];
     protected $casts = [
-        'date' => 'date',
+        'date' => 'date:Y-m-d',
         'status' => AgendaStatus::class,
     ];
 
