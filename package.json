@@ -29,6 +29,9 @@
     "dependencies": {
         "@heroicons/react": "^2.2.0",
         "html5-qrcode": "^2.3.8",
-        "jsbarcode": "^3.12.3"
+        "jsbarcode": "^3.12.3",
+        "qrcode.react": "^4.2.0",
+        "react-is": "^19.2.5",
+        "recharts": "^3.8.1"
     }
 }

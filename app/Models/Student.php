@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 use App\Enums\Gender;
 use App\Enums\StudentStatus;
+use Illuminate\Notifications\Notifiable;
 
-class Student extends Model
+class Student extends Authenticatable
 {
+    use Notifiable;
+
     protected $guarded = ['id'];
     protected $casts = [
         'birth_date' => 'date',

@@ -143,16 +143,34 @@ export default function Login({
                             )}
                         </div>
 
-                        <div className="mt-6 flex justify-start">
-                            <button
-                                type="submit"
-                                disabled={processing}
-                                className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl px-12 py-3 font-bold text-[11px] uppercase tracking-wider transition-colors disabled:opacity-50 shadow-lg shadow-indigo-600/30"
+                            <div className="mt-8 flex flex-col gap-4">
+                                <button
+                                    type="submit"
+                                    disabled={processing}
+                                    className="w-full sm:w-auto bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl px-12 py-3.5 font-bold text-xs uppercase tracking-wider transition-colors disabled:opacity-50 shadow-lg shadow-indigo-600/30"
+                                >
+                                    LOGIN SEBAGAI GURU / KARYAWAN
+                                </button>
+                            </div>
+                        </form>
+                        
+                        <div className="mt-6">
+                            <div className="text-center mb-4 relative">
+                                <div className="absolute inset-0 flex items-center">
+                                    <div className="w-full border-t border-slate-200 dark:border-slate-700"></div>
+                                </div>
+                                <div className="relative flex justify-center text-xs">
+                                    <span className="bg-white dark:bg-slate-800 px-3 text-slate-400">Atau</span>
+                                </div>
+                            </div>
+                            
+                            <a
+                                href="/portal/login"
+                                className="block text-center w-full py-3 text-xs font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-400 dark:hover:bg-indigo-900/50 rounded-xl transition-colors uppercase tracking-wider"
                             >
-                                LOGIN
-                            </button>
+                                Masuk ke Portal Siswa & Wali Murid →
+                            </a>
                         </div>
-                    </form>
                 </div>
             </div>
         </div>

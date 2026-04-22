@@ -33,13 +33,15 @@ export default function AgendaCreate({ classes, subjects = [] }: { classes: any[
     useEffect(() => {
         if (data.academic_class_id) {
             setLoadingStudents(true);
-            axios.get(route('teacher.agendas.students', data.academic_class_id))
+            axios.get(route('teacher.agendas.students', data.academic_class_id), {
+                params: { date: data.date }
+            })
                 .then(res => {
                     setStudents(res.data);
-                    // Initialize attendance with 'hadir' status for all
-                    const initialAttendance = res.data.map((s: Student) => ({
+                    // Initialize attendance with status from API (pre-filled from QR if scanned)
+                    const initialAttendance = res.data.map((s: any) => ({
                         student_id: s.id,
-                        status: 'hadir',
+                        status: s.current_status || 'hadir',
                         notes: ''
                     }));
                     setData('attendance', initialAttendance);

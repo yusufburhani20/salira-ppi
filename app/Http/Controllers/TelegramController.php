@@ -84,13 +84,18 @@ class TelegramController extends Controller
         // Ambil nomor HP dan bersihkan karakter non-digit
         $phoneNumber = preg_replace('/[^0-9]/', '', $contact['phone_number']);
         
-        // Ambil 10 digit terakhir untuk pencocokan yang lebih fleksibel (menghindari masalah 62 vs 08)
-        $lastTenDigits = substr($phoneNumber, -10);
+        // Buang awalan '62' atau '0' untuk mendapatkan nomor inti (core number)
+        $coreNumber = preg_replace('/^(62|0)/', '', $phoneNumber);
 
-        Log::info("Attempting to match phone: {$phoneNumber} (Last 10: {$lastTenDigits})");
+        // Jika nomor kurang dari 8 digit setelah dipotong (sangat tidak wajar), kita gunakan aslinya sebagai fallback
+        if (strlen($coreNumber) < 8) {
+            $coreNumber = $phoneNumber;
+        }
+
+        Log::info("Attempting to match phone: {$phoneNumber} (Core: {$coreNumber})");
 
         // Search in Users (Teachers/Staff)
-        $user = User::where('phone', 'like', "%{$lastTenDigits}")->first();
+        $user = User::where('phone', 'like', "%{$coreNumber}")->first();
         if ($user) {
             $user->update(['telegram_id' => $chatId]);
             $this->telegram->sendMessage($chatId, "✅ Berhasil! Akun Guru/Staff <b>{$user->name}</b> telah terhubung dengan Bot SALIRA.");
@@ -98,14 +103,14 @@ class TelegramController extends Controller
         }
 
         // Search in Students (Parents) - Matching by parent_phone
-        $student = Student::where('parent_phone', 'like', "%{$lastTenDigits}")->first();
+        $student = Student::where('parent_phone', 'like', "%{$coreNumber}")->first();
         if ($student) {
             $student->update(['parent_telegram_id' => $chatId]);
             $this->telegram->sendMessage($chatId, "✅ Berhasil! Anda telah terhubung sebagai Orang Tua dari <b>{$student->name}</b>. Anda akan menerima notifikasi otomatis dari sekolah.");
             return response()->json(['status' => 'ok']);
         }
 
-        $this->telegram->sendMessage($chatId, "❌ Maaf, nomor HP Anda ({$phoneNumber}) belum terdaftar di sistem SALIRA.\n\nPastikan nomor di database Admin sudah benar (saat ini kami mencari nomor yang berakhiran {$lastTenDigits}).");
+        $this->telegram->sendMessage($chatId, "❌ Maaf, nomor HP Anda ({$phoneNumber}) belum terdaftar di sistem SALIRA.\n\nPastikan nomor di database Admin sudah benar dan tidak ada salah ketik (sedang mencocokkan: {$coreNumber}).");
         return response()->json(['status' => 'ok']);
     }
 }

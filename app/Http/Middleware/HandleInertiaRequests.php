@@ -35,8 +35,8 @@ class HandleInertiaRequests extends Middleware
             ...parent::share($request),
             'auth' => [
                 'user' => $user ? array_merge($user->toArray(), [
-                    'roles' => $user->getRoleNames(),
-                    'avatar_url' => $user->avatar ? asset('storage/' . $user->avatar) : null,
+                    'roles' => method_exists($user, 'getRoleNames') ? $user->getRoleNames() : ['Siswa'],
+                    'avatar_url' => isset($user->avatar) ? asset('storage/' . $user->avatar) : null,
                 ]) : null,
             ],
             'notifications' => [

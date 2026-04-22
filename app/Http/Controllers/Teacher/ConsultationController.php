@@ -13,6 +13,7 @@ use App\Enums\FollowUpStatus;
 use App\Enums\ConsultationPrivacy;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
+use App\Notifications\PortalNotification;
 
 class ConsultationController extends Controller
 {
@@ -57,7 +58,7 @@ class ConsultationController extends Controller
             'follow_up_status' => ['required', Rule::enum(FollowUpStatus::class)],
         ]);
 
-        StudentConsultation::create([
+        $consultation = StudentConsultation::create([
             'student_id' => $validated['student_id'],
             'teacher_id' => Auth::id(),
             'class_id' => $validated['class_id'],
@@ -70,6 +71,15 @@ class ConsultationController extends Controller
             'follow_up_status' => $validated['follow_up_status'],
             'privacy_level' => ConsultationPrivacy::normal,
         ]);
+
+        // Notify Student
+        $student = Student::find($validated['student_id']);
+        if ($student) {
+            $student->notify(new PortalNotification(
+                "Catatan bimbingan baru telah ditambahkan: {$validated['subject']}",
+                ['type' => 'consultation', 'id' => $consultation->id]
+            ));
+        }
 
         return back()->with('success', 'Catatan bimbingan berhasil disimpan.');
     }

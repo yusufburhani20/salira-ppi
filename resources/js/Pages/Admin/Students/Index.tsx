@@ -39,6 +39,8 @@ export default function StudentIndex({ students, filters, classes }: any) {
     const [showForm, setShowForm]         = useState(false);
     const [showDelete, setShowDelete]     = useState(false);
     const [showImport, setShowImport]     = useState(false);
+    const [showPrintModal, setShowPrintModal] = useState(false);
+    const [printSelectedClass, setPrintSelectedClass] = useState<string>('');
     const [editTarget, setEditTarget]     = useState<any>(null);
     const [deleteTarget, setDeleteTarget] = useState<any>(null);
     const importRef = useRef<HTMLInputElement>(null);
@@ -132,6 +134,12 @@ export default function StudentIndex({ students, filters, classes }: any) {
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                         Export
                     </a>
+                    {/* Cetak Kartu Masal */}
+                    <button onClick={() => setShowPrintModal(true)}
+                        className="flex items-center gap-1.5 px-3 py-2.5 bg-cyan-100 hover:bg-cyan-200 dark:bg-cyan-500/20 dark:hover:bg-cyan-500/30 text-cyan-700 dark:text-cyan-400 rounded-xl text-sm font-medium transition-colors">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                        Cetak Kartu
+                    </button>
                     {/* Tambah */}
                     <button onClick={openCreate}
                         className="flex items-center gap-1.5 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold transition-all shadow-sm">
@@ -343,6 +351,43 @@ export default function StudentIndex({ students, filters, classes }: any) {
                     <div className="flex gap-3">
                         <button onClick={() => setShowDelete(false)} className="flex-1 px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">Batal</button>
                         <button onClick={handleDelete} className="flex-1 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-semibold transition-colors">Ya, Hapus</button>
+                    </div>
+                </div>
+            </Modal>
+            {/* ── Print Cards Modal ── */}
+            <Modal show={showPrintModal} onClose={() => setShowPrintModal(false)} title="Cetak Kartu Pelajar Masal">
+                <div className="space-y-4">
+                    <div className="bg-indigo-50 dark:bg-indigo-500/10 rounded-xl p-4 text-sm text-indigo-700 dark:text-indigo-300">
+                        <p className="font-semibold mb-1">Cetak Berdasarkan Kelas:</p>
+                        <p className="text-xs">Sistem akan men-generate kartu pengenal digital untuk semua siswa berstatus aktif di kelas yang Anda pilih. Anda dapat mencetaknya langsung menggunakan kertas A4.</p>
+                    </div>
+                    
+                    <Field label="Pilih Kelas">
+                        <select 
+                            className={ic} 
+                            value={printSelectedClass} 
+                            onChange={e => setPrintSelectedClass(e.target.value)}
+                        >
+                            <option value="">— Pilih Kelas —</option>
+                            {classes.map((cls: any) => (
+                                <option key={cls.id} value={cls.id}>{cls.name}</option>
+                            ))}
+                        </select>
+                    </Field>
+
+                    <div className="flex gap-3 pt-2">
+                        <button type="button" onClick={() => setShowPrintModal(false)} className="flex-1 px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">Batal</button>
+                        <button 
+                            disabled={!printSelectedClass}
+                            onClick={() => {
+                                setShowPrintModal(false);
+                                window.open(route('admin.students.print-cards', printSelectedClass), '_blank');
+                            }}
+                            className="flex-1 px-4 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white text-sm font-semibold transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                            Cetak Sekarang
+                        </button>
                     </div>
                 </div>
             </Modal>

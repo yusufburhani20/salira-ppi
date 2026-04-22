@@ -16,13 +16,15 @@ class EnsureUserIsActive
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if ($request->user() && $request->user()->status !== UserStatus::active) {
-            auth()->logout();
+        $user = $request->user();
+        
+        if ($user && $user instanceof \App\Models\User && $user->status !== UserStatus::active) {
+            auth()->guard('web')->logout();
 
             $request->session()->invalidate();
             $request->session()->regenerateToken();
 
-            $statusLabel = $request->user()->status->label();
+            $statusLabel = $user->status->label();
             
             return redirect()->route('login')->with('error', "Your account is {$statusLabel}. Please contact administrator.");
         }

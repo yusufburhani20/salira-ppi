@@ -140,4 +140,39 @@ class StudentController extends Controller
             'Content-Type' => 'text/csv',
         ]);
     }
+
+    public function printCards($academic_class_id)
+    {
+        $academicClass = AcademicClass::findOrFail($academic_class_id);
+        
+        // Cukup ambil siswa aktif di kelas tersebut
+        $students = Student::whereHas('academicClasses', function($q) use ($academic_class_id) {
+            $q->where('academic_classes.id', $academic_class_id)
+              ->where('class_members.is_active', true);
+        })->where('status', 'active')->orderBy('name')->get();
+
+        // Siapkan token QR per siswa
+        $studentsWithTokens = $students->map(function ($student) {
+            $timestamp = time();
+            // Sama dengan PortalController: NIS:Timestamp:HashedSignature
+            $signature = hash_hmac('sha256', "{$student->nis}:{$timestamp}", config('app.key'));
+            $qrToken = base64_encode("{$student->nis}:{$timestamp}:{$signature}");
+            
+            return array_merge($student->toArray(), [
+                'qr_token' => $qrToken
+            ]);
+        });
+
+        $settings = [
+            'school_name' => \App\Models\Setting::get('school_name', 'SALIRA ACADEMY'),
+            'school_logo' => \App\Models\Setting::get('school_logo') ? '/storage/' . \App\Models\Setting::get('school_logo') : null,
+            'school_address' => \App\Models\Setting::get('school_address', 'Alamat Sekolah'),
+        ];
+
+        return Inertia::render('Admin/Students/PrintCards', [
+            'academicClass' => $academicClass,
+            'students' => $studentsWithTokens,
+            'settings' => $settings,
+        ]);
+    }
 }

@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use App\Notifications\PortalNotification;
 
 class DailyAssessmentController extends Controller
 {
@@ -84,12 +85,21 @@ class DailyAssessmentController extends Controller
             ]);
 
             foreach ($request->scores as $scoreData) {
-                StudentScore::create([
+                $studentScore = StudentScore::create([
                     'daily_assessment_id' => $assessment->id,
                     'student_id' => $scoreData['student_id'],
                     'score' => $scoreData['score'],
                     'notes' => $scoreData['notes'] ?? null,
                 ]);
+
+                // Notify Student
+                $student = \App\Models\Student::find($scoreData['student_id']);
+                if ($student) {
+                    $student->notify(new PortalNotification(
+                        "Nilai baru diterbitkan untuk mata pelajaran {$subjectName}: {$request->title}",
+                        ['type' => 'score', 'id' => $assessment->id]
+                    ));
+                }
             }
         });
 
@@ -153,6 +163,10 @@ class DailyAssessmentController extends Controller
             ]);
 
             foreach ($request->scores as $scoreData) {
+                $isNew = !StudentScore::where('daily_assessment_id', $assessment->id)
+                    ->where('student_id', $scoreData['student_id'])
+                    ->exists();
+
                 StudentScore::updateOrCreate(
                     [
                         'daily_assessment_id' => $assessment->id,
@@ -163,6 +177,16 @@ class DailyAssessmentController extends Controller
                         'notes' => $scoreData['notes'] ?? null,
                     ]
                 );
+
+                if ($isNew) {
+                    $student = \App\Models\Student::find($scoreData['student_id']);
+                    if ($student) {
+                        $student->notify(new PortalNotification(
+                            "Nilai Anda untuk mata pelajaran {$subjectName} telah diperbarui: {$request->title}",
+                            ['type' => 'score', 'id' => $assessment->id]
+                        ));
+                    }
+                }
             }
         });
 

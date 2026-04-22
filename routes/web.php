@@ -28,6 +28,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/students/export', [\App\Http\Controllers\Admin\StudentController::class, 'export'])->name('students.export');
         Route::post('/students/import', [\App\Http\Controllers\Admin\StudentController::class, 'import'])->name('students.import');
         Route::get('/students/template', [\App\Http\Controllers\Admin\StudentController::class, 'template'])->name('students.template');
+        Route::get('/students/print-cards/{academic_class_id}', [\App\Http\Controllers\Admin\StudentController::class, 'printCards'])->name('students.print-cards');
 
         // Settings
         Route::get('/settings', [\App\Http\Controllers\Admin\SettingController::class, 'index'])->name('settings.index');
@@ -101,6 +102,19 @@ Route::middleware('auth')->group(function () {
             Route::get('/student-resume/pdf', [\App\Http\Controllers\Admin\StudentReportController::class, 'resumePdf'])->name('student-resume.pdf');
         });
 
+        // Bills / Financial
+        Route::get('/bills', [\App\Http\Controllers\Admin\BillController::class, 'index'])->name('bills.index');
+        Route::get('/bills/create', [\App\Http\Controllers\Admin\BillController::class, 'create'])->name('bills.create');
+        Route::post('/bills', [\App\Http\Controllers\Admin\BillController::class, 'store'])->name('bills.store');
+        Route::post('/bills/sync/{id?}', [\App\Http\Controllers\Admin\BillController::class, 'checkStatus'])->name('bills.sync');
+        Route::post('/bills/settings', [\App\Http\Controllers\Admin\BillController::class, 'updateSettings'])->name('bills.settings');
+
+        // Announcements
+        Route::resource('/announcements', \App\Http\Controllers\Admin\AnnouncementController::class)->names('announcements');
+
+        // Finance Analytics
+        Route::get('/finance', [\App\Http\Controllers\Admin\FinanceController::class, 'index'])->name('finance.index');
+
         // Inventory Management
         Route::prefix('inventory')->name('inventory.')->group(function () {
             Route::get('/', [\App\Http\Controllers\Admin\InventoryController::class, 'index'])->name('index');
@@ -173,5 +187,46 @@ Route::middleware('auth')->group(function () {
 
 // Telegram Webhook
 Route::post('/webhook/telegram', [\App\Http\Controllers\TelegramController::class, 'handle']);
+
+// Midtrans Webhook (S2S)
+Route::post('/webhook/midtrans', [\App\Http\Controllers\Webhook\MidtransController::class, 'handle']);
+
+// Public Invoice Page
+Route::get('/invoice/{bill_number}', [\App\Http\Controllers\InvoiceController::class, 'show'])->name('invoice.show');
+
+// Student Portal Routes
+Route::prefix('portal')->name('portal.')->group(function () {
+    Route::middleware('guest:student')->group(function () {
+        Route::get('/login', [\App\Http\Controllers\Portal\StudentAuthController::class, 'showLoginForm'])->name('login');
+        Route::post('/login', [\App\Http\Controllers\Portal\StudentAuthController::class, 'login']);
+    });
+
+    // Public Presence Scanner (Kiosk Mode)
+    Route::get('/attendance/scanner', [\App\Http\Controllers\Portal\PresenceScannerController::class, 'index'])->name('attendance.scanner');
+    Route::post('/attendance/scan', [\App\Http\Controllers\Portal\PresenceScannerController::class, 'scan'])->name('attendance.scan');
+
+    Route::middleware('auth:student')->group(function () {
+        Route::get('/dashboard', [\App\Http\Controllers\Portal\PortalController::class, 'dashboard'])->name('dashboard');
+        Route::get('/bills', [\App\Http\Controllers\Portal\PortalController::class, 'bills'])->name('bills');
+        Route::get('/attendance', [\App\Http\Controllers\Portal\PortalController::class, 'attendance'])->name('attendance');
+        Route::get('/scores', [\App\Http\Controllers\Portal\PortalController::class, 'scores'])->name('scores');
+        Route::get('/id-card', [\App\Http\Controllers\Portal\PortalController::class, 'idCard'])->name('id-card');
+        
+        // Presence Scanner (Old location - removed as it's now public)
+
+        
+        Route::get('/profile', [\App\Http\Controllers\Portal\ProfileController::class, 'edit'])->name('profile.edit');
+        Route::put('/profile', [\App\Http\Controllers\Portal\ProfileController::class, 'update'])->name('profile.update');
+
+        Route::get('/report', [\App\Http\Controllers\Portal\PortalController::class, 'reportPdf'])->name('report');
+
+        // Notifications
+        Route::get('/notifications', [\App\Http\Controllers\Portal\PortalController::class, 'notifications'])->name('notifications.index');
+        Route::patch('/notifications/{id}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.markAsRead');
+        Route::patch('/notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.markAllAsRead');
+
+        Route::post('/logout', [\App\Http\Controllers\Portal\StudentAuthController::class, 'destroy'])->name('logout');
+    });
+});
 
 require __DIR__.'/auth.php';
