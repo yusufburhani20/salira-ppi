@@ -9,9 +9,15 @@ interface User {
     email: string;
 }
 
+interface Student {
+    name: string;
+    nis: string;
+}
+
 interface PermissionRequest {
     id: number;
-    user: User;
+    user: User | null;
+    student: Student | null;
     type: string;
     start_date: string;
     end_date: string;
@@ -110,8 +116,17 @@ export default function ApprovalIndex({ auth, permissions }: PageProps<{ permiss
                                     {permissions.map((req) => (
                                         <tr key={req.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20">
                                             <td className="px-6 py-4">
-                                                <div className="font-semibold text-gray-900 dark:text-white">{req.user.name}</div>
-                                                <div className="text-xs text-gray-500">{req.user.email}</div>
+                                                {req.student ? (
+                                                    <>
+                                                        <div className="font-semibold text-indigo-600 dark:text-indigo-400">{req.student.name}</div>
+                                                        <div className="text-[10px] font-bold bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-md inline-block">SISWA · {req.student.nis}</div>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <div className="font-semibold text-gray-900 dark:text-white">{req.user?.name}</div>
+                                                        <div className="text-xs text-gray-500">STAFF/GURU</div>
+                                                    </>
+                                                )}
                                             </td>
                                             <td className="px-6 py-4 font-medium text-gray-900 dark:text-white capitalize">
                                                 {req.type}
@@ -232,8 +247,17 @@ export default function ApprovalIndex({ auth, permissions }: PageProps<{ permiss
                                     <div className="space-y-4">
                                         <div>
                                             <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Pemohon</label>
-                                            <p className="font-semibold text-gray-800 dark:text-gray-200">{selectedRequest.user.name}</p>
-                                            <p className="text-sm text-gray-500">{selectedRequest.user.email}</p>
+                                            {selectedRequest.student ? (
+                                                <>
+                                                    <p className="font-semibold text-indigo-600 dark:text-indigo-400">{selectedRequest.student.name}</p>
+                                                    <p className="text-xs text-gray-500">Siswa (NIS: {selectedRequest.student.nis})</p>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <p className="font-semibold text-gray-800 dark:text-gray-200">{selectedRequest.user?.name}</p>
+                                                    <p className="text-sm text-gray-500">Staff/Guru</p>
+                                                </>
+                                            )}
                                         </div>
                                         <div>
                                             <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Jenis Izin</label>

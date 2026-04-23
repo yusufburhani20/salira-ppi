@@ -5,9 +5,10 @@ interface StatCardProps {
     value: string | number;
     icon: ReactNode;
     trend?: {
-        value: number;
+        value: number | string;
         isPositive: boolean;
         label: string;
+        suffix?: string;
     };
     colorClass?: string; // Tailwind color classes for the icon background e.g. 'bg-indigo-50 text-indigo-500 dark:bg-indigo-500/20 dark:text-indigo-400'
 }
@@ -32,7 +33,7 @@ export default function StatCard({ title, value, icon, trend, colorClass = 'bg-s
                         ) : (
                             <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" /></svg>
                         )}
-                        {trend.value}%
+                        {trend.value}{trend.suffix !== undefined ? trend.suffix : '%'}
                     </span>
                     <span className="text-slate-400 dark:text-slate-500 ml-2">{trend.label}</span>
                 </div>

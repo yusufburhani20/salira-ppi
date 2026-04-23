@@ -20,6 +20,8 @@ Route::middleware('auth')->group(function () {
 
     // Admin Group
     Route::middleware(['role:Super Admin|Admin|Pimpinan'])->prefix('admin')->name('admin.')->group(function () {
+        Route::get('/leader-dashboard', [\App\Http\Controllers\Admin\LeaderDashboardController::class, 'index'])->name('leader-dashboard');
+        
         // Students
         Route::get('/students', [\App\Http\Controllers\Admin\StudentController::class, 'index'])->name('students.index');
         Route::post('/students', [\App\Http\Controllers\Admin\StudentController::class, 'store'])->name('students.store');
@@ -42,6 +44,14 @@ Route::middleware('auth')->group(function () {
         Route::get('/classes/export', [\App\Http\Controllers\Admin\AcademicClassController::class, 'export'])->name('classes.export');
         Route::post('/classes/import', [\App\Http\Controllers\Admin\AcademicClassController::class, 'import'])->name('classes.import');
         Route::get('/classes/template', [\App\Http\Controllers\Admin\AcademicClassController::class, 'template'])->name('classes.template');
+
+        // Academic Years & Semesters
+        Route::get('/academic-years', [\App\Http\Controllers\Admin\AcademicYearController::class, 'index'])->name('academic-years.index');
+        Route::post('/academic-years', [\App\Http\Controllers\Admin\AcademicYearController::class, 'store'])->name('academic-years.store');
+        Route::put('/academic-years/{academicYear}', [\App\Http\Controllers\Admin\AcademicYearController::class, 'update'])->name('academic-years.update');
+        Route::delete('/academic-years/{academicYear}', [\App\Http\Controllers\Admin\AcademicYearController::class, 'destroy'])->name('academic-years.destroy');
+        Route::post('/academic-years/{academicYear}/toggle', [\App\Http\Controllers\Admin\AcademicYearController::class, 'toggleActive'])->name('academic-years.toggle');
+        Route::post('/semesters/{semester}/toggle', [\App\Http\Controllers\Admin\AcademicYearController::class, 'toggleSemester'])->name('semesters.toggle');
 
         // Subjects (Mata Pelajaran)
         Route::get('/subjects', [\App\Http\Controllers\Admin\SubjectController::class, 'index'])->name('subjects.index');
@@ -219,6 +229,11 @@ Route::prefix('portal')->name('portal.')->group(function () {
         Route::put('/profile', [\App\Http\Controllers\Portal\ProfileController::class, 'update'])->name('profile.update');
 
         Route::get('/report', [\App\Http\Controllers\Portal\PortalController::class, 'reportPdf'])->name('report');
+
+        // Permissions (Izin/Sakit)
+        Route::get('/permissions', [\App\Http\Controllers\Portal\StudentPermissionController::class, 'index'])->name('permissions.index');
+        Route::post('/permissions', [\App\Http\Controllers\Portal\StudentPermissionController::class, 'store'])->name('permissions.store');
+        Route::delete('/permissions/{permission}', [\App\Http\Controllers\Portal\StudentPermissionController::class, 'destroy'])->name('permissions.destroy');
 
         // Notifications
         Route::get('/notifications', [\App\Http\Controllers\Portal\PortalController::class, 'notifications'])->name('notifications.index');

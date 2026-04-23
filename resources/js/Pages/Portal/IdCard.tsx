@@ -3,7 +3,7 @@ import { Head } from '@inertiajs/react';
 import { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 
-export default function IdCard({ student, qrToken, settings }: any) {
+export default function IdCard({ student, qrToken, settings, activeClass }: any) {
     const [orientation, setOrientation] = useState<'h' | 'v'>('h');
 
     return (
@@ -50,7 +50,7 @@ export default function IdCard({ student, qrToken, settings }: any) {
 
                     {/* Preview card (screen only, scaled down) */}
                     {orientation === 'h' ? (
-                        <div className="w-[500px] h-[300px] bg-gradient-to-br from-indigo-700 via-indigo-600 to-violet-700 rounded-[2rem] shadow-2xl overflow-hidden flex text-white scale-75 sm:scale-100 origin-center">
+                        <div className="w-[500px] h-[300px] bg-emerald-800 rounded-[2rem] shadow-2xl overflow-hidden flex text-white scale-75 sm:scale-100 origin-center">
                             <div className="w-[30%] bg-white/10 border-r border-white/20 flex flex-col items-center justify-center p-6 text-center">
                                 <div className="w-24 h-24 rounded-2xl bg-white p-1 shadow-xl mb-4 overflow-hidden">
                                     <QRCodeSVG value={qrToken} size={88} style={{ width: '100%', height: '100%' }} />
@@ -63,28 +63,32 @@ export default function IdCard({ student, qrToken, settings }: any) {
                                         <h2 className="text-xl font-black tracking-tight">{settings.school_name}</h2>
                                         <p className="text-[9px] opacity-70 font-bold uppercase tracking-widest">Digital Student Identification</p>
                                     </div>
-                                    <img src={settings.school_logo || "/images/Salira.png"} className="h-8 w-auto" alt="Logo" />
+                                    <img src={settings.school_logo || "/images/Salira.png"} className="h-14 w-auto drop-shadow-md" alt="Logo" />
                                 </div>
                                 <div>
                                     <p className="text-[10px] opacity-60 font-black uppercase tracking-widest mb-1">Nama Lengkap</p>
                                     <h3 className="text-2xl font-black tracking-tight">{student.name}</h3>
                                 </div>
-                                <div className="flex gap-10">
+                                <div className="flex gap-6 flex-wrap">
                                     <div>
                                         <p className="text-[10px] opacity-60 font-black uppercase tracking-widest mb-0.5">NIS</p>
                                         <p className="text-lg font-black font-mono tracking-tighter">{student.nis}</p>
                                     </div>
                                     <div>
-                                        <p className="text-[10px] opacity-60 font-black uppercase tracking-widest mb-0.5">Status</p>
-                                        <p className="text-xs font-bold bg-white/20 px-2 py-1 rounded-lg uppercase tracking-widest">Active</p>
+                                        <p className="text-[10px] opacity-60 font-black uppercase tracking-widest mb-0.5">Kelas</p>
+                                        <p className="text-sm font-black">{activeClass?.name ?? '-'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-[10px] opacity-60 font-black uppercase tracking-widest mb-0.5">T.A.</p>
+                                        <p className="text-xs font-bold bg-white/20 px-2 py-1 rounded-lg tracking-wide">{activeClass?.academic_year ?? '-'}</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
                     ) : (
-                        <div className="w-[280px] h-[430px] bg-gradient-to-b from-slate-900 via-slate-800 to-indigo-900 rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col text-white scale-90 sm:scale-100 origin-center">
+                        <div className="w-[280px] h-[430px] bg-emerald-900 rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col text-white scale-90 sm:scale-100 origin-center">
                             <div className="p-6 text-center border-b border-white/10">
-                                <img src={settings.school_logo || "/images/Salira.png"} className="h-8 w-auto mx-auto mb-3" alt="Logo" />
+                                <img src={settings.school_logo || "/images/Salira.png"} className="h-16 w-auto mx-auto mb-3 drop-shadow-md" alt="Logo" />
                                 <h2 className="text-base font-black tracking-tight leading-tight">{settings.school_name}</h2>
                             </div>
                             <div className="flex-1 p-6 flex flex-col items-center justify-center text-center">
@@ -92,10 +96,15 @@ export default function IdCard({ student, qrToken, settings }: any) {
                                     <QRCodeSVG value={qrToken} size={256} style={{ width: '100%', height: '100%' }} />
                                 </div>
                                 <h3 className="text-lg font-black mb-1">{student.name}</h3>
-                                <p className="text-sm font-mono tracking-[0.2em] text-indigo-400 mb-4 font-black uppercase">{student.nis}</p>
+                                <p className="text-sm font-mono tracking-[0.2em] text-indigo-400 mb-1 font-black uppercase">{student.nis}</p>
+                                {activeClass && (
+                                    <p className="text-xs font-bold text-white/80 mb-4 bg-white/10 px-3 py-1 rounded-full">
+                                        {activeClass.name} · {activeClass.academic_year}
+                                    </p>
+                                )}
                                 <div className="w-full h-px bg-white/20 mb-4" />
                                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.3em] leading-relaxed">
-                                    Valid ID Card<br />SALIRA Academic Portal
+                                    Kartu Pelajar Digital<br />SALIRA Academic Portal
                                 </p>
                             </div>
                             <div className="p-4 bg-white/5 border-t border-white/5 text-center">
@@ -129,7 +138,7 @@ export default function IdCard({ student, qrToken, settings }: any) {
                     <div id="print-card-h" style={{
                         display: 'none',
                         width: '85mm', height: '54mm',
-                        background: 'linear-gradient(135deg, #4338ca, #4f46e5, #6d28d9)',
+                        background: '#065f46',
                         fontFamily: 'Arial, sans-serif', color: 'white',
                         overflow: 'hidden',
                     }}>
@@ -149,20 +158,24 @@ export default function IdCard({ student, qrToken, settings }: any) {
                                         <p style={{ margin: 0, fontSize: '12px', fontWeight: 900, letterSpacing: '-0.02em' }}>{settings.school_name}</p>
                                         <p style={{ margin: '2px 0 0', fontSize: '5.5px', opacity: 0.7, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }}>Digital Student Identification</p>
                                     </div>
-                                    <img src={settings.school_logo || '/images/Salira.png'} style={{ height: '20px', width: 'auto' }} alt="Logo" />
+                                    <img src={settings.school_logo || '/images/Salira.png'} style={{ height: '38px', width: 'auto', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }} alt="Logo" />
                                 </div>
                                 <div>
                                     <p style={{ margin: '0 0 2px', fontSize: '5.5px', opacity: 0.6, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.12em' }}>Nama Lengkap</p>
                                     <p style={{ margin: 0, fontSize: '15px', fontWeight: 900, letterSpacing: '-0.02em' }}>{student.name}</p>
                                 </div>
-                                <div style={{ display: 'flex', gap: '16px' }}>
+                                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                                     <div>
                                         <p style={{ margin: '0 0 2px', fontSize: '5.5px', opacity: 0.6, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em' }}>NIS</p>
                                         <p style={{ margin: 0, fontSize: '12px', fontWeight: 900, fontFamily: 'monospace', letterSpacing: '-0.02em' }}>{student.nis}</p>
                                     </div>
                                     <div>
-                                        <p style={{ margin: '0 0 2px', fontSize: '5.5px', opacity: 0.6, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Status</p>
-                                        <p style={{ margin: 0, fontSize: '6px', fontWeight: 700, background: 'rgba(255,255,255,0.2)', padding: '2px 6px', borderRadius: '4px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Active</p>
+                                        <p style={{ margin: '0 0 2px', fontSize: '5.5px', opacity: 0.6, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em' }}>Kelas</p>
+                                        <p style={{ margin: 0, fontSize: '10px', fontWeight: 900 }}>{activeClass?.name ?? '-'}</p>
+                                    </div>
+                                    <div>
+                                        <p style={{ margin: '0 0 2px', fontSize: '5.5px', opacity: 0.6, fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em' }}>T.A.</p>
+                                        <p style={{ margin: 0, fontSize: '6px', fontWeight: 700, background: 'rgba(255,255,255,0.2)', padding: '2px 6px', borderRadius: '4px', letterSpacing: '0.05em' }}>{activeClass?.academic_year ?? '-'}</p>
                                     </div>
                                 </div>
                             </div>
@@ -174,14 +187,14 @@ export default function IdCard({ student, qrToken, settings }: any) {
                     <div id="print-card-v" style={{
                         display: 'none',
                         width: '54mm', height: '85mm',
-                        background: 'linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #1e1b4b 100%)',
+                        background: '#064e3b',
                         fontFamily: 'Arial, sans-serif', color: 'white',
                         overflow: 'hidden',
                     }}>
                         <div style={{ display: 'flex', flexDirection: 'column', width: '100%', height: '100%', boxSizing: 'border-box' }}>
                             {/* Header */}
                             <div style={{ padding: '10px', textAlign: 'center', borderBottom: '1px solid rgba(255,255,255,0.1)', flexShrink: 0 }}>
-                                <img src={settings.school_logo || '/images/Salira.png'} style={{ height: '20px', width: 'auto', display: 'block', margin: '0 auto 6px' }} alt="Logo" />
+                                <img src={settings.school_logo || '/images/Salira.png'} style={{ height: '48px', width: 'auto', display: 'block', margin: '0 auto 8px', filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }} alt="Logo" />
                                 <p style={{ margin: 0, fontSize: '10px', fontWeight: 900, lineHeight: 1.3 }}>{settings.school_name}</p>
                             </div>
                             {/* Body */}
@@ -189,11 +202,16 @@ export default function IdCard({ student, qrToken, settings }: any) {
                                 <div style={{ background: 'white', padding: '5px', borderRadius: '10px', marginBottom: '8px', flexShrink: 0 }}>
                                     <QRCodeSVG value={qrToken} size={70} />
                                 </div>
-                                <p style={{ margin: '0 0 3px', fontSize: '12px', fontWeight: 900 }}>{student.name}</p>
-                                <p style={{ margin: '0 0 8px', fontSize: '8px', fontFamily: 'monospace', letterSpacing: '0.15em', color: '#818cf8', fontWeight: 900, textTransform: 'uppercase' }}>{student.nis}</p>
+                                <p style={{ margin: '0 0 2px', fontSize: '12px', fontWeight: 900 }}>{student.name}</p>
+                                <p style={{ margin: '0 0 4px', fontSize: '8px', fontFamily: 'monospace', letterSpacing: '0.15em', color: '#818cf8', fontWeight: 900, textTransform: 'uppercase' }}>{student.nis}</p>
+                                {activeClass && (
+                                    <p style={{ margin: '0 0 6px', fontSize: '6px', fontWeight: 700, background: 'rgba(255,255,255,0.1)', padding: '2px 8px', borderRadius: '999px', color: 'rgba(255,255,255,0.8)', letterSpacing: '0.05em' }}>
+                                        {activeClass.name} · {activeClass.academic_year}
+                                    </p>
+                                )}
                                 <div style={{ width: '80%', height: '1px', background: 'rgba(255,255,255,0.2)', marginBottom: '6px', flexShrink: 0 }} />
                                 <p style={{ margin: 0, fontSize: '5.5px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.12em', lineHeight: 1.8 }}>
-                                    Valid ID Card<br />SALIRA Academic Portal
+                                    Kartu Pelajar Digital<br />SALIRA Academic Portal
                                 </p>
                             </div>
                             {/* Footer */}

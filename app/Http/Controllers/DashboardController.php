@@ -16,6 +16,10 @@ class DashboardController extends Controller
 {
     public function index(Request $request)
     {
+        if ($request->user()->hasRole('Pimpinan')) {
+            return redirect()->route('admin.leader-dashboard');
+        }
+
         $today = Carbon::today();
         $classId = $request->academic_class_id;
 

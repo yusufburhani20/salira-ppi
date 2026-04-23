@@ -14,13 +14,15 @@ class SettingController extends Controller
     {
         return Inertia::render('Admin/Settings/Index', [
             'settings' => [
-                'school_name' => Setting::get('school_name', 'SALIRA ACADEMY'),
-                'school_address' => Setting::get('school_address', ''),
-                'school_phone' => Setting::get('school_phone', ''),
-                'school_email' => Setting::get('school_email', ''),
-                'report_location' => Setting::get('report_location', 'Kota'),
-                'school_logo' => Setting::get('school_logo') ? Storage::url(Setting::get('school_logo')) : null,
-                'school_favicon' => Setting::get('school_favicon') ? Storage::url(Setting::get('school_favicon')) : null,
+                'school_name'              => Setting::get('school_name', 'SALIRA ACADEMY'),
+                'school_address'           => Setting::get('school_address', ''),
+                'school_phone'             => Setting::get('school_phone', ''),
+                'school_email'             => Setting::get('school_email', ''),
+                'report_location'          => Setting::get('report_location', 'Kota'),
+                'school_logo'              => Setting::get('school_logo') ? Storage::url(Setting::get('school_logo')) : null,
+                'school_favicon'           => Setting::get('school_favicon') ? Storage::url(Setting::get('school_favicon')) : null,
+                'attendance_alert_enabled' => Setting::get('attendance_alert_enabled', '0') === '1',
+                'attendance_alert_time'    => Setting::get('attendance_alert_time', '08:00'),
             ]
         ]);
     }
@@ -42,6 +44,8 @@ class SettingController extends Controller
         Setting::set('school_phone', $request->school_phone);
         Setting::set('school_email', $request->school_email);
         Setting::set('report_location', $request->report_location);
+        Setting::set('attendance_alert_enabled', $request->boolean('attendance_alert_enabled') ? '1' : '0');
+        Setting::set('attendance_alert_time', $request->attendance_alert_time ?? '08:00');
 
         if ($request->hasFile('school_logo')) {
             // Delete old logo

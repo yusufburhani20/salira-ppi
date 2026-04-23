@@ -51,48 +51,62 @@ class ClassAgendaController extends Controller
 
     public function getStudents(Request $request, $classId)
     {
-        $date = $request->query('date', Carbon::today()->toDateString());
-        
-        $class = AcademicClass::with(['students' => function($q) {
+        $date    = $request->query('date', Carbon::today()->toDateString());
+        $agendaId = $request->query('agenda_id'); // ID agenda jika sedang edit jurnal yang sudah ada
+
+        $class = AcademicClass::with(['students' => function ($q) {
             $q->wherePivot('is_active', true)->orderBy('name');
         }])->findOrFail($classId);
 
-        // Find the current or most recent schedule for this class to check QR attendance
-        $day = strtolower(Carbon::parse($date)->format('l'));
-        $now = Carbon::now();
-        $time = $now->toTimeString();
+        // === PRIORITAS 1: Jika sedang edit agenda yang sudah ada, gunakan data yang sudah disimpan guru ===
+        if ($agendaId) {
+            $savedAttendances = StudentAttendance::where('class_agenda_id', $agendaId)
+                ->get()
+                ->keyBy('student_id');
 
-        // Try to find a schedule that matches "now" or just any schedule for today if checking history
-        $schedule = Schedule::where('class_id', $classId)
-            ->where('day', $day)
-            ->where(function($q) use ($time) {
-                $q->where('start_time', '<=', $time)
-                  ->orWhere('day', '!=', strtolower(Carbon::now()->format('l'))); // If not today, just get any
-            })
-            ->first();
+            if ($savedAttendances->isNotEmpty()) {
+                $students = $class->students->map(function ($student) use ($savedAttendances) {
+                    $existing = $savedAttendances->get($student->id);
+                    return array_merge($student->toArray(), [
+                        'current_status' => $existing ? ($existing->status->value ?? $existing->status) : 'hadir',
+                        'attendance_id'  => $existing?->id,
+                    ]);
+                });
+                return response()->json($students);
+            }
+        }
 
-        $students = $class->students->map(function($student) use ($date, $schedule) {
-            $status = 'hadir'; // Default
-            $attendance_id = null;
-            
-            if ($schedule) {
-                $existing = StudentAttendance::where('student_id', $student->id)
-                    ->where('schedule_id', $schedule->id)
-                    ->whereDate('date', $date)
-                    ->first();
-                
-                if ($existing) {
-                    $status = $existing->status->value ?? $existing->status;
-                    $attendance_id = $existing->id;
-                }
+        // === PRIORITAS 2: Cek apakah ada aktivitas tapping hari ini di kelas ini ===
+        // Record tap memiliki schedule_id = null dan class_agenda_id = null
+        $tapRecords = StudentAttendance::whereIn('student_id', $class->students->pluck('id'))
+            ->whereDate('date', $date)
+            ->whereNull('schedule_id')
+            ->whereNull('class_agenda_id')
+            ->get()
+            ->keyBy('student_id');
+
+        // === PRIORITAS 3: Jika TIDAK ADA tap sama sekali di kelas ini → semua default Hadir ===
+        $hasTapping = $tapRecords->isNotEmpty();
+
+        $students = $class->students->map(function ($student) use ($tapRecords, $hasTapping) {
+            $tapRecord = $tapRecords->get($student->id);
+
+            if ($hasTapping) {
+                // Ada aktivitas tap: siswa yang tap = Hadir, yang tidak tap = Alpha
+                $status        = $tapRecord ? ($tapRecord->status->value ?? $tapRecord->status) : 'alpha';
+                $attendance_id = $tapRecord?->id;
+            } else {
+                // Tidak ada tap sama sekali → fallback semua Hadir
+                $status        = 'hadir';
+                $attendance_id = null;
             }
 
             return array_merge($student->toArray(), [
                 'current_status' => $status,
-                'attendance_id' => $attendance_id
+                'attendance_id'  => $attendance_id,
             ]);
         });
-        
+
         return response()->json($students);
     }
 

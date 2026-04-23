@@ -41,7 +41,7 @@ export default function ClassIndex({ classes, filters, academicYears, teachers }
     const [deleteTarget, setDeleteTarget] = useState<any>(null);
 
     const { data, setData, post, put, processing, errors, reset } = useForm({
-        academic_year: '', name: '', homeroom_teacher_id: '',
+        academic_year_id: '', name: '', homeroom_teacher_id: '',
     });
 
     const importForm = useForm({ file: null as File | null });
@@ -50,7 +50,7 @@ export default function ClassIndex({ classes, filters, academicYears, teachers }
     const openEdit = (cls: any) => {
         setEditTarget(cls);
         setData({
-            academic_year: cls.academic_year?.name ?? '',
+            academic_year_id: cls.academic_year_id ?? '',
             name: cls.name ?? '',
             homeroom_teacher_id: cls.homeroom_teacher_id ?? '',
         });
@@ -185,8 +185,11 @@ export default function ClassIndex({ classes, filters, academicYears, teachers }
             {/* ── Form Modal ── */}
             <Modal show={showForm} onClose={() => setShowForm(false)} title={editTarget ? 'Edit Data Kelas' : 'Tambah Kelas Baru'}>
                 <form onSubmit={handleSubmit} className="space-y-4">
-                    <Field label="Tahun Ajaran *" error={errors.academic_year}>
-                        <input className={ic} value={data.academic_year} onChange={e => setData('academic_year', e.target.value)} placeholder="Contoh: 2024/2025" />
+                    <Field label="Tahun Ajaran *" error={errors.academic_year_id}>
+                        <select className={ic} value={data.academic_year_id} onChange={e => setData('academic_year_id', e.target.value)} required>
+                            <option value="">— Pilih Tahun Ajaran —</option>
+                            {academicYears.map((ay: any) => (<option key={ay.id} value={ay.id}>{ay.name} {ay.is_active ? '(Aktif)' : ''}</option>))}
+                        </select>
                     </Field>
                     <Field label="Nama Kelas *" error={errors.name}>
                         <input className={ic} value={data.name} onChange={e => setData('name', e.target.value)} placeholder="Contoh: X IPA 1" />

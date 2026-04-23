@@ -52,11 +52,13 @@ const actionMap: Record<string, { action: string; label: string; icon: any; colo
 
 interface BarcodeItemProps {
     barcode: any;
+    selected: boolean;
+    onToggleSelect: () => void;
     onDelete: () => void;
     onAction: (barcodeId: number, action: string, notes: string) => Promise<boolean>;
 }
 
-function BarcodeItem({ barcode, onDelete, onAction }: BarcodeItemProps) {
+function BarcodeItem({ barcode, selected, onToggleSelect, onDelete, onAction }: BarcodeItemProps) {
     const svgRef = useRef<SVGSVGElement>(null);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
     const [showNotes, setShowNotes] = useState<string | null>(null); // which action is pending notes
@@ -101,9 +103,19 @@ function BarcodeItem({ barcode, onDelete, onAction }: BarcodeItemProps) {
     const actions = actionMap[localStatus] ?? [];
 
     return (
-        <div className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/50 rounded-2xl p-4 flex flex-col gap-3">
+        <div className={`bg-white dark:bg-slate-800 border ${selected ? 'border-indigo-500 ring-1 ring-indigo-500' : 'border-slate-100 dark:border-slate-700/50'} rounded-2xl p-4 flex flex-col gap-3 relative transition-all`}>
+            {/* Selection Checkbox */}
+            <div className="absolute top-2 left-2 z-10">
+                <input 
+                    type="checkbox" 
+                    checked={selected} 
+                    onChange={onToggleSelect} 
+                    className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-600 w-4 h-4 cursor-pointer bg-white" 
+                />
+            </div>
+
             {/* Barcode image */}
-            <div className="flex items-center justify-center bg-slate-50 dark:bg-slate-900/30 rounded-xl py-2 px-1">
+            <div className="flex items-center justify-center bg-slate-50 dark:bg-slate-900/30 rounded-xl py-2 px-1 mt-3">
                 <svg ref={svgRef} className="max-w-full" />
             </div>
 
@@ -169,6 +181,7 @@ function BarcodeItem({ barcode, onDelete, onAction }: BarcodeItemProps) {
 
 export default function InventoryShow({ item }: any) {
     const [showGenForm, setShowGenForm] = useState(false);
+    const [selectedBarcodes, setSelectedBarcodes] = useState<number[]>([]);
     const [toast, setToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
     const { data, setData, post, processing, errors, reset } = useForm({ quantity: 1, serial_prefix: '' });
 
@@ -213,6 +226,95 @@ export default function InventoryShow({ item }: any) {
             showToast('error', 'Gagal menghubungi server.');
             return false;
         }
+    };
+
+    const toggleSelect = (id: number) => {
+        setSelectedBarcodes(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+    };
+
+    const toggleSelectAll = () => {
+        if (selectedBarcodes.length === (item.barcodes?.length || 0)) {
+            setSelectedBarcodes([]);
+        } else {
+            setSelectedBarcodes((item.barcodes || []).map((bc: any) => bc.id));
+        }
+    };
+
+    const handleBulkPrint = () => {
+        if (selectedBarcodes.length === 0) return;
+        const w = window.open('', '_blank');
+        if (!w) return;
+
+        const html = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Cetak Barcode Massal - ${item.name}</title>
+            <style>
+                @media print {
+                    @page { size: A4 portrait; margin: 15mm; }
+                    body { margin: 0; background: white; }
+                }
+                body { 
+                    font-family: monospace; 
+                    margin: 20px auto; 
+                    max-width: 210mm; /* A4 width */
+                    background: #f8fafc;
+                }
+                .page-container {
+                    display: grid;
+                    grid-template-columns: repeat(2, 1fr);
+                    gap: 15mm;
+                    padding: 15mm;
+                    background: white;
+                    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+                    min-height: 297mm; /* A4 height */
+                    box-sizing: border-box;
+                }
+                @media print {
+                    .page-container { box-shadow: none; padding: 0; min-height: auto; display: grid; grid-template-columns: repeat(2, 1fr); gap: 15mm; }
+                }
+                .barcode-box { 
+                    text-align: center; 
+                    padding: 12px; 
+                    border: 1px dashed #ccc; 
+                    border-radius: 8px; 
+                    break-inside: avoid; 
+                    display: flex; 
+                    flex-direction: column; 
+                    align-items: center; 
+                    justify-content: center; 
+                    background: white;
+                }
+                svg { max-width: 100%; height: auto; }
+                p { margin: 10px 0 0 0; font-size: 14px; font-weight: bold; }
+            </style>
+            <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"><\/script>
+        </head>
+        <body>
+            <div class="page-container">
+            ` + selectedBarcodes.map(bcId => {
+                const bc = item.barcodes.find((b:any) => b.id === bcId);
+                return '<div class="barcode-box">' +
+                    '<svg id="bc-' + bc.id + '"></svg>' +
+                    '<p>' + (bc.serial_number || '') + '</p>' +
+                '</div>';
+            }).join('') + `
+            </div>
+            <script>
+                window.onload = function() {
+                    ` + selectedBarcodes.map(bcId => {
+                        const bc = item.barcodes.find((b:any) => b.id === bcId);
+                        return 'JsBarcode("#bc-' + bc.id + '", "' + bc.barcode_value + '", { format: "CODE128", width: 2, height: 50, displayValue: true, fontSize: 14, margin: 8 });';
+                    }).join('\n') + `
+                    setTimeout(() => { window.print(); window.close(); }, 500);
+                };
+            <\/script>
+        </body>
+        </html>`;
+        
+        w.document.write(html);
+        w.document.close();
     };
 
     // Group barcodes by status for the summary
@@ -299,27 +401,47 @@ export default function InventoryShow({ item }: any) {
 
                     {/* Barcodes */}
                     <div className="lg:col-span-2 bg-white dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700/50 shadow-sm overflow-hidden">
-                        <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-700/50 flex items-center justify-between">
+                        <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-700/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                             <div>
                                 <h3 className="text-sm font-bold text-slate-900 dark:text-white">Kelola Unit Barcode</h3>
                                 <p className="text-xs text-slate-500 mt-0.5">Klik tombol aksi pada kartu untuk ubah status unit</p>
                             </div>
-                            <button onClick={() => setShowGenForm(true)} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-indigo-500/20 active:scale-95">
-                                <PlusIcon className="w-4 h-4" /> Generate Barcode
-                            </button>
+                            <div className="flex flex-wrap items-center gap-2">
+                                {selectedBarcodes.length > 0 && (
+                                    <button onClick={handleBulkPrint} className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white text-xs font-bold rounded-xl transition-all shadow-md active:scale-95">
+                                        <PrinterIcon className="w-4 h-4" /> Cetak {selectedBarcodes.length} Barcode
+                                    </button>
+                                )}
+                                <button onClick={() => setShowGenForm(true)} className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-indigo-500/20 active:scale-95">
+                                    <PlusIcon className="w-4 h-4" /> Generate Barcode
+                                </button>
+                            </div>
                         </div>
 
-                        {/* Legend */}
+                        {/* Legend & Select All */}
                         {item.barcodes?.length > 0 && (
-                            <div className="px-5 pt-4 flex flex-wrap gap-2">
-                                {[
-                                    { label: 'Tersedia', color: 'bg-emerald-100 text-emerald-700' },
-                                    { label: 'Dipinjam', color: 'bg-blue-100 text-blue-700' },
-                                    { label: 'Perbaikan', color: 'bg-amber-100 text-amber-700' },
-                                ].map(l => (
-                                    <span key={l.label} className={`text-[9px] font-bold px-2 py-0.5 rounded-lg ${l.color}`}>{l.label}</span>
-                                ))}
-                                <span className="text-[9px] text-slate-400 ml-1">← Status ditampilkan di pojok kanan kartu. Klik tombol untuk mengubah.</span>
+                            <div className="px-5 pt-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                                <div className="flex items-center gap-2">
+                                    <label className="flex items-center gap-2 cursor-pointer bg-slate-50 dark:bg-slate-700/50 px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-600">
+                                        <input 
+                                            type="checkbox" 
+                                            checked={selectedBarcodes.length > 0 && selectedBarcodes.length === item.barcodes.length}
+                                            onChange={toggleSelectAll}
+                                            className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-600 w-4 h-4 cursor-pointer"
+                                        />
+                                        <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300">Pilih Semua</span>
+                                    </label>
+                                </div>
+                                <div className="flex flex-wrap gap-2 items-center">
+                                    {[
+                                        { label: 'Tersedia', color: 'bg-emerald-100 text-emerald-700' },
+                                        { label: 'Dipinjam', color: 'bg-blue-100 text-blue-700' },
+                                        { label: 'Perbaikan', color: 'bg-amber-100 text-amber-700' },
+                                    ].map(l => (
+                                        <span key={l.label} className={`text-[9px] font-bold px-2 py-0.5 rounded-lg ${l.color}`}>{l.label}</span>
+                                    ))}
+                                    <span className="text-[9px] text-slate-400 ml-1">← Status di pojok kanan kartu.</span>
+                                </div>
                             </div>
                         )}
 
@@ -335,6 +457,8 @@ export default function InventoryShow({ item }: any) {
                                     <BarcodeItem
                                         key={bc.id}
                                         barcode={bc}
+                                        selected={selectedBarcodes.includes(bc.id)}
+                                        onToggleSelect={() => toggleSelect(bc.id)}
                                         onDelete={() => handleDeleteBarcode(bc.id)}
                                         onAction={handleAction}
                                     />

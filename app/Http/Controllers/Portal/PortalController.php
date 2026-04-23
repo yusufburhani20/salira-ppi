@@ -248,23 +248,34 @@ class PortalController extends Controller
     public function idCard()
     {
         $student = Auth::guard('student')->user();
-        
+
         // Generate secure token for QR
         // Structure: NIS:Timestamp:HashedSignature
         $timestamp = time();
         $signature = hash_hmac('sha256', "{$student->nis}:{$timestamp}", config('app.key'));
-        $qrToken = base64_encode("{$student->nis}:{$timestamp}:{$signature}");
+        $qrToken   = base64_encode("{$student->nis}:{$timestamp}:{$signature}");
+
+        // Ambil kelas aktif beserta tahun ajaran
+        $activeClass = $student->academicClasses()
+            ->wherePivot('is_active', true)
+            ->with('academicYear')
+            ->latest('class_members.created_at')
+            ->first();
 
         $settings = [
-            'school_name' => Setting::get('school_name', 'SALIRA ACADEMY'),
-            'school_logo' => Setting::get('school_logo') ? '/storage/' . Setting::get('school_logo') : null,
+            'school_name'    => Setting::get('school_name', 'SALIRA ACADEMY'),
+            'school_logo'    => Setting::get('school_logo') ? '/storage/' . Setting::get('school_logo') : null,
             'school_address' => Setting::get('school_address', 'Alamat Sekolah'),
         ];
 
         return Inertia::render('Portal/IdCard', [
-            'student' => $student,
-            'qrToken' => $qrToken,
-            'settings' => $settings,
+            'student'     => $student,
+            'qrToken'     => $qrToken,
+            'settings'    => $settings,
+            'activeClass' => $activeClass ? [
+                'name'          => $activeClass->name,
+                'academic_year' => $activeClass->academicYear?->name ?? '-',
+            ] : null,
         ]);
     }
 }

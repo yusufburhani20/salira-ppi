@@ -52,7 +52,7 @@ export default function PrintCards({ academicClass, students, settings }: any) {
                     <div className="card-grid-h">
                         {students.map((student: any) => (
                             <div key={student.id} className="card-container-h card-avoid-break">
-                                <div className="card-h-inner bg-gradient-to-br from-indigo-700 via-indigo-600 to-violet-700 text-white">
+                                <div className="card-h-inner bg-emerald-800 text-white">
                                     <div className="card-h-qr-section">
                                         <div className="card-qr-box">
                                             <QRCodeSVG value={student.qr_token} size={70} style={{ width: '100%', height: '100%' }} />
@@ -91,7 +91,7 @@ export default function PrintCards({ academicClass, students, settings }: any) {
                     <div className="card-grid-v">
                         {students.map((student: any) => (
                             <div key={student.id} className="card-container-v card-avoid-break">
-                                <div className="card-v-inner bg-gradient-to-b from-slate-900 via-slate-800 to-indigo-900 text-white">
+                                <div className="card-v-inner bg-emerald-900 text-white">
                                     <div className="card-v-header">
                                         {settings.school_logo && <img src={settings.school_logo} className="card-v-logo" alt="Logo" />}
                                         <h3 className="card-v-school">{settings.school_name}</h3>
@@ -219,8 +219,9 @@ export default function PrintCards({ academicClass, students, settings }: any) {
                     letter-spacing: 0.08em;
                 }
                 .card-h-logo {
-                    height: 20px;
+                    height: 38px;
                     width: auto;
+                    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
                 }
                 .card-h-label {
                     margin: 0 0 2px;
@@ -277,10 +278,11 @@ export default function PrintCards({ academicClass, students, settings }: any) {
                     border-bottom: 1px solid rgba(255,255,255,0.1);
                 }
                 .card-v-logo {
-                    height: 22px;
+                    height: 48px;
                     width: auto;
                     display: block;
-                    margin: 0 auto 6px;
+                    margin: 0 auto 8px;
+                    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
                 }
                 .card-v-school {
                     margin: 0;

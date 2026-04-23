@@ -16,9 +16,10 @@ import {
 
 interface ScanResult {
     student_name: string;
+    class_name: string;
     subject: string;
-    teacher: string;
     time: string;
+    timezone: string;
 }
 
 export default function Scanner() {
@@ -137,17 +138,19 @@ export default function Scanner() {
                                             <p className="font-bold truncate">{lastResult.student_name}</p>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-3 border-b border-white/10 pb-2">
                                         <div className="p-1.5 bg-white/20 rounded-lg"><AcademicCapIcon className="w-4 h-4" /></div>
                                         <div className="min-w-0">
-                                            <p className="text-[10px] uppercase font-bold text-emerald-100">Mata Pelajaran</p>
-                                            <p className="font-bold truncate">{lastResult.subject}</p>
+                                            <p className="text-[10px] uppercase font-bold text-emerald-100">Kelas</p>
+                                            <p className="font-bold truncate">{lastResult.class_name}</p>
                                         </div>
                                     </div>
                                     <div className="grid grid-cols-2 gap-3 pt-1">
                                         <div className="flex items-center gap-2">
                                             <ClockIcon className="w-4 h-4 text-emerald-200" />
-                                            <span className="text-sm font-medium">{lastResult.time} WIB</span>
+                                            <span className="text-sm font-medium">
+                                                {lastResult.time} {lastResult.timezone?.split('/')[1]?.replace('_', ' ') ?? 'WIB'}
+                                            </span>
                                         </div>
                                         <div className="text-right">
                                             <span className="text-[10px] font-bold px-2 py-1 bg-white text-emerald-700 rounded-full uppercase">HADIR</span>

@@ -6,10 +6,9 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\Student;
-use App\Models\Schedule;
 use App\Models\StudentAttendance;
-use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class PresenceScannerController extends Controller
 {
@@ -35,62 +34,55 @@ class PresenceScannerController extends Controller
 
             list($nis, $timestamp, $signature) = $parts;
 
-            // Validate Signature
+            // Validasi Signature
             $expectedSignature = hash_hmac('sha256', "{$nis}:{$timestamp}", config('app.key'));
             if ($signature !== $expectedSignature) {
                 return response()->json(['success' => false, 'message' => 'Token keamanan tidak valid.'], 403);
             }
 
-            // Find Student
+            // Cari Siswa
             $student = Student::where('nis', $nis)->first();
             if (!$student) {
                 return response()->json(['success' => false, 'message' => 'Siswa tidak terdaftar.'], 404);
             }
 
-            // Check Active Class
+            // Pastikan siswa sudah terdaftar di kelas
             if (!$student->academic_class_id) {
                 return response()->json(['success' => false, 'message' => 'Siswa belum terdaftar di kelas manapun.'], 400);
             }
 
-            // Find Current Schedule
             $now = Carbon::now();
-            $day = strtolower($now->format('l'));
-            $time = $now->toTimeString();
 
-            $schedule = Schedule::where('class_id', $student->academic_class_id)
-                ->where('day', $day)
-                ->where('start_time', '<=', $time)
-                ->where('end_time', '>=', $time)
-                ->first();
-
-            if (!$schedule) {
-                return response()->json(['success' => false, 'message' => 'Tidak ada jadwal pelajaran aktif saat ini.'], 404);
-            }
-
-            // Record / Update Attendance
-            // Logic: If already present, just confirm. If alpha/missing, mark as present.
-            $attendance = StudentAttendance::updateOrCreate(
+            // Simpan/perbarui record master harian (tanpa schedule_id & class_agenda_id).
+            // Record ini berfungsi sebagai penanda bahwa siswa sudah tiba di sekolah hari ini.
+            // Modul Jurnal Mengajar guru akan membaca record ini sebagai data awal kehadiran.
+            StudentAttendance::updateOrCreate(
                 [
-                    'schedule_id' => $schedule->id,
-                    'student_id' => $student->id,
-                    'date' => $now->toDateString(),
+                    'student_id'      => $student->id,
+                    'date'            => $now->toDateString(),
+                    'schedule_id'     => null,
+                    'class_agenda_id' => null,
                 ],
                 [
                     'academic_class_id' => $student->academic_class_id,
-                    'recorded_by' => $schedule->teacher_id, // Attributed to the schedule teacher
-                    'status' => 'hadir',
-                    'notes' => 'Presensi Mandiri via QR'
+                    'recorded_by'       => 1, // ID 1 = Super Admin / Sistem sebagai pencatat otomatis
+                    'status'            => 'hadir',
+                    'notes'             => 'Presensi Mandiri via QR – ' . $now->format('H:i') . ' WIB',
                 ]
             );
 
             return response()->json([
                 'success' => true,
                 'message' => 'Presensi berhasil dicatat!',
-                'data' => [
+                'data'    => [
                     'student_name' => $student->name,
-                    'subject' => $schedule->subject,
-                    'teacher' => $schedule->teacher->name ?? 'System',
-                    'time' => $now->format('H:i')
+                    'class_name'   => $student->academicClasses()
+                        ->wherePivot('is_active', true)
+                        ->latest('class_members.created_at')
+                        ->first()?->name ?? '-',
+                    'subject'      => 'Semua Mapel Hari Ini',
+                    'time'         => $now->format('H:i'),
+                    'timezone'     => config('app.timezone', 'Asia/Jakarta'),
                 ]
             ]);
 

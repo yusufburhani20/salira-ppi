@@ -35,18 +35,18 @@ class AcademicClassController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'academic_year'       => 'required|string|max:255',
-            'name'                => 'required|string|max:255',
+            'academic_year_id' => 'nullable|exists:academic_years,id',
+            'name'             => 'required|string|max:255',
             'homeroom_teacher_id' => 'nullable|exists:users,id',
         ]);
 
-        $academicYear = AcademicYear::firstOrCreate(
-            ['name' => $validated['academic_year']],
-            ['is_active' => true]
-        );
+        // Gunakan tahun ajaran yang dipilih, atau fallback ke yang aktif, atau buat baru
+        $academicYearId = $validated['academic_year_id']
+            ?? AcademicYear::where('is_active', true)->value('id')
+            ?? AcademicYear::firstOrCreate(['name' => date('Y') . '/' . (date('Y') + 1)], ['is_active' => true])->id;
 
         AcademicClass::create([
-            'academic_year_id'    => $academicYear->id,
+            'academic_year_id'    => $academicYearId,
             'name'                => $validated['name'],
             'homeroom_teacher_id' => $validated['homeroom_teacher_id'],
         ]);
@@ -57,18 +57,15 @@ class AcademicClassController extends Controller
     public function update(Request $request, AcademicClass $class)
     {
         $validated = $request->validate([
-            'academic_year'       => 'required|string|max:255',
+            'academic_year_id'    => 'nullable|exists:academic_years,id',
             'name'                => 'required|string|max:255',
             'homeroom_teacher_id' => 'nullable|exists:users,id',
         ]);
 
-        $academicYear = AcademicYear::firstOrCreate(
-            ['name' => $validated['academic_year']],
-            ['is_active' => true]
-        );
+        $academicYearId = $validated['academic_year_id'] ?? $class->academic_year_id;
 
         $class->update([
-            'academic_year_id'    => $academicYear->id,
+            'academic_year_id'    => $academicYearId,
             'name'                => $validated['name'],
             'homeroom_teacher_id' => $validated['homeroom_teacher_id'],
         ]);
