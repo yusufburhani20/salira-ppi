@@ -7,6 +7,8 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use App\Models\Setting;
+use App\Services\TelegramService;
 
 class AnnouncementNotification extends Notification implements ShouldQueue
 {
@@ -32,7 +34,17 @@ class AnnouncementNotification extends Notification implements ShouldQueue
         $channels = ['database'];
         
         if ($this->announcement->type === 'important') {
-            $channels[] = 'mail';
+            if (Setting::get('notif_channel_email', '1') === '1' && Setting::get('notif_announcement_email', '1') === '1') {
+                $channels[] = 'mail';
+            }
+            if (Setting::get('notif_channel_whatsapp', '1') === '1' && Setting::get('notif_announcement_whatsapp', '1') === '1') {
+                $phone = $notifiable->phone ?? $notifiable->parent_phone;
+                if (!empty($phone)) $channels[] = \App\Notifications\Channels\WhatsAppChannel::class;
+            }
+            if (Setting::get('notif_channel_telegram', '1') === '1' && Setting::get('notif_announcement_telegram', '1') === '1') {
+                $tgId = $notifiable->telegram_id ?? $notifiable->parent_telegram_id;
+                if (!empty($tgId)) $channels[] = \App\Notifications\Channels\TelegramChannel::class;
+            }
         }
 
         return $channels;
@@ -67,5 +79,40 @@ class AnnouncementNotification extends Notification implements ShouldQueue
             'type' => $this->announcement->type,
         ];
     }
+
+    private function parseTemplate($template)
+    {
+        $replacements = [
+            '[JUDUL_PENGUMUMAN]' => $this->announcement->title,
+            '[KONTEN]' => $this->announcement->content,
+            '[LINK_LAMPIRAN]' => $this->announcement->attachment_path ? url('/storage/' . $this->announcement->attachment_path) : 'Tidak ada lampiran',
+        ];
+
+        return str_replace(array_keys($replacements), array_values($replacements), $template);
+    }
+
+    public function toWhatsApp(object $notifiable)
+    {
+        $phone = $notifiable->phone ?? $notifiable->parent_phone;
+        if (!$phone) return null;
+
+        $template = Setting::get('tpl_wa_announcement', "📢 *PENGUMUMAN PENTING SALIRA*\n\n*[JUDUL_PENGUMUMAN]*\n\n[KONTEN]\n\n[LINK_LAMPIRAN]");
+        $message = $this->parseTemplate($template);
+
+        return [
+            'phone' => $phone,
+            'message' => $message
+        ];
+    }
+
+    public function toTelegram(object $notifiable)
+    {
+        $targetId = $notifiable->telegram_id ?? $notifiable->parent_telegram_id;
+        if (!$targetId) return;
+
+        $template = Setting::get('tpl_tg_announcement', "<b>📢 PENGUMUMAN PENTING SALIRA</b>\n\n<b>[JUDUL_PENGUMUMAN]</b>\n\n[KONTEN]\n\n[LINK_LAMPIRAN]");
+        $message = $this->parseTemplate($template);
+
+        return app(TelegramService::class)->sendMessage($targetId, $message);
+    }
 }
- Lancaster 

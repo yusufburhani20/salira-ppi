@@ -52,7 +52,7 @@ export default function Login({
                         href={route('register')}
                         className="border border-white/50 text-white hover:bg-white hover:text-blue-700 transition-colors rounded-xl px-12 py-3 font-bold text-xs uppercase tracking-wider relative z-10 backdrop-blur-sm"
                     >
-                        DAFTAR GURU / STAFF
+                        DAFTAR
                     </Link>
                 </div>
 
@@ -143,34 +143,34 @@ export default function Login({
                             )}
                         </div>
 
-                            <div className="mt-8 flex flex-col gap-4">
-                                <button
-                                    type="submit"
-                                    disabled={processing}
-                                    className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-12 py-3.5 font-bold text-xs uppercase tracking-wider transition-colors disabled:opacity-50 shadow-lg shadow-blue-600/30"
-                                >
-                                    LOGIN SEBAGAI GURU / KARYAWAN
-                                </button>
-                            </div>
-                        </form>
-                        
-                        <div className="mt-6">
-                            <div className="text-center mb-4 relative">
-                                <div className="absolute inset-0 flex items-center">
-                                    <div className="w-full border-t border-slate-200 dark:border-slate-700"></div>
-                                </div>
-                                <div className="relative flex justify-center text-xs">
-                                    <span className="bg-white dark:bg-slate-800 px-3 text-slate-400">Atau</span>
-                                </div>
-                            </div>
-                            
-                            <a
-                                href="/portal/login"
-                                className="block text-center w-full py-3 text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 rounded-xl transition-colors uppercase tracking-wider"
+                        <div className="mt-8 flex flex-col gap-4">
+                            <button
+                                type="submit"
+                                disabled={processing}
+                                className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white rounded-xl px-12 py-3.5 font-bold text-xs uppercase tracking-wider transition-colors disabled:opacity-50 shadow-lg shadow-blue-600/30"
                             >
-                                Masuk ke Portal Siswa & Wali Murid →
-                            </a>
+                                LOGIN SEBAGAI GURU / KARYAWAN
+                            </button>
                         </div>
+                    </form>
+
+                    <div className="mt-6">
+                        <div className="text-center mb-4 relative">
+                            <div className="absolute inset-0 flex items-center">
+                                <div className="w-full border-t border-slate-200 dark:border-slate-700"></div>
+                            </div>
+                            <div className="relative flex justify-center text-xs">
+                                <span className="bg-white dark:bg-slate-800 px-3 text-slate-400">Atau</span>
+                            </div>
+                        </div>
+
+                        <a
+                            href="/portal/login"
+                            className="block text-center w-full py-3 text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 rounded-xl transition-colors uppercase tracking-wider"
+                        >
+                            Masuk ke Portal Siswa & Wali Murid →
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>

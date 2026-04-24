@@ -42,7 +42,7 @@ export default function PermissionIndex({ auth, permissions, types }: PageProps<
     };
 
     const userRoles = auth.user.roles || [];
-    const isTeacher = userRoles.includes('Guru') || userRoles.includes('Guru/Dosen');
+    const isTeacher = userRoles.includes('Guru/Dosen') || userRoles.includes('Wali Kelas') || userRoles.includes('Admin') || userRoles.includes('Super Admin');
 
     const closeDialog = () => {
         setIsDialogOpen(false);

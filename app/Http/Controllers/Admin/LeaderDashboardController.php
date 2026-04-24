@@ -27,7 +27,7 @@ class LeaderDashboardController extends Controller
             ->keyBy('status');
 
         // 2. Statistik Kehadiran Guru Hari Ini
-        $totalTeachers = User::role('Guru/Dosen')->count();
+        $totalTeachers = User::role(['Guru/Dosen', 'Wali Kelas'])->count();
         $teacherPresenceCount = Attendance::whereDate('date', $today)
             ->whereNotNull('check_in')
             ->count();

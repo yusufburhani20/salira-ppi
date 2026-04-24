@@ -8,6 +8,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use App\Models\Setting;
 
 class BillPaidNotification extends Notification implements ShouldQueue
 {
@@ -30,9 +31,19 @@ class BillPaidNotification extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        $channels = ['database', 'mail'];
-        if ($notifiable->telegram_id || $notifiable->parent_telegram_id) {
-            $channels[] = \App\Notifications\Channels\TelegramChannel::class;
+        $channels = ['database'];
+        if (Setting::get('notif_channel_email', '1') === '1' && Setting::get('notif_bill_paid_email', '1') === '1') {
+            $channels[] = 'mail';
+        }
+        if (Setting::get('notif_channel_telegram', '1') === '1' && Setting::get('notif_bill_paid_telegram', '1') === '1') {
+            if ($notifiable->telegram_id || $notifiable->parent_telegram_id) {
+                $channels[] = \App\Notifications\Channels\TelegramChannel::class;
+            }
+        }
+        if (Setting::get('notif_channel_whatsapp', '1') === '1' && Setting::get('notif_bill_paid_whatsapp', '1') === '1') {
+            if (!empty($notifiable->phone) || !empty($notifiable->parent_phone)) {
+                $channels[] = \App\Notifications\Channels\WhatsAppChannel::class;
+            }
         }
         return $channels;
     }
@@ -68,6 +79,23 @@ class BillPaidNotification extends Notification implements ShouldQueue
         ];
     }
 
+    private function parseTemplate($template, $notifiable)
+    {
+        $amount = number_format($this->bill->amount, 0, ',', '.');
+        $url = url('/invoice/' . $this->bill->bill_number);
+        $dateStr = $this->bill->paid_at ? $this->bill->paid_at->format('d/m/Y H:i') : now()->format('d/m/Y H:i');
+
+        $replacements = [
+            '[NAMA_SISWA]' => $notifiable->name,
+            '[NAMA_TAGIHAN]' => $this->bill->title,
+            '[NOMINAL]' => "Rp {$amount}",
+            '[LINK_INVOICE]' => $url,
+            '[WAKTU]' => $dateStr,
+        ];
+
+        return str_replace(array_keys($replacements), array_values($replacements), $template);
+    }
+
     /**
      * Trigger Telegram Notification
      */
@@ -76,16 +104,26 @@ class BillPaidNotification extends Notification implements ShouldQueue
         $targetId = $notifiable->parent_telegram_id ?? $notifiable->telegram_id;
         if (!$targetId) return;
 
-        $amount = number_format($this->bill->amount, 0, ',', '.');
-        $url = url('/invoice/' . $this->bill->bill_number);
-        $dateStr = $this->bill->paid_at ? $this->bill->paid_at->format('d/m/Y H:i') : now()->format('d/m/Y H:i');
-
-        $message = "<b>✅ PEMBAYARAN BERHASIL</b>\n\n";
-        $message .= "Bapak/Ibu wali dari <b>{$notifiable->name}</b>,\n";
-        $message .= "Terima kasih, pembayaran tagihan <b>{$this->bill->title}</b> sebesar <b>Rp {$amount}</b> telah berhasil dan berstatus <b>LUNAS</b>.\n\n";
-        $message .= "Waktu lunas: {$dateStr}\n";
-        $message .= "<a href='{$url}'>Lihat Kuitansi</a>\n\n";
+        $template = Setting::get('tpl_tg_bill_paid', "<b>✅ PEMBAYARAN SPP LUNAS</b>\n\nTerima kasih Bapak/Ibu wali dari <b>[NAMA_SISWA]</b>.\nPembayaran untuk tagihan <b>[NAMA_TAGIHAN]</b> sebesar <b>[NOMINAL]</b> telah kami terima dan lunas.\n\nAnda dapat melihat kuitansi pembayaran melalui tautan berikut:\n<a href='[LINK_INVOICE]'>Kuitansi Pembayaran</a>\n\nTerima kasih atas partisipasi Anda.");
+        $message = $this->parseTemplate($template, $notifiable);
 
         return app(TelegramService::class)->sendMessage($targetId, $message);
+    }
+
+    /**
+     * Trigger WhatsApp Notification
+     */
+    public function toWhatsApp(object $notifiable)
+    {
+        $phone = $notifiable->parent_phone ?? $notifiable->phone;
+        if (!$phone) return null;
+
+        $template = Setting::get('tpl_wa_bill_paid', "✅ *PEMBAYARAN SPP LUNAS*\n\nTerima kasih Bapak/Ibu wali dari *[NAMA_SISWA]*.\nPembayaran untuk tagihan *[NAMA_TAGIHAN]* sebesar *[NOMINAL]* telah kami terima dan lunas.\n\nAnda dapat melihat kuitansi pembayaran melalui tautan berikut:\n[LINK_INVOICE]\n\nTerima kasih atas partisipasi Anda.");
+        $message = $this->parseTemplate($template, $notifiable);
+
+        return [
+            'phone' => $phone,
+            'message' => $message
+        ];
     }
 }

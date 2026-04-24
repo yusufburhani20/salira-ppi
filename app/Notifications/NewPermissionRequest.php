@@ -7,6 +7,8 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use App\Models\PermissionRequest;
+use App\Models\Setting;
+use App\Services\TelegramService;
 
 class NewPermissionRequest extends Notification implements ShouldQueue
 {
@@ -29,7 +31,21 @@ class NewPermissionRequest extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        return ['database', 'mail'];
+        $channels = ['database'];
+        if (Setting::get('notif_channel_email', '1') === '1' && Setting::get('notif_permission_req_email', '1') === '1') {
+            $channels[] = 'mail';
+        }
+        if (Setting::get('notif_channel_telegram', '1') === '1' && Setting::get('notif_permission_req_telegram', '0') === '1') {
+            if ($notifiable->telegram_id) {
+                $channels[] = \App\Notifications\Channels\TelegramChannel::class;
+            }
+        }
+        if (Setting::get('notif_channel_whatsapp', '1') === '1' && Setting::get('notif_permission_req_whatsapp', '1') === '1') {
+            if (!empty($notifiable->phone)) {
+                $channels[] = \App\Notifications\Channels\WhatsAppChannel::class;
+            }
+        }
+        return $channels;
     }
 
     /**
@@ -66,6 +82,47 @@ class NewPermissionRequest extends Notification implements ShouldQueue
             'user_name' => $this->permissionRequest->user->name,
             'type' => $typeLabel,
             'message' => $this->permissionRequest->user->name . ' mengajukan ' . $typeLabel . ' baru.',
+        ];
+    }
+
+    private function parseTemplate($template, $notifiable)
+    {
+        $typeLabel = $this->permissionRequest->type instanceof \App\Enums\PermissionType 
+            ? $this->permissionRequest->type->label() 
+            : $this->permissionRequest->type;
+
+        $replacements = [
+            '[NAMA_ADMIN]' => $notifiable->name,
+            '[TIPE_IZIN]' => $typeLabel,
+            '[NAMA_PEMOHON]' => $this->permissionRequest->user->name ?? $this->permissionRequest->student->name,
+            '[ALASAN]' => $this->permissionRequest->reason,
+            '[LINK_APPROVAL]' => url('/admin/approvals'),
+        ];
+
+        return str_replace(array_keys($replacements), array_values($replacements), $template);
+    }
+
+    public function toTelegram(object $notifiable)
+    {
+        $targetId = $notifiable->telegram_id;
+        if (!$targetId) return;
+
+        $template = Setting::get('tpl_tg_permission_req', "<b>📝 Pengajuan Izin Baru</b>\n\nHalo <b>[NAMA_ADMIN]</b>,\nTerdapat pengajuan <b>[TIPE_IZIN]</b> baru dari <b>[NAMA_PEMOHON]</b>.\n\nAlasan: <i>[ALASAN]</i>\n\nSilakan cek di portal untuk menyetujui atau menolak pengajuan ini.\n<a href='[LINK_APPROVAL]'>Buka Approval</a>");
+        $message = $this->parseTemplate($template, $notifiable);
+
+        return app(TelegramService::class)->sendMessage($targetId, $message);
+    }
+
+    public function toWhatsApp(object $notifiable)
+    {
+        if (empty($notifiable->phone)) return null;
+
+        $template = Setting::get('tpl_wa_permission_req', "📝 *Pengajuan Izin Baru*\n\nHalo *[NAMA_ADMIN]*,\nTerdapat pengajuan *[TIPE_IZIN]* baru dari *[NAMA_PEMOHON]*.\n\nAlasan: _[ALASAN]_\n\nSilakan cek di portal untuk menyetujui atau menolak pengajuan ini.\n[LINK_APPROVAL]");
+        $message = $this->parseTemplate($template, $notifiable);
+
+        return [
+            'phone' => $notifiable->phone,
+            'message' => $message
         ];
     }
 }

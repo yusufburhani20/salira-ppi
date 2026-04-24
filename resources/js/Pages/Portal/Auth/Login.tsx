@@ -27,7 +27,7 @@ export default function PortalLogin() {
             <Head title="Login Portal Siswa" />
 
             <div className="max-w-4xl w-full bg-white dark:bg-slate-800 rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row relative z-10 transition-colors">
-                
+
                 {/* Left Side - Illustration */}
                 <div className="w-full md:w-1/2 bg-blue-600 p-10 md:p-14 flex flex-col justify-center items-start text-white relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-400/20 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none" />
@@ -35,7 +35,7 @@ export default function PortalLogin() {
 
                     <h1 className="text-3xl md:text-4xl font-black mb-3 relative z-10 tracking-tight">PORTAL SALIRA</h1>
                     <p className="text-sm font-semibold mb-6 max-w-[280px] leading-relaxed relative z-10 text-blue-100 tracking-wider">
-                        Masuk untuk memantau absensi, tagihan, dan perkembangan si buah hati secara real-time.
+                        Masuk untuk memantau absensi, tagihan, dan perkembangan Peserta Didik.
                     </p>
                     <div className="bg-white/10 backdrop-blur-md p-4 rounded-xl border border-white/20 relative z-10 mb-6">
                         <p className="text-xs text-blue-50 font-medium">Bagi login pertama, gunakan <strong className="text-white">NISN</strong> sebagai Username dan <strong className="text-white">Format DDMMYYYY tanggal lahir</strong> (atau <strong className="text-white">123456</strong> jika kosong) sebagai Sandi.</p>
@@ -61,7 +61,7 @@ export default function PortalLogin() {
 
                 {/* Right Side - Login Form */}
                 <div className="w-full md:w-1/2 p-10 md:p-14 flex flex-col justify-center">
-                    <h2 className="text-3xl font-bold text-slate-800 dark:text-white mb-8">Sign In Siswa</h2>
+                    <h2 className="text-3xl font-bold text-slate-800 dark:text-white mb-8">Sign In Siswa/Wali Murid</h2>
 
                     <form onSubmit={submit} className="flex flex-col gap-5">
                         <div>

@@ -18,23 +18,25 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // Admin Group
-    Route::middleware(['role:Super Admin|Admin|Pimpinan'])->prefix('admin')->name('admin.')->group(function () {
-        Route::get('/leader-dashboard', [\App\Http\Controllers\Admin\LeaderDashboardController::class, 'index'])->name('leader-dashboard');
-        
-        // Students
+    // Admin Group A: Super Admin, Admin, Pimpinan, Staff/TU
+    // Data Siswa (GET read-only untuk Pimpinan, dibatasi di controller)
+    Route::middleware(['role:Super Admin|Admin|Pimpinan|Staff/TU'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('/students', [\App\Http\Controllers\Admin\StudentController::class, 'index'])->name('students.index');
+        Route::get('/students/export', [\App\Http\Controllers\Admin\StudentController::class, 'export'])->name('students.export');
+        Route::get('/students/template', [\App\Http\Controllers\Admin\StudentController::class, 'template'])->name('students.template');
+        Route::get('/students/print-cards/{academic_class_id}', [\App\Http\Controllers\Admin\StudentController::class, 'printCards'])->name('students.print-cards');
+        
+        // Classes (read-only for pimpinan can be restricted similar to students if needed in the future, for now they don't see it per matrix, so it moves to Group B)
+    });
+
+    // Admin Group B: Super Admin, Admin, Staff/TU
+    // Manajemen Data Operasional
+    Route::middleware(['role:Super Admin|Admin|Staff/TU'])->prefix('admin')->name('admin.')->group(function () {
+        // Students CRUD
         Route::post('/students', [\App\Http\Controllers\Admin\StudentController::class, 'store'])->name('students.store');
         Route::put('/students/{student}', [\App\Http\Controllers\Admin\StudentController::class, 'update'])->name('students.update');
         Route::delete('/students/{student}', [\App\Http\Controllers\Admin\StudentController::class, 'destroy'])->name('students.destroy');
-        Route::get('/students/export', [\App\Http\Controllers\Admin\StudentController::class, 'export'])->name('students.export');
         Route::post('/students/import', [\App\Http\Controllers\Admin\StudentController::class, 'import'])->name('students.import');
-        Route::get('/students/template', [\App\Http\Controllers\Admin\StudentController::class, 'template'])->name('students.template');
-        Route::get('/students/print-cards/{academic_class_id}', [\App\Http\Controllers\Admin\StudentController::class, 'printCards'])->name('students.print-cards');
-
-        // Settings
-        Route::get('/settings', [\App\Http\Controllers\Admin\SettingController::class, 'index'])->name('settings.index');
-        Route::post('/settings', [\App\Http\Controllers\Admin\SettingController::class, 'update'])->name('settings.update');
 
         // Classes
         Route::get('/classes', [\App\Http\Controllers\Admin\AcademicClassController::class, 'index'])->name('classes.index');
@@ -62,20 +64,38 @@ Route::middleware('auth')->group(function () {
         Route::get('/subjects/template', [\App\Http\Controllers\Admin\SubjectController::class, 'template'])->name('subjects.template');
         Route::post('/subjects/import', [\App\Http\Controllers\Admin\SubjectController::class, 'import'])->name('subjects.import');
 
-        // Geofences
-        Route::apiResource('geofences', \App\Http\Controllers\Admin\GeofenceController::class)->except(['show']);
-        
-        // Attendances (Admin View)
-        Route::get('/attendances', [\App\Http\Controllers\Admin\AttendanceController::class, 'index'])->name('attendances.index');
-        Route::get('/attendances/export/excel', [\App\Http\Controllers\Admin\AttendanceController::class, 'exportExcel'])->name('attendances.export.excel');
-        Route::get('/attendances/export/pdf', [\App\Http\Controllers\Admin\AttendanceController::class, 'exportPdf'])->name('attendances.export.pdf');
-        
-        // Users (Super Admin Only)
-        Route::middleware(['role:Super Admin'])->resource('users', \App\Http\Controllers\Admin\UserController::class)->except(['show']);
+        // Inventory Management
+        Route::prefix('inventory')->name('inventory.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\InventoryController::class, 'index'])->name('index');
+            Route::get('/export/excel', [\App\Http\Controllers\Admin\InventoryController::class, 'exportExcel'])->name('export.excel');
+            Route::get('/export/pdf', [\App\Http\Controllers\Admin\InventoryController::class, 'exportPdf'])->name('export.pdf');
+            Route::post('/', [\App\Http\Controllers\Admin\InventoryController::class, 'store'])->name('store');
+            Route::get('/logs', [\App\Http\Controllers\Admin\InventoryController::class, 'logs'])->name('logs');
+            Route::get('/scanner', [\App\Http\Controllers\Admin\InventoryBarcodeController::class, 'scanner'])->name('scanner');
+            Route::post('/scan', [\App\Http\Controllers\Admin\InventoryBarcodeController::class, 'scan'])->name('scan');
+            Route::post('/action', [\App\Http\Controllers\Admin\InventoryBarcodeController::class, 'action'])->name('action');
+            Route::post('/categories', [\App\Http\Controllers\Admin\InventoryController::class, 'storeCategory'])->name('categories.store');
+            Route::post('/{item}/barcodes', [\App\Http\Controllers\Admin\InventoryBarcodeController::class, 'store'])->name('barcodes.store');
+            Route::delete('/barcodes/{barcode}', [\App\Http\Controllers\Admin\InventoryBarcodeController::class, 'destroy'])->name('barcodes.destroy');
+            Route::get('/{item}', [\App\Http\Controllers\Admin\InventoryController::class, 'show'])->name('show');
+            Route::put('/{item}', [\App\Http\Controllers\Admin\InventoryController::class, 'update'])->name('update');
+            Route::delete('/{item}', [\App\Http\Controllers\Admin\InventoryController::class, 'destroy'])->name('destroy');
+        });
+    });
+
+    // Admin Group C: Super Admin, Admin, Pimpinan
+    // Laporan, Approval, Tagihan, Keuangan, Absensi
+    Route::middleware(['role:Super Admin|Admin|Pimpinan'])->prefix('admin')->name('admin.')->group(function () {
+        Route::get('/leader-dashboard', [\App\Http\Controllers\Admin\LeaderDashboardController::class, 'index'])->name('leader-dashboard');
         
         // Approvals (Pimpinan & Admin)
         Route::get('/approvals', [\App\Http\Controllers\Admin\ApprovalController::class, 'index'])->name('approvals.index');
         Route::put('/approvals/{approval}', [\App\Http\Controllers\Admin\ApprovalController::class, 'update'])->name('approvals.update');
+
+        // Attendances (Admin View)
+        Route::get('/attendances', [\App\Http\Controllers\Admin\AttendanceController::class, 'index'])->name('attendances.index');
+        Route::get('/attendances/export/excel', [\App\Http\Controllers\Admin\AttendanceController::class, 'exportExcel'])->name('attendances.export.excel');
+        Route::get('/attendances/export/pdf', [\App\Http\Controllers\Admin\AttendanceController::class, 'exportPdf'])->name('attendances.export.pdf');
 
         // Reports / Rekapitulasi
         Route::prefix('reports')->name('reports.')->group(function () {
@@ -119,29 +139,34 @@ Route::middleware('auth')->group(function () {
         Route::post('/bills/sync/{id?}', [\App\Http\Controllers\Admin\BillController::class, 'checkStatus'])->name('bills.sync');
         Route::post('/bills/settings', [\App\Http\Controllers\Admin\BillController::class, 'updateSettings'])->name('bills.settings');
 
-        // Announcements
-        Route::resource('/announcements', \App\Http\Controllers\Admin\AnnouncementController::class)->names('announcements');
-
         // Finance Analytics
         Route::get('/finance', [\App\Http\Controllers\Admin\FinanceController::class, 'index'])->name('finance.index');
+    });
 
-        // Inventory Management
-        Route::prefix('inventory')->name('inventory.')->group(function () {
-            Route::get('/', [\App\Http\Controllers\Admin\InventoryController::class, 'index'])->name('index');
-            Route::get('/export/excel', [\App\Http\Controllers\Admin\InventoryController::class, 'exportExcel'])->name('export.excel');
-            Route::get('/export/pdf', [\App\Http\Controllers\Admin\InventoryController::class, 'exportPdf'])->name('export.pdf');
-            Route::post('/', [\App\Http\Controllers\Admin\InventoryController::class, 'store'])->name('store');
-            Route::get('/logs', [\App\Http\Controllers\Admin\InventoryController::class, 'logs'])->name('logs');
-            Route::get('/scanner', [\App\Http\Controllers\Admin\InventoryBarcodeController::class, 'scanner'])->name('scanner');
-            Route::post('/scan', [\App\Http\Controllers\Admin\InventoryBarcodeController::class, 'scan'])->name('scan');
-            Route::post('/action', [\App\Http\Controllers\Admin\InventoryBarcodeController::class, 'action'])->name('action');
-            Route::post('/categories', [\App\Http\Controllers\Admin\InventoryController::class, 'storeCategory'])->name('categories.store');
-            Route::post('/{item}/barcodes', [\App\Http\Controllers\Admin\InventoryBarcodeController::class, 'store'])->name('barcodes.store');
-            Route::delete('/barcodes/{barcode}', [\App\Http\Controllers\Admin\InventoryBarcodeController::class, 'destroy'])->name('barcodes.destroy');
-            Route::get('/{item}', [\App\Http\Controllers\Admin\InventoryController::class, 'show'])->name('show');
-            Route::put('/{item}', [\App\Http\Controllers\Admin\InventoryController::class, 'update'])->name('update');
-            Route::delete('/{item}', [\App\Http\Controllers\Admin\InventoryController::class, 'destroy'])->name('destroy');
+    // Admin Group D: Super Admin, Admin
+    // Konfigurasi Sistem
+    Route::middleware(['role:Super Admin|Admin'])->prefix('admin')->name('admin.')->group(function () {
+        // Settings
+        Route::get('/settings', [\App\Http\Controllers\Admin\SettingController::class, 'index'])->name('settings.index');
+        Route::post('/settings', [\App\Http\Controllers\Admin\SettingController::class, 'update'])->name('settings.update');
+
+        // Notification Settings (Super Admin Only)
+        Route::middleware(['role:Super Admin'])->group(function () {
+            Route::get('/settings/notifications', [\App\Http\Controllers\Admin\NotificationSettingController::class, 'index'])->name('settings.notifications.index');
+            Route::post('/settings/notifications/matrix', [\App\Http\Controllers\Admin\NotificationSettingController::class, 'updateMatrix'])->name('settings.notifications.matrix');
+            Route::post('/settings/notifications/templates', [\App\Http\Controllers\Admin\NotificationSettingController::class, 'updateTemplates'])->name('settings.notifications.templates');
+            Route::get('/settings/whatsapp-status', [\App\Http\Controllers\Admin\NotificationSettingController::class, 'whatsappStatus'])->name('settings.whatsapp-status');
+            Route::post('/settings/notifications/test', [\App\Http\Controllers\Admin\NotificationSettingController::class, 'testSend'])->name('settings.notifications.test');
         });
+
+        // Geofences
+        Route::apiResource('geofences', \App\Http\Controllers\Admin\GeofenceController::class)->except(['show']);
+        
+        // Announcements
+        Route::resource('/announcements', \App\Http\Controllers\Admin\AnnouncementController::class)->names('announcements');
+        
+        // Users (Super Admin Only)
+        Route::middleware(['role:Super Admin'])->resource('users', \App\Http\Controllers\Admin\UserController::class)->except(['show']);
     });
 
     // Staff / User Routes
@@ -172,7 +197,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.markAllAsRead');
 
     // Teacher Routes
-    Route::middleware(['auth', 'role:Super Admin|Admin|Guru/Dosen'])->prefix('teacher')->name('teacher.')->group(function () {
+    Route::middleware(['auth', 'role:Super Admin|Admin|Guru/Dosen|Wali Kelas'])->prefix('teacher')->name('teacher.')->group(function () {
         // Class Agendas
         Route::get('/agendas', [\App\Http\Controllers\Teacher\ClassAgendaController::class, 'index'])->name('agendas.index');
         Route::get('/agendas/create', [\App\Http\Controllers\Teacher\ClassAgendaController::class, 'create'])->name('agendas.create');
@@ -186,12 +211,22 @@ Route::middleware('auth')->group(function () {
         // Daily Assessments (Scores)
         Route::resource('assessments', \App\Http\Controllers\Teacher\DailyAssessmentController::class);
         
-        // Student Guidance (Guru Wali)
+        // Student Guidance (Guru Wali / Guru BK / Wali Kelas / Guru)
+        // Note: as per implementation plan, Guru/Dosen and Wali Kelas both have access to bimbingan
         Route::get('/consultations', [\App\Http\Controllers\Teacher\ConsultationController::class, 'index'])->name('consultations.index');
         Route::post('/consultations', [\App\Http\Controllers\Teacher\ConsultationController::class, 'store'])->name('consultations.store');
         Route::put('/consultations/{consultation}', [\App\Http\Controllers\Teacher\ConsultationController::class, 'update'])->name('consultations.update');
         Route::delete('/consultations/{consultation}', [\App\Http\Controllers\Teacher\ConsultationController::class, 'destroy'])->name('consultations.destroy');
         Route::get('/consultations/students/{classId}', [\App\Http\Controllers\Teacher\ConsultationController::class, 'getStudents'])->name('consultations.students');
+    });
+
+    // Wali Kelas Specific Routes (Resume & Kirim Laporan)
+    Route::middleware(['auth', 'role:Super Admin|Admin|Wali Kelas'])->prefix('teacher')->name('teacher.')->group(function () {
+        Route::get('/my-students', [\App\Http\Controllers\Teacher\StudentResumeController::class, 'index'])->name('my-students.index');
+        Route::get('/my-students/{student}/resume', [\App\Http\Controllers\Teacher\StudentResumeController::class, 'show'])->name('my-students.resume');
+        Route::get('/my-students/{student}/resume-data', [\App\Http\Controllers\Teacher\StudentResumeController::class, 'data'])->name('my-students.resume-data');
+        Route::get('/my-students/{student}/resume-pdf', [\App\Http\Controllers\Teacher\StudentResumeController::class, 'pdf'])->name('my-students.resume-pdf');
+        Route::post('/my-students/{student}/send-report', [\App\Http\Controllers\Teacher\StudentResumeController::class, 'sendReport'])->name('my-students.send-report');
     });
 });
 

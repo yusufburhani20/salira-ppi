@@ -8,6 +8,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use App\Models\Setting;
 
 class BillGeneratedNotification extends Notification implements ShouldQueue
 {
@@ -30,9 +31,19 @@ class BillGeneratedNotification extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        $channels = ['database', 'mail'];
-        if ($notifiable->telegram_id || $notifiable->parent_telegram_id) {
-            $channels[] = \App\Notifications\Channels\TelegramChannel::class;
+        $channels = ['database'];
+        if (Setting::get('notif_channel_email', '1') === '1' && Setting::get('notif_bill_generated_email', '1') === '1') {
+            $channels[] = 'mail';
+        }
+        if (Setting::get('notif_channel_telegram', '1') === '1' && Setting::get('notif_bill_generated_telegram', '1') === '1') {
+            if ($notifiable->telegram_id || $notifiable->parent_telegram_id) {
+                $channels[] = \App\Notifications\Channels\TelegramChannel::class;
+            }
+        }
+        if (Setting::get('notif_channel_whatsapp', '1') === '1' && Setting::get('notif_bill_generated_whatsapp', '1') === '1') {
+            if (!empty($notifiable->phone) || !empty($notifiable->parent_phone)) {
+                $channels[] = \App\Notifications\Channels\WhatsAppChannel::class;
+            }
         }
         return $channels;
     }
@@ -67,6 +78,21 @@ class BillGeneratedNotification extends Notification implements ShouldQueue
         ];
     }
 
+    private function parseTemplate($template, $notifiable)
+    {
+        $amount = number_format($this->bill->amount, 0, ',', '.');
+        $url = url('/invoice/' . $this->bill->bill_number);
+
+        $replacements = [
+            '[NAMA_SISWA]' => $notifiable->name,
+            '[NAMA_TAGIHAN]' => $this->bill->title,
+            '[NOMINAL]' => "Rp {$amount}",
+            '[LINK_INVOICE]' => $url,
+        ];
+
+        return str_replace(array_keys($replacements), array_values($replacements), $template);
+    }
+
     /**
      * Trigger Telegram Notification
      */
@@ -76,16 +102,26 @@ class BillGeneratedNotification extends Notification implements ShouldQueue
         $targetId = $notifiable->parent_telegram_id ?? $notifiable->telegram_id;
         if (!$targetId) return;
 
-        $amount = number_format($this->bill->amount, 0, ',', '.');
-        $url = url('/invoice/' . $this->bill->bill_number);
-
-        $message = "<b>⚠️ TAGIHAN BARU SALIRA</b>\n\n";
-        $message .= "Bapak/Ibu wali dari <b>{$notifiable->name}</b>,\n";
-        $message .= "Tagihan <b>{$this->bill->title}</b> sebesar <b>Rp {$amount}</b> telah diterbitkan.\n\n";
-        $message .= "Harap segera melakukan pembayaran melalui tautan web di bawah ini:\n";
-        $message .= "<a href='{$url}'>Lihat & Bayar Tagihan</a>\n\n";
-        $message .= "Terima kasih.";
+        $template = Setting::get('tpl_tg_bill_generated', "<b>⚠️ TAGIHAN BARU SALIRA</b>\n\nBapak/Ibu wali dari <b>[NAMA_SISWA]</b>,\nTagihan <b>[NAMA_TAGIHAN]</b> sebesar <b>[NOMINAL]</b> telah diterbitkan.\n\nHarap segera melakukan pembayaran melalui tautan web di bawah ini:\n<a href='[LINK_INVOICE]'>Lihat & Bayar Tagihan</a>\n\nTerima kasih.");
+        $message = $this->parseTemplate($template, $notifiable);
 
         return app(TelegramService::class)->sendMessage($targetId, $message);
+    }
+
+    /**
+     * Trigger WhatsApp Notification
+     */
+    public function toWhatsApp(object $notifiable)
+    {
+        $phone = $notifiable->parent_phone ?? $notifiable->phone;
+        if (!$phone) return null;
+
+        $template = Setting::get('tpl_wa_bill_generated', "⚠️ *TAGIHAN BARU SALIRA*\n\nBapak/Ibu wali dari *[NAMA_SISWA]*,\nTagihan *[NAMA_TAGIHAN]* sebesar *[NOMINAL]* telah diterbitkan.\n\nHarap segera melakukan pembayaran melalui tautan web di bawah ini:\n[LINK_INVOICE]\n\nTerima kasih.");
+        $message = $this->parseTemplate($template, $notifiable);
+
+        return [
+            'phone' => $phone,
+            'message' => $message
+        ];
     }
 }

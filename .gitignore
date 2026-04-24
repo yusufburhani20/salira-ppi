@@ -23,3 +23,8 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+# --- Tambahan untuk WhatsApp Gateway SALIRA ---
+node_modules/
+whatsapp-gateway/node_modules/
+whatsapp-gateway/sessions/
+whatsapp-gateway/.env

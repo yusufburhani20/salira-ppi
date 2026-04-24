@@ -27,7 +27,7 @@ class AcademicClassController extends Controller
         return Inertia::render('Admin/Classes/Index', [
             'classes'       => $classes,
             'academicYears' => AcademicYear::orderBy('name', 'desc')->get(),
-            'teachers'      => User::role('Guru/Dosen')->get(['id', 'name', 'nip']),
+            'teachers'      => User::role(['Guru/Dosen', 'Wali Kelas'])->get(['id', 'name', 'nip']),
             'filters'       => $request->only(['search']),
         ]);
     }

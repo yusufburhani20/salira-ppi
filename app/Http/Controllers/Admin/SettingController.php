@@ -21,8 +21,6 @@ class SettingController extends Controller
                 'report_location'          => Setting::get('report_location', 'Kota'),
                 'school_logo'              => Setting::get('school_logo') ? Storage::url(Setting::get('school_logo')) : null,
                 'school_favicon'           => Setting::get('school_favicon') ? Storage::url(Setting::get('school_favicon')) : null,
-                'attendance_alert_enabled' => Setting::get('attendance_alert_enabled', '0') === '1',
-                'attendance_alert_time'    => Setting::get('attendance_alert_time', '08:00'),
             ]
         ]);
     }
@@ -44,8 +42,6 @@ class SettingController extends Controller
         Setting::set('school_phone', $request->school_phone);
         Setting::set('school_email', $request->school_email);
         Setting::set('report_location', $request->report_location);
-        Setting::set('attendance_alert_enabled', $request->boolean('attendance_alert_enabled') ? '1' : '0');
-        Setting::set('attendance_alert_time', $request->attendance_alert_time ?? '08:00');
 
         if ($request->hasFile('school_logo')) {
             // Delete old logo

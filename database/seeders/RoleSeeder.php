@@ -22,6 +22,7 @@ class RoleSeeder extends Seeder
             'Pimpinan',
             'Admin',
             'Guru/Dosen',
+            'Wali Kelas',
             'Staff/TU'
         ];
 
@@ -68,5 +69,18 @@ class RoleSeeder extends Seeder
             ]
         );
         $guru->assignRole('Guru/Dosen');
+
+        // Create Demo Wali Kelas
+        $waliKelas = User::firstOrCreate(
+            ['email' => 'walikelas@salira.com'],
+            [
+                'name' => 'Ibu Wali Kelas',
+                'nip' => '333333',
+                'password' => Hash::make('password'),
+                'status' => UserStatus::active->value,
+                'email_verified_at' => now(),
+            ]
+        );
+        $waliKelas->assignRole('Wali Kelas');
     }
 }

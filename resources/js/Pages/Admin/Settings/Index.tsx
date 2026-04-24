@@ -1,8 +1,8 @@
 import { PageProps } from '@/types';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, useForm } from '@inertiajs/react';
-import React from 'react';
-import { Cog6ToothIcon, PhotoIcon, BuildingOfficeIcon } from '@heroicons/react/24/outline';
+import { Head, useForm, Link } from '@inertiajs/react';
+import React, { useState, useEffect } from 'react';
+import { PhotoIcon, BuildingOfficeIcon } from '@heroicons/react/24/outline';
 
 interface Settings {
     school_name: string;
@@ -12,11 +12,12 @@ interface Settings {
     report_location: string;
     school_logo: string | null;
     school_favicon: string | null;
-    attendance_alert_enabled: boolean;
-    attendance_alert_time: string;
 }
 
 export default function SettingIndex({ auth, settings }: PageProps<{ settings: Settings }>) {
+    const userRoles = auth.user.roles || [];
+    const isSuperAdmin = userRoles.includes('Super Admin');
+
     const { data, setData, post, processing, errors } = useForm({
         school_name: settings.school_name,
         school_address: settings.school_address,
@@ -25,8 +26,6 @@ export default function SettingIndex({ auth, settings }: PageProps<{ settings: S
         report_location: settings.report_location,
         school_logo: null as File | null,
         school_favicon: null as File | null,
-        attendance_alert_enabled: settings.attendance_alert_enabled || false,
-        attendance_alert_time: settings.attendance_alert_time || '08:00',
     });
 
     const submit = (e: React.FormEvent) => {
@@ -159,42 +158,6 @@ export default function SettingIndex({ auth, settings }: PageProps<{ settings: S
                                                     <p className="text-xs text-gray-400 mt-2">Maksimal 1MB (ICO, PNG, SVG) - Rekomendasi 512x512</p>
                                                     {errors.school_favicon && <p className="text-red-500 text-xs mt-1">{errors.school_favicon}</p>}
                                                 </div>
-                                            </div>
-                                        </div>
-                                        <div className="pt-8 mt-8 border-t dark:border-gray-700">
-                                            <h3 className="text-lg font-bold flex items-center gap-2 mb-6">
-                                                <Cog6ToothIcon className="w-5 h-5 text-primary" />
-                                                Otomasi & Notifikasi
-                                            </h3>
-
-                                            <div className="space-y-6 bg-slate-50 dark:bg-slate-900/50 p-6 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-700">
-                                                <div className="flex items-center justify-between">
-                                                    <div>
-                                                        <label className="block font-bold text-slate-800 dark:text-slate-200">Polisi Absensi Otomatis</label>
-                                                        <p className="text-xs text-slate-500">Kirim peringatan otomatis ke wali jika siswa belum scan kehadiran.</p>
-                                                    </div>
-                                                    <div className="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
-                                                        onClick={() => setData('attendance_alert_enabled', !data.attendance_alert_enabled)}
-                                                        style={{ backgroundColor: data.attendance_alert_enabled ? '#4f46e5' : '#d1d5db' }}
-                                                    >
-                                                        <span className="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
-                                                            style={{ transform: data.attendance_alert_enabled ? 'translateX(20px)' : 'translateX(0px)' }}
-                                                        />
-                                                    </div>
-                                                </div>
-
-                                                {data.attendance_alert_enabled && (
-                                                    <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
-                                                        <label className="block font-bold text-slate-700 dark:text-slate-300 mb-2 italic">Jam Pengiriman Notifikasi</label>
-                                                        <input 
-                                                            type="time"
-                                                            value={data.attendance_alert_time}
-                                                            onChange={e => setData('attendance_alert_time', e.target.value)}
-                                                            className="w-full md:w-48 rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white font-bold"
-                                                        />
-                                                        <p className="text-[10px] text-slate-400 mt-2">Sistem akan memindai siswa yang belum hadir tepat pada jam ini setiap hari kerja.</p>
-                                                    </div>
-                                                )}
                                             </div>
                                         </div>
                                     </div>

@@ -4,7 +4,8 @@ namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
-use NotificationChannels\Telegram\TelegramMessage;
+use App\Models\Setting;
+use App\Services\TelegramService;
 
 class StudentAbsenceAlert extends Notification
 {
@@ -22,24 +23,39 @@ class StudentAbsenceAlert extends Notification
     public function via($notifiable): array
     {
         $channels = ['database'];
-        // parent_telegram_id ada langsung di model Student
-        if ($notifiable->parent_telegram_id) {
-            $channels[] = 'telegram';
+        if (Setting::get('notif_channel_telegram', '1') === '1' && Setting::get('notif_absence_telegram', '1') === '1') {
+            if ($notifiable->parent_telegram_id) {
+                $channels[] = \App\Notifications\Channels\TelegramChannel::class;
+            }
+        }
+        if (Setting::get('notif_channel_whatsapp', '1') === '1' && Setting::get('notif_absence_whatsapp', '1') === '1') {
+            if (!empty($notifiable->parent_phone)) {
+                $channels[] = \App\Notifications\Channels\WhatsAppChannel::class;
+            }
         }
         return $channels;
     }
 
+    private function parseTemplate($template, $notifiable)
+    {
+        $replacements = [
+            '[NAMA_SISWA]' => $this->student->name,
+            '[WAKTU]' => date('H:i'),
+            '[LINK_PORTAL]' => url('/portal'),
+        ];
+
+        return str_replace(array_keys($replacements), array_values($replacements), $template);
+    }
+
     public function toTelegram($notifiable)
     {
-        $schoolName = \App\Models\Setting::where('key', 'school_name')->value('value') ?? 'Sekolah';
-        
-        return TelegramMessage::create()
-            ->to($notifiable->parent_telegram_id) // Kirim ke Telegram WALI
-            ->content("*Peringatan Kehadiran Siswa*\n\n" .
-                "Bapak/Ibu Orang Tua dari *{$this->student->name}*,\n\n" .
-                "Hingga saat ini (Pukul " . date('H:i') . "), anak Anda tercatat *BELUM* melakukan pemindaian kartu kehadiran di {$schoolName}.\n\n" .
-                "Mohon segera lakukan konfirmasi jika anak Anda berhalangan hadir melalui Portal Siswa.\n\n" .
-                "Terima kasih.");
+        $targetId = $notifiable->parent_telegram_id;
+        if (!$targetId) return;
+
+        $template = Setting::get('tpl_tg_absence', "<b>🚨 PERINGATAN ABSENSI</b>\n\nBapak/Ibu wali dari <b>[NAMA_SISWA]</b>,\nKami informasikan bahwa hingga pukul <b>[WAKTU]</b>, anak Anda belum tercatat melakukan presensi kehadiran di sekolah.\n\nMohon konfirmasinya melalui portal atau hubungi wali kelas.\n<a href='[LINK_PORTAL]'>Portal Siswa</a>");
+        $message = $this->parseTemplate($template, $notifiable);
+
+        return app(TelegramService::class)->sendMessage($targetId, $message);
     }
 
     public function toArray($notifiable): array
@@ -49,6 +65,19 @@ class StudentAbsenceAlert extends Notification
             'message' => "Siswa {$this->student->name} belum tercatat hadir hari ini.",
             'type' => 'warning',
             'student_id' => $this->student->id,
+        ];
+    }
+
+    public function toWhatsApp($notifiable)
+    {
+        if (empty($notifiable->parent_phone)) return null;
+
+        $template = Setting::get('tpl_wa_absence', "🚨 *PERINGATAN ABSENSI*\n\nBapak/Ibu wali dari *[NAMA_SISWA]*,\nKami informasikan bahwa hingga pukul *[WAKTU]*, anak Anda belum tercatat melakukan presensi kehadiran di sekolah.\n\nMohon konfirmasinya melalui portal atau hubungi wali kelas.\n[LINK_PORTAL]");
+        $message = $this->parseTemplate($template, $notifiable);
+
+        return [
+            'phone' => $notifiable->parent_phone,
+            'message' => $message
         ];
     }
 }

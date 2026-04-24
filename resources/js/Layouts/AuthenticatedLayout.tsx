@@ -36,8 +36,12 @@ export default function Authenticated({
     const isSuperAdmin = userRoles.includes('Super Admin');
     const isAdmin = userRoles.includes('Admin') || isSuperAdmin;
     const isPimpinan = userRoles.includes('Pimpinan');
-    const isTeacher = userRoles.includes('Guru') || userRoles.includes('Guru/Dosen');
-    // Guru & Staff technically don't have Admin/Pimpinan privileges.
+    const isGuru = userRoles.includes('Guru/Dosen');
+    const isWaliKelas = userRoles.includes('Wali Kelas');
+    const isStaff = userRoles.includes('Staff/TU');
+    const isTeacher = isGuru || isWaliKelas || isAdmin;
+    const isWaliOrAdmin = isWaliKelas || isAdmin;
+    const hasDataAccess = isAdmin || isStaff;
 
     // Grouped nav structure — each group has a label, show condition, and items
     const navGroups = [
@@ -94,6 +98,13 @@ export default function Authenticated({
                     icon: (<svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.414a4 4 0 00-5.656-5.656l-6.415 6.414a6 6 0 108.486 8.486L19 14" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5" /></svg>),
                 },
                 {
+                    label: 'Resume Per Siswa',
+                    href: route('teacher.my-students.index'),
+                    active: route().current('teacher.my-students.*'),
+                    show: isWaliOrAdmin,
+                    icon: (<svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>),
+                },
+                {
                     label: 'Rekapitulasi',
                     href: route('admin.reports.index'),
                     active: route().current('admin.reports.index') || route().current('admin.reports.attendance.*') || route().current('admin.reports.assessments.*'),
@@ -131,61 +142,61 @@ export default function Authenticated({
         },
         {
             group: 'Data Akademik',
-            show: isAdmin,
+            show: hasDataAccess || isPimpinan,
             items: [
                 {
                     label: 'Tahun Ajaran',
                     href: route('admin.academic-years.index'),
                     active: route().current('admin.academic-years.*'),
-                    show: isAdmin,
+                    show: hasDataAccess,
                     icon: (<svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>),
                 },
                 {
                     label: 'Data Siswa',
                     href: route('admin.students.index'),
                     active: route().current('admin.students.*'),
-                    show: isAdmin,
+                    show: hasDataAccess || isPimpinan,
                     icon: (<svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>),
                 },
                 {
                     label: 'Data Kelas',
                     href: route('admin.classes.index'),
                     active: route().current('admin.classes.*'),
-                    show: isAdmin,
+                    show: hasDataAccess,
                     icon: (<svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>),
                 },
                 {
                     label: 'Mata Pelajaran',
                     href: route('admin.subjects.index'),
                     active: route().current('admin.subjects.*'),
-                    show: isAdmin,
+                    show: hasDataAccess,
                     icon: (<svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>),
                 },
             ],
         },
         {
             group: 'Inventaris',
-            show: isAdmin,
+            show: hasDataAccess,
             items: [
                 {
                     label: 'Kelola Barang',
                     href: route('admin.inventory.index'),
                     active: route().current('admin.inventory.*'),
-                    show: isAdmin,
+                    show: hasDataAccess,
                     icon: (<svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>),
                 },
                 {
                     label: 'Scanner Barcode',
                     href: route('admin.inventory.scanner'),
                     active: route().current('admin.inventory.scanner'),
-                    show: isAdmin,
+                    show: hasDataAccess,
                     icon: (<svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" /></svg>),
                 },
                 {
                     label: 'Log Transaksi',
                     href: route('admin.inventory.logs'),
                     active: route().current('admin.inventory.logs'),
-                    show: isAdmin,
+                    show: hasDataAccess,
                     icon: (<svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>),
                 },
             ],
@@ -221,6 +232,13 @@ export default function Authenticated({
                     active: route().current('admin.geofences.*'),
                     show: isAdmin,
                     icon: (<svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" /></svg>),
+                },
+                {
+                    label: 'Pengaturan Notifikasi',
+                    href: route('admin.settings.notifications.index'),
+                    active: route().current('admin.settings.notifications.*'),
+                    show: isSuperAdmin,
+                    icon: (<svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>),
                 },
                 {
                     label: 'Pengumuman Sekolah',

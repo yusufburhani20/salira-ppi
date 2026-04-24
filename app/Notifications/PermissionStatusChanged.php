@@ -8,6 +8,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use App\Models\Setting;
 
 class PermissionStatusChanged extends Notification implements ShouldQueue
 {
@@ -30,10 +31,22 @@ class PermissionStatusChanged extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        $channels = ['database', 'mail'];
+        $channels = ['database'];
 
-        if ($notifiable->telegram_id) {
-            $channels[] = \App\Notifications\Channels\TelegramChannel::class;
+        if (Setting::get('notif_channel_email', '1') === '1' && Setting::get('notif_permission_status_email', '1') === '1') {
+            $channels[] = 'mail';
+        }
+
+        if (Setting::get('notif_channel_telegram', '1') === '1' && Setting::get('notif_permission_status_telegram', '1') === '1') {
+            if ($notifiable->telegram_id) {
+                $channels[] = \App\Notifications\Channels\TelegramChannel::class;
+            }
+        }
+
+        if (Setting::get('notif_channel_whatsapp', '1') === '1' && Setting::get('notif_permission_status_whatsapp', '1') === '1') {
+            if (!empty($notifiable->phone)) {
+                $channels[] = \App\Notifications\Channels\WhatsAppChannel::class;
+            }
         }
 
         return $channels;
@@ -73,23 +86,53 @@ class PermissionStatusChanged extends Notification implements ShouldQueue
         ];
     }
 
-    /**
-     * Send the notification via Telegram.
-     */
+    private function parseTemplate($template, $notifiable, $isWhatsApp = true)
+    {
+        $statusStr = $this->permission->status->value === 'approved' 
+            ? ($isWhatsApp ? '✅ *DITERIMA*' : '✅ <b>DITERIMA</b>') 
+            : ($isWhatsApp ? '❌ *DITOLAK*' : '❌ <b>DITOLAK</b>');
+            
+        $typeLabel = $this->permission->type->label();
+        
+        $reason = "";
+        if ($this->permission->rejection_reason) {
+            $reason = $isWhatsApp 
+                ? "\n_Alasan: " . $this->permission->rejection_reason . "_"
+                : "\n<i>Alasan: " . $this->permission->rejection_reason . "</i>";
+        }
+
+        $replacements = [
+            '[NAMA_PEMOHON]' => $notifiable->name,
+            '[TIPE_IZIN]' => $typeLabel,
+            '[TANGGAL]' => $this->permission->start_date->format('d/m/Y'),
+            '[STATUS]' => $statusStr,
+            '[ALASAN_TOLAK]' => $reason,
+            '[LINK_PORTAL]' => url('/permissions'),
+        ];
+
+        return str_replace(array_keys($replacements), array_values($replacements), $template);
+    }
+
     public function toTelegram(object $notifiable)
     {
         if (!$notifiable->telegram_id) return;
 
-        $statusStr = $this->permission->status->value === 'approved' ? '✅ DITERIMA' : '❌ DITOLAK';
-        $typeLabel = $this->permission->type->label();
-        $reason = $this->permission->rejection_reason ? "\n<b>Alasan:</b> " . $this->permission->rejection_reason : "";
-
-        $message = "<b>🔔 NOTIFIKASI SALIRA</b>\n\n";
-        $message .= "Halo {$notifiable->name},\n";
-        $message .= "Pengajuan izin <b>{$typeLabel}</b> Anda telah diperbarui.\n\n";
-        $message .= "<b>Status:</b> {$statusStr}{$reason}\n\n";
-        $message .= "Silakan cek dashboard untuk detail lebih lanjut.";
+        $template = Setting::get('tpl_tg_permission_status', "<b>📝 Status Pengajuan Izin</b>\n\nHalo <b>[NAMA_PEMOHON]</b>,\nPengajuan izin <b>[TIPE_IZIN]</b> Anda pada tanggal <b>[TANGGAL]</b> telah diperbarui.\n\n<b>Status:</b> [STATUS]\n[ALASAN_TOLAK]\n\nSilakan cek dashboard untuk detail lebih lanjut.");
+        $message = $this->parseTemplate($template, $notifiable, false);
 
         return app(TelegramService::class)->sendMessage($notifiable->telegram_id, $message);
+    }
+
+    public function toWhatsApp(object $notifiable)
+    {
+        if (empty($notifiable->phone)) return null;
+
+        $template = Setting::get('tpl_wa_permission_status', "📝 *Status Pengajuan Izin*\n\nHalo *[NAMA_PEMOHON]*,\nPengajuan izin *[TIPE_IZIN]* Anda pada tanggal *[TANGGAL]* telah diperbarui.\n\n*Status:* [STATUS]\n[ALASAN_TOLAK]\n\nSilakan cek portal untuk detail lebih lanjut.\n[LINK_PORTAL]");
+        $message = $this->parseTemplate($template, $notifiable, true);
+
+        return [
+            'phone' => $notifiable->phone,
+            'message' => $message
+        ];
     }
 }
