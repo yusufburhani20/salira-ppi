@@ -12,6 +12,8 @@ interface Settings {
     report_location: string;
     school_logo: string | null;
     school_favicon: string | null;
+    github_username?: string;
+    github_token?: string;
 }
 
 export default function SettingIndex({ auth, settings }: PageProps<{ settings: Settings }>) {
@@ -26,6 +28,8 @@ export default function SettingIndex({ auth, settings }: PageProps<{ settings: S
         report_location: settings.report_location,
         school_logo: null as File | null,
         school_favicon: null as File | null,
+        github_username: settings.github_username || '',
+        github_token: settings.github_token || '',
     });
 
     const [isUpdating, setIsUpdating] = useState(false);
@@ -234,7 +238,40 @@ export default function SettingIndex({ auth, settings }: PageProps<{ settings: S
                                         </div>
                                     </div>
                                 </div>
-                                <div className="pt-6 border-t dark:border-gray-700 flex justify-end">
+                                {isSuperAdmin && (
+                                    <div className="pt-8 mt-8 border-t dark:border-gray-700">
+                                        <h3 className="text-lg font-bold flex items-center gap-2 mb-6 text-slate-800 dark:text-slate-200">
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
+                                            Kredensial Repositori (GitHub)
+                                        </h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div>
+                                                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Username GitHub</label>
+                                                <input 
+                                                    type="text" 
+                                                    value={data.github_username} 
+                                                    onChange={e => setData('github_username', e.target.value)} 
+                                                    className="w-full rounded-xl border-gray-300 dark:border-gray-700 dark:bg-gray-900 focus:ring-primary focus:border-primary"
+                                                    placeholder="Contoh: yusufburhani20"
+                                                />
+                                                {errors.github_username && <p className="text-red-500 text-xs mt-1">{errors.github_username}</p>}
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Personal Access Token</label>
+                                                <input 
+                                                    type="password" 
+                                                    value={data.github_token} 
+                                                    onChange={e => setData('github_token', e.target.value)} 
+                                                    className="w-full rounded-xl border-gray-300 dark:border-gray-700 dark:bg-gray-900 focus:ring-primary focus:border-primary"
+                                                    placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+                                                />
+                                                {errors.github_token && <p className="text-red-500 text-xs mt-1">{errors.github_token}</p>}
+                                                <p className="text-xs text-slate-500 mt-2">Dibutuhkan untuk melakukan pembaruan otomatis jika menggunakan repositori privat.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                                <div className="pt-6 mt-6 border-t dark:border-gray-700 flex justify-end">
                                     <button 
                                         type="submit"
                                         disabled={processing}

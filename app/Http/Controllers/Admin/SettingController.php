@@ -21,6 +21,8 @@ class SettingController extends Controller
                 'report_location'          => Setting::get('report_location', 'Kota'),
                 'school_logo'              => Setting::get('school_logo') ? Storage::url(Setting::get('school_logo')) : null,
                 'school_favicon'           => Setting::get('school_favicon') ? Storage::url(Setting::get('school_favicon')) : null,
+                'github_username'          => Setting::get('github_username', ''),
+                'github_token'             => Setting::get('github_token', ''),
             ]
         ]);
     }
@@ -35,6 +37,8 @@ class SettingController extends Controller
             'report_location' => 'nullable|string|max:100',
             'school_logo' => 'nullable|image|max:2048',
             'school_favicon' => 'nullable|image|mimes:ico,png,jpg,jpeg,svg|max:1024',
+            'github_username' => 'nullable|string|max:100',
+            'github_token' => 'nullable|string|max:255',
         ]);
 
         Setting::set('school_name', $request->school_name);
@@ -42,6 +46,8 @@ class SettingController extends Controller
         Setting::set('school_phone', $request->school_phone);
         Setting::set('school_email', $request->school_email);
         Setting::set('report_location', $request->report_location);
+        Setting::set('github_username', $request->github_username);
+        Setting::set('github_token', $request->github_token);
 
         if ($request->hasFile('school_logo')) {
             // Delete old logo
@@ -100,8 +106,18 @@ class SettingController extends Controller
         $initLog .= "[{$ts}] ✅ Menjalankan deploy.sh di latar belakang...\n";
         file_put_contents($logPath, $initLog);
 
+        // Ambil kredensial dari setting
+        $githubToken = Setting::get('github_token', '');
+        $githubUser  = Setting::get('github_username', '');
+
+        // Pass GitHub credentials as environment variables to the script
+        $envPrefix = '';
+        if ($githubToken && $githubUser) {
+            $envPrefix = "GITHUB_TOKEN=" . escapeshellarg($githubToken) . " GITHUB_USER=" . escapeshellarg($githubUser) . " ";
+        }
+
         // Jalankan script (output append ke log)
-        $cmd = "bash " . escapeshellarg($scriptPath) . " >> " . escapeshellarg($logPath) . " 2>&1 &";
+        $cmd = "{$envPrefix}bash " . escapeshellarg($scriptPath) . " >> " . escapeshellarg($logPath) . " 2>&1 &";
         exec($cmd);
 
         return response()->json(['status' => 'success', 'message' => 'Proses pembaruan sedang berjalan.']);
