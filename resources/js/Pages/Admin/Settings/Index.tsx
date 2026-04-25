@@ -1,7 +1,7 @@
 import { PageProps } from '@/types';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm, Link } from '@inertiajs/react';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { PhotoIcon, BuildingOfficeIcon } from '@heroicons/react/24/outline';
 
 interface Settings {
@@ -40,27 +40,40 @@ export default function SettingIndex({ auth, settings }: PageProps<{ settings: S
         });
     };
 
-    const fetchLogs = async () => {
+    const fetchLogs = useCallback(async (isInitial = false) => {
         try {
             const response = await fetch(route('admin.settings.update-logs'));
             const data = await response.json();
             if (data.logs) {
                 setUpdateLogs(data.logs);
                 
-                // Auto scroll to bottom
-                if (logEndRef.current) {
-                    logEndRef.current.scrollTop = logEndRef.current.scrollHeight;
+                const hasCompleted = data.logs.includes('[PROCESS_COMPLETED]');
+                
+                if (hasCompleted) {
+                    setIsUpdating(false);
+                    // Show success if it just finished or was already finished when we loaded
+                    setUpdateStatus('success');
+                } else if (isInitial && data.logs.trim() !== '' && data.logs !== 'Belum ada log pembaruan.') {
+                    // If we're loading the page and the log is active but not completed, resume monitoring
+                    setIsUpdating(true);
                 }
 
-                if (data.logs.includes('[PROCESS_COMPLETED]')) {
-                    setIsUpdating(false);
-                    setUpdateStatus('success');
-                }
+                // Auto scroll to bottom in next tick to ensure state is updated
+                setTimeout(() => {
+                    if (logEndRef.current) {
+                        logEndRef.current.scrollTop = logEndRef.current.scrollHeight;
+                    }
+                }, 100);
             }
         } catch (error) {
             console.error('Error fetching logs:', error);
         }
-    };
+    }, []);
+
+    // Check logs on mount to see if an update is already in progress
+    useEffect(() => {
+        fetchLogs(true);
+    }, [fetchLogs]);
 
     useEffect(() => {
         let interval: NodeJS.Timeout;
