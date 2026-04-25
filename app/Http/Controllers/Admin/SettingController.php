@@ -77,12 +77,20 @@ class SettingController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Script deploy.sh tidak ditemukan.'], 404);
         }
 
-        // Wipe the old log file
-        file_put_contents($logPath, "Memulai pembaruan sistem...\n");
+        // Wipe the old log file and write initial message
+        file_put_contents($logPath, "[" . now()->format('H:i:s') . "] Memulai proses pembaruan sistem...\n");
 
-        // Execute the script in the background
-        // We use bash to run it, redirect all output to log, and use & to send it to background
-        exec("bash {$scriptPath} >> {$logPath} 2>&1 &");
+        // Pass GitHub credentials as environment variables to the script
+        $githubToken = env('GITHUB_TOKEN', '');
+        $githubUser  = env('GITHUB_USER', '');
+
+        // Execute the script in the background, redirect all stdout+stderr to log
+        $envPrefix = '';
+        if ($githubToken && $githubUser) {
+            $envPrefix = "GITHUB_TOKEN=" . escapeshellarg($githubToken) . " GITHUB_USER=" . escapeshellarg($githubUser) . " ";
+        }
+
+        exec("{$envPrefix}bash {$scriptPath} >> {$logPath} 2>&1 &");
 
         return response()->json(['status' => 'success', 'message' => 'Proses pembaruan sedang berjalan di latar belakang.']);
     }
@@ -90,14 +98,19 @@ class SettingController extends Controller
     public function updateLogs()
     {
         $logPath = storage_path('logs/deploy.log');
-        
+
         if (!file_exists($logPath)) {
             return response()->json(['logs' => 'Belum ada log pembaruan.']);
         }
 
-        // Read the last 100 lines to avoid massive payloads if log gets big
-        $logs = shell_exec("tail -n 100 {$logPath}");
+        // Read file with pure PHP — no shell_exec (more reliable on all servers)
+        $content = file_get_contents($logPath);
+        
+        // Return only the last ~8000 chars to avoid huge payloads
+        if (strlen($content) > 8000) {
+            $content = '...[log dipotong]...' . substr($content, -8000);
+        }
 
-        return response()->json(['logs' => $logs]);
+        return response()->json(['logs' => $content ?: 'Log kosong.']);
     }
 }

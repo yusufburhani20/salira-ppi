@@ -3,42 +3,63 @@
 # SALIRA Auto Deployment Script for aaPanel
 # ==========================================
 
-echo "🚀 Memulai proses deployment SALIRA..."
+LOG_PREFIX="[$(date '+%H:%M:%S')]"
+APP_DIR="/www/wwwroot/dev.parkaw.my.id"
+
+echo "$LOG_PREFIX 🚀 Memulai proses deployment SALIRA..."
 
 # 1. Pindah ke direktori utama
-cd /www/wwwroot/dev.parkaw.my.id || exit
+cd "$APP_DIR" || { echo "$LOG_PREFIX ❌ Gagal masuk ke direktori $APP_DIR"; exit 1; }
 
 # 2. Menarik kode terbaru dari GitHub
-echo "📥 Menarik kode terbaru (git pull)..."
-git pull origin main
+# Mendukung repo privat via GITHUB_USER + GITHUB_TOKEN dari environment variable
+echo "$LOG_PREFIX 📥 Menarik kode terbaru dari GitHub..."
+
+if [ -n "$GITHUB_TOKEN" ] && [ -n "$GITHUB_USER" ]; then
+    # Ambil URL repo dari remote origin saat ini
+    REPO_URL=$(git remote get-url origin)
+
+    # Ganti protokol menjadi https://USER:TOKEN@... agar bisa autentikasi
+    # Contoh: https://github.com/user/repo.git → https://USER:TOKEN@github.com/user/repo.git
+    AUTHED_URL=$(echo "$REPO_URL" | sed "s|https://|https://${GITHUB_USER}:${GITHUB_TOKEN}@|")
+    git pull "$AUTHED_URL" main 2>&1
+else
+    # Jika tidak ada token, coba pull biasa (untuk repo publik atau SSH)
+    git pull origin main 2>&1
+fi
+
+if [ $? -ne 0 ]; then
+    echo "$LOG_PREFIX ❌ git pull GAGAL! Pastikan GITHUB_TOKEN & GITHUB_USER sudah diisi di .env"
+    exit 1
+fi
+
+echo "$LOG_PREFIX ✅ git pull berhasil."
 
 # 3. Menginstall dependensi PHP (Composer)
-echo "📦 Memperbarui paket PHP..."
-/www/server/php/83/bin/php /usr/bin/composer install --no-dev --optimize-autoloader
+echo "$LOG_PREFIX 📦 Memperbarui paket PHP (composer install)..."
+/www/server/php/83/bin/php /usr/bin/composer install --no-dev --optimize-autoloader --no-interaction 2>&1
 
 # 4. Menjalankan Migrasi Database
-echo "🗄️ Menjalankan migrasi database..."
-/www/server/php/83/bin/php artisan migrate --force
+echo "$LOG_PREFIX 🗄️  Menjalankan migrasi database..."
+/www/server/php/83/bin/php artisan migrate --force 2>&1
 
 # 5. Menginstall dan Build Frontend (React/Vite)
-echo "🎨 Membangun ulang aset frontend (Vite)..."
-npm install --legacy-peer-deps
-npm run build
+echo "$LOG_PREFIX 🎨 Membangun ulang aset frontend (Vite)..."
+npm install --legacy-peer-deps 2>&1
+npm run build 2>&1
+
+if [ $? -ne 0 ]; then
+    echo "$LOG_PREFIX ❌ Build frontend GAGAL!"
+    exit 1
+fi
 
 # 6. Membersihkan Cache Laravel
-echo "🧹 Membersihkan cache sistem..."
-/www/server/php/83/bin/php artisan optimize:clear
+echo "$LOG_PREFIX 🧹 Membersihkan cache sistem..."
+/www/server/php/83/bin/php artisan optimize:clear 2>&1
 
-# 7. Memperbarui dependensi WhatsApp Gateway
-echo "📱 Memperbarui WhatsApp Gateway..."
-cd whatsapp-gateway || exit
-npm install
-cd ..
+# 7. Memperbaiki Hak Akses Folder (Penting untuk aaPanel)
+echo "$LOG_PREFIX 🔐 Menyesuaikan hak akses file..."
+chown -R www:www "$APP_DIR/" 2>&1
 
-# 8. Memperbaiki Hak Akses Folder (Penting untuk aaPanel)
-echo "🔐 Menyesuaikan hak akses file..."
-chown -R www:www /www/wwwroot/dev.parkaw.my.id/
-
-echo "✅ DEPLOYMENT SELESAI SUKSES!"
-echo "(Catatan: Jika ada pembaruan fitur pada WhatsApp Gateway, pastikan me-restart Node project di aaPanel)"
+echo "$LOG_PREFIX ✅ DEPLOYMENT SELESAI SUKSES!"
 echo "[PROCESS_COMPLETED]"
