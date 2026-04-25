@@ -69,30 +69,42 @@ class SettingController extends Controller
 
     public function systemUpdate()
     {
-        // Path to the deploy script
         $scriptPath = base_path('deploy.sh');
         $logPath = storage_path('logs/deploy.log');
 
+        $ts = now()->format('H:i:s');
+
+        // Mulai log baru
+        $initLog = "[{$ts}] Memulai proses pembaruan sistem...\n";
+        $initLog .= "[{$ts}] Server path: {$scriptPath}\n";
+        $initLog .= "[{$ts}] Log path: {$logPath}\n";
+
         if (!file_exists($scriptPath)) {
+            $initLog .= "[{$ts}] ❌ ERROR: deploy.sh tidak ditemukan!\n";
+            file_put_contents($logPath, $initLog);
             return response()->json(['status' => 'error', 'message' => 'Script deploy.sh tidak ditemukan.'], 404);
         }
 
-        // Wipe the old log file and write initial message
-        file_put_contents($logPath, "[" . now()->format('H:i:s') . "] Memulai proses pembaruan sistem...\n");
+        // Pastikan script bisa dieksekusi
+        @chmod($scriptPath, 0755);
 
-        // Pass GitHub credentials as environment variables to the script
-        $githubToken = env('GITHUB_TOKEN', '');
-        $githubUser  = env('GITHUB_USER', '');
-
-        // Execute the script in the background, redirect all stdout+stderr to log
-        $envPrefix = '';
-        if ($githubToken && $githubUser) {
-            $envPrefix = "GITHUB_TOKEN=" . escapeshellarg($githubToken) . " GITHUB_USER=" . escapeshellarg($githubUser) . " ";
+        // Cek apakah fungsi exec tersedia
+        $disabledFunctions = explode(',', ini_get('disable_functions'));
+        if (in_array('exec', array_map('trim', $disabledFunctions))) {
+            $initLog .= "[{$ts}] ❌ ERROR: Fungsi exec() dinonaktifkan di server ini (disable_functions).\n";
+            $initLog .= "[{$ts}] Solusi: Hapus 'exec' dari disable_functions di konfigurasi PHP aaPanel.\n";
+            file_put_contents($logPath, $initLog);
+            return response()->json(['status' => 'error', 'message' => 'exec() tidak tersedia.'], 500);
         }
 
-        exec("{$envPrefix}bash {$scriptPath} >> {$logPath} 2>&1 &");
+        $initLog .= "[{$ts}] ✅ Menjalankan deploy.sh di latar belakang...\n";
+        file_put_contents($logPath, $initLog);
 
-        return response()->json(['status' => 'success', 'message' => 'Proses pembaruan sedang berjalan di latar belakang.']);
+        // Jalankan script (output append ke log)
+        $cmd = "bash " . escapeshellarg($scriptPath) . " >> " . escapeshellarg($logPath) . " 2>&1 &";
+        exec($cmd);
+
+        return response()->json(['status' => 'success', 'message' => 'Proses pembaruan sedang berjalan.']);
     }
 
     public function updateLogs()
