@@ -6,10 +6,17 @@
 LOG_PREFIX="[$(date '+%H:%M:%S')]"
 APP_DIR="/www/wwwroot/dev.parkaw.my.id"
 
+# Fungsi untuk menangani error
+die() {
+    echo "$LOG_PREFIX ❌ ERROR: $1"
+    echo "[PROCESS_FAILED]"
+    exit 1
+}
+
 echo "$LOG_PREFIX 🚀 Memulai proses deployment SALIRA..."
 
 # 1. Pindah ke direktori utama
-cd "$APP_DIR" || { echo "$LOG_PREFIX ❌ Gagal masuk ke direktori $APP_DIR"; exit 1; }
+cd "$APP_DIR" || die "Gagal masuk ke direktori $APP_DIR"
 
 # 2. Menarik kode terbaru dari GitHub
 # Mendukung repo privat via GITHUB_USER + GITHUB_TOKEN dari environment variable
@@ -40,26 +47,25 @@ else
 fi
 
 if [ $? -ne 0 ]; then
-    echo "$LOG_PREFIX ❌ git pull GAGAL! Pastikan GITHUB_TOKEN & GITHUB_USER sudah diisi di .env"
-    exit 1
+    die "git pull GAGAL! Pastikan Kredensial GitHub sudah diisi dengan benar di Pengaturan."
 fi
 
 echo "$LOG_PREFIX ✅ git pull berhasil."
 
 # 3. Menginstall dependensi PHP (Composer)
 echo "$LOG_PREFIX 📦 Memperbarui paket PHP (composer install)..."
-/www/server/php/83/bin/php /usr/bin/composer install --no-dev --optimize-autoloader --no-interaction 2>&1
+/www/server/php/83/bin/php /usr/bin/composer install --no-dev --optimize-autoloader --no-interaction 2>&1 || die "Gagal memperbarui dependensi PHP (Composer)"
 
 # 4. Menjalankan Migrasi Database
 echo "$LOG_PREFIX 🗄️  Menjalankan migrasi database..."
-/www/server/php/83/bin/php artisan migrate --force 2>&1
+/www/server/php/83/bin/php artisan migrate --force 2>&1 || die "Gagal menjalankan migrasi database"
 
 # 5. Menginstall dan Build Frontend (React/Vite)
 echo "$LOG_PREFIX 🎨 Membangun ulang aset frontend (Vite)..."
-npm install --legacy-peer-deps 2>&1
+npm install --legacy-peer-deps 2>&1 || die "Gagal menginstall dependensi frontend (NPM)"
 
 # Gunakan path eksplisit agar tsc & vite ditemukan saat dijalankan sebagai background process
-./node_modules/.bin/vite build 2>&1
+./node_modules/.bin/vite build 2>&1 || die "Gagal mem-build aset frontend (Vite)"
 
 # 6. Membersihkan Cache Laravel
 echo "$LOG_PREFIX 🧹 Membersihkan cache sistem..."

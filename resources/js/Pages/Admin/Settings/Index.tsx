@@ -52,13 +52,17 @@ export default function SettingIndex({ auth, settings }: PageProps<{ settings: S
                 setUpdateLogs(data.logs);
                 
                 const hasCompleted = data.logs.includes('[PROCESS_COMPLETED]');
+                const hasFailed = data.logs.includes('[PROCESS_FAILED]');
                 
                 if (hasCompleted) {
                     setIsUpdating(false);
                     // Show success if it just finished or was already finished when we loaded
                     setUpdateStatus('success');
+                } else if (hasFailed) {
+                    setIsUpdating(false);
+                    setUpdateStatus('error');
                 } else if (isInitial && data.logs.trim() !== '' && data.logs !== 'Belum ada log pembaruan.') {
-                    // If we're loading the page and the log is active but not completed, resume monitoring
+                    // If we're loading the page and the log is active but not completed/failed, resume monitoring
                     setIsUpdating(true);
                 }
 
