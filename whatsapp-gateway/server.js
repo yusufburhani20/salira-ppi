@@ -27,9 +27,12 @@ client.on('qr', (qr) => {
     qrcode.generate(qr, { small: true });
 });
 
+let currentState = 'disconnected';
+
 client.on('ready', () => {
     console.log('WhatsApp Client is READY!');
     currentQR = null;
+    currentState = 'connected';
 });
 
 client.on('authenticated', () => {
@@ -40,11 +43,13 @@ client.on('authenticated', () => {
 client.on('auth_failure', (msg) => {
     console.error('WhatsApp AUTHENTICATION FAILURE', msg);
     currentQR = null;
+    currentState = 'disconnected';
 });
 
 client.on('disconnected', (reason) => {
     console.log('WhatsApp Client was DISCONNECTED', reason);
     currentQR = null;
+    currentState = 'disconnected';
 });
 
 // API Endpoint to send message
@@ -79,19 +84,11 @@ app.post('/send-message', async (req, res) => {
     }
 });
 
-app.get('/status', async (req, res) => {
-    try {
-        const state = await client.getState();
-        res.json({ 
-            status: state === 'CONNECTED' ? 'connected' : 'disconnected',
-            qr: currentQR
-        });
-    } catch (error) {
-        res.json({ 
-            status: 'disconnected',
-            qr: currentQR 
-        });
-    }
+app.get('/status', (req, res) => {
+    res.json({ 
+        status: currentState,
+        qr: currentQR
+    });
 });
 
 client.initialize();

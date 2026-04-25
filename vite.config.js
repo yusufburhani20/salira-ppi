@@ -12,10 +12,10 @@ export default defineConfig({
     ],
 
     server: { // Tambahkan blok server ini
-        host: '0.0.0.0', // Mengizinkan akses dari semua network interface
-        hmr: {
-            host: '192.168.1.33', // IP PC host Bapak agar HMR (auto-refresh) jalan di HP
-        },
+        host: '127.0.0.1', // Mengizinkan akses lokal
+        // hmr: {
+        //     host: '192.168.1.33', // IP PC host Bapak agar HMR (auto-refresh) jalan di HP
+        // },
     },
     optimizeDeps: {
         include: ['recharts', 'react-is'],
