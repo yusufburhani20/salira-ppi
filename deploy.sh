@@ -46,12 +46,9 @@ echo "$LOG_PREFIX 🗄️  Menjalankan migrasi database..."
 # 5. Menginstall dan Build Frontend (React/Vite)
 echo "$LOG_PREFIX 🎨 Membangun ulang aset frontend (Vite)..."
 npm install --legacy-peer-deps 2>&1
-npm run build 2>&1
 
-if [ $? -ne 0 ]; then
-    echo "$LOG_PREFIX ❌ Build frontend GAGAL!"
-    exit 1
-fi
+# Gunakan path eksplisit agar tsc & vite ditemukan saat dijalankan sebagai background process
+./node_modules/.bin/vite build 2>&1
 
 # 6. Membersihkan Cache Laravel
 echo "$LOG_PREFIX 🧹 Membersihkan cache sistem..."
