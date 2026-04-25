@@ -54,9 +54,5 @@ npm install --legacy-peer-deps 2>&1
 echo "$LOG_PREFIX 🧹 Membersihkan cache sistem..."
 /www/server/php/83/bin/php artisan optimize:clear 2>&1
 
-# 7. Memperbaiki Hak Akses Folder (Penting untuk aaPanel)
-echo "$LOG_PREFIX 🔐 Menyesuaikan hak akses file..."
-chown -R www:www "$APP_DIR/" 2>&1
-
 echo "$LOG_PREFIX ✅ DEPLOYMENT SELESAI SUKSES!"
 echo "[PROCESS_COMPLETED]"
