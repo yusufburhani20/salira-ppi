@@ -76,6 +76,7 @@ class BillPaidNotification extends Notification implements ShouldQueue
             'bill_id' => $this->bill->id,
             'amount' => $this->bill->amount,
             'message' => "Tagihan {$this->bill->title} telah dilonasi.",
+            'action_url' => '/invoice/' . $this->bill->bill_number,
         ];
     }
 

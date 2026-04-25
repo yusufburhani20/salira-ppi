@@ -75,6 +75,7 @@ class BillGeneratedNotification extends Notification implements ShouldQueue
             'bill_id' => $this->bill->id,
             'amount' => $this->bill->amount,
             'message' => "Tagihan {$this->bill->title} baru saja diterbitkan.",
+            'action_url' => '/admin/bills',
         ];
     }
 

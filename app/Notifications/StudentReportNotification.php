@@ -109,6 +109,7 @@ class StudentReportNotification extends Notification implements ShouldQueue
             'student_id' => $this->student->id,
             'message' => "Laporan dikirim ke orang tua untuk periode {$this->startDate} - {$this->endDate}",
             'sender_id' => $this->sender->id,
+            'action_url' => '/admin/reports/student-resume',
         ];
     }
 

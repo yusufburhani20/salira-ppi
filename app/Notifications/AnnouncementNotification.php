@@ -77,6 +77,7 @@ class AnnouncementNotification extends Notification implements ShouldQueue
             'title' => $this->announcement->title,
             'message' => $this->announcement->title, // Consistent with Bell dropdown
             'type' => $this->announcement->type,
+            'action_url' => '/dashboard',
         ];
     }
 

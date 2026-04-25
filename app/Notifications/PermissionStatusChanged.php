@@ -83,6 +83,7 @@ class PermissionStatusChanged extends Notification implements ShouldQueue
             'type' => $this->permission->type->value,
             'status' => $this->permission->status->value,
             'message' => "Pengajuan izin " . $this->permission->type->label() . " Anda telah " . strtolower($this->permission->status->label()),
+            'action_url' => '/user/permissions',
         ];
     }
 

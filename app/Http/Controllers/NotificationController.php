@@ -22,6 +22,26 @@ class NotificationController extends Controller
     }
 
     /**
+     * Mark notification as read and redirect to action URL.
+     */
+    public function readAndRedirect(Request $request, $id)
+    {
+        $notification = $request->user()->notifications()->where('id', $id)->first();
+
+        $url = '/dashboard'; // fallback default
+
+        if ($notification) {
+            $notification->markAsRead();
+            // Ambil action_url dari data notifikasi
+            if (!empty($notification->data['action_url'])) {
+                $url = $notification->data['action_url'];
+            }
+        }
+
+        return redirect($url);
+    }
+
+    /**
      * Mark a specific notification as read.
      */
     public function markAsRead(Request $request, $id)

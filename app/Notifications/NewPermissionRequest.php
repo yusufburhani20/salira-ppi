@@ -82,6 +82,7 @@ class NewPermissionRequest extends Notification implements ShouldQueue
             'user_name' => $this->permissionRequest->user->name,
             'type' => $typeLabel,
             'message' => $this->permissionRequest->user->name . ' mengajukan ' . $typeLabel . ' baru.',
+            'action_url' => '/admin/approvals',
         ];
     }
 
