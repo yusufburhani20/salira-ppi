@@ -10,7 +10,7 @@ use App\Models\PermissionRequest;
 use App\Models\Setting;
 use App\Services\TelegramService;
 
-class NewPermissionRequest extends Notification implements ShouldQueue
+class NewPermissionRequest extends Notification
 {
     use Queueable;
 
@@ -57,10 +57,12 @@ class NewPermissionRequest extends Notification implements ShouldQueue
             ? $this->permissionRequest->type->label() 
             : $this->permissionRequest->type;
 
+        $requesterName = $this->permissionRequest->user->name ?? $this->permissionRequest->student->name ?? 'Pemohon';
+
         return (new MailMessage)
-            ->subject('Pengajuan Izin Baru: ' . $this->permissionRequest->user->name)
+            ->subject('Pengajuan Izin Baru: ' . $requesterName)
             ->greeting('Halo ' . $notifiable->name . ',')
-            ->line('Terdapat pengajuan ' . $typeLabel . ' baru dari ' . $this->permissionRequest->user->name . '.')
+            ->line('Terdapat pengajuan ' . $typeLabel . ' baru dari ' . $requesterName . '.')
             ->line('Alasan: ' . $this->permissionRequest->reason)
             ->action('Lihat Pengajuan', url('/admin/approvals'))
             ->line('Terima kasih telah menggunakan sistem SALIRA!');
@@ -77,11 +79,13 @@ class NewPermissionRequest extends Notification implements ShouldQueue
             ? $this->permissionRequest->type->label() 
             : $this->permissionRequest->type;
 
+        $requesterName = $this->permissionRequest->user->name ?? $this->permissionRequest->student->name ?? 'Pemohon';
+
         return [
             'permission_id' => $this->permissionRequest->id,
-            'user_name' => $this->permissionRequest->user->name,
+            'user_name' => $requesterName,
             'type' => $typeLabel,
-            'message' => $this->permissionRequest->user->name . ' mengajukan ' . $typeLabel . ' baru.',
+            'message' => $requesterName . ' mengajukan ' . $typeLabel . ' baru.',
             'action_url' => '/admin/approvals',
         ];
     }

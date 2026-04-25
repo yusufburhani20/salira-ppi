@@ -420,7 +420,7 @@ export default function Authenticated({
                                 <div className="max-h-80 overflow-y-auto custom-scrollbar">
                                     {notifications?.recent && notifications.recent.length > 0 ? (
                                         notifications.recent.map((notif: any) => (
-                                            <a
+                                            <Link
                                                 key={notif.id}
                                                 href={route('notifications.redirect', notif.id)}
                                                 className={`w-full text-left p-4 flex gap-3 border-b border-slate-50 dark:border-slate-700/50 hover:bg-slate-50 dark:hover:bg-slate-800/80 transition-colors cursor-pointer ${!notif.read_at ? 'bg-indigo-50/50 dark:bg-indigo-900/10' : ''}`}
@@ -442,7 +442,7 @@ export default function Authenticated({
                                                         </span>
                                                     </div>
                                                 </div>
-                                            </a>
+                                            </Link>
                                         ))
                                     ) : (
                                         <div className="p-6 text-center flex flex-col items-center justify-center gap-2">

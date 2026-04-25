@@ -60,8 +60,12 @@ class PermissionController extends Controller
         ]);
 
         // Send Notification to Admins and Pimpinan
-        $admins = \App\Models\User::role(['Super Admin', 'Admin', 'Pimpinan'])->get();
-        \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\NewPermissionRequest($permission));
+        try {
+            $admins = \App\Models\User::role(['Super Admin', 'Admin', 'Pimpinan'])->get();
+            \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\NewPermissionRequest($permission));
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Gagal mengirim notif izin guru: ' . $e->getMessage());
+        }
 
         return back()->with('success', 'Permission request submitted successfully. Awaiting approval.');
     }

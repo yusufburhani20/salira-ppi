@@ -40,7 +40,7 @@ class StudentPermissionController extends Controller
             $attachmentPath = $request->file('attachment')->store('permissions/students', 'public');
         }
 
-        PermissionRequest::create([
+        $permission = PermissionRequest::create([
             'student_id' => $student->id,
             'type' => $request->type,
             'start_date' => $request->start_date,
@@ -49,6 +49,14 @@ class StudentPermissionController extends Controller
             'attachment_path' => $attachmentPath,
             'status' => 'pending',
         ]);
+
+        // Send Notification to Admins and Pimpinan
+        try {
+            $admins = \App\Models\User::role(['Super Admin', 'Admin', 'Pimpinan'])->get();
+            \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\NewPermissionRequest($permission));
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Gagal mengirim notif izin siswa: ' . $e->getMessage());
+        }
 
         return redirect()->back()->with('success', 'Permohonan izin berhasil dikirim.');
     }
