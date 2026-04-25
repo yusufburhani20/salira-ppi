@@ -28,11 +28,70 @@ export default function SettingIndex({ auth, settings }: PageProps<{ settings: S
         school_favicon: null as File | null,
     });
 
+    const [isUpdating, setIsUpdating] = useState(false);
+    const [updateLogs, setUpdateLogs] = useState<string>('');
+    const [updateStatus, setUpdateStatus] = useState<'success'|'error'|null>(null);
+    const logEndRef = React.useRef<HTMLPreElement>(null);
+
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
         post(route('admin.settings.update'), {
             forceFormData: true,
         });
+    };
+
+    const fetchLogs = async () => {
+        try {
+            const response = await fetch(route('admin.settings.update-logs'));
+            const data = await response.json();
+            if (data.logs) {
+                setUpdateLogs(data.logs);
+                
+                // Auto scroll to bottom
+                if (logEndRef.current) {
+                    logEndRef.current.scrollTop = logEndRef.current.scrollHeight;
+                }
+
+                if (data.logs.includes('[PROCESS_COMPLETED]')) {
+                    setIsUpdating(false);
+                    setUpdateStatus('success');
+                }
+            }
+        } catch (error) {
+            console.error('Error fetching logs:', error);
+        }
+    };
+
+    useEffect(() => {
+        let interval: NodeJS.Timeout;
+        if (isUpdating) {
+            interval = setInterval(fetchLogs, 2000);
+        }
+        return () => {
+            if (interval) clearInterval(interval);
+        };
+    }, [isUpdating]);
+
+    const startUpdate = async () => {
+        if (!confirm('Anda yakin ingin memulai pembaruan sistem? Ini mungkin membuat website sedikit melambat selama proses build.')) return;
+        
+        setIsUpdating(true);
+        setUpdateStatus(null);
+        setUpdateLogs('Memulai perintah sistem...\n');
+
+        try {
+            await fetch(route('admin.settings.system-update'), {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                    'Content-Type': 'application/json'
+                }
+            });
+        } catch (error) {
+            console.error('Failed to start update:', error);
+            setIsUpdating(false);
+            setUpdateStatus('error');
+        }
     };
 
     return (
@@ -162,7 +221,6 @@ export default function SettingIndex({ auth, settings }: PageProps<{ settings: S
                                         </div>
                                     </div>
                                 </div>
-
                                 <div className="pt-6 border-t dark:border-gray-700 flex justify-end">
                                     <button 
                                         type="submit"
@@ -175,6 +233,61 @@ export default function SettingIndex({ auth, settings }: PageProps<{ settings: S
                             </form>
                         </div>
                     </div>
+
+                    {/* System Update Section */}
+                    {isSuperAdmin && (
+                        <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg mt-8">
+                            <div className="p-8">
+                                <h3 className="text-lg font-bold flex items-center gap-2 mb-6 text-red-600 dark:text-red-400">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                                    Pembaruan Sistem (System Update)
+                                </h3>
+                                
+                                <div className="bg-red-50 dark:bg-red-900/20 p-4 rounded-xl border border-red-100 dark:border-red-800 mb-6">
+                                    <p className="text-sm text-red-800 dark:text-red-300">
+                                        Fitur ini akan menarik kode terbaru dari server pusat (GitHub) dan melakukan kompilasi ulang (Build). 
+                                        Proses ini memakan waktu sekitar 1-2 menit. Silakan pantau log di bawah ini.
+                                    </p>
+                                </div>
+
+                                <div className="mb-4 flex justify-between items-center">
+                                    <button 
+                                        onClick={startUpdate}
+                                        disabled={isUpdating}
+                                        className="h-10 px-6 bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-slate-500/20 disabled:opacity-50 flex items-center gap-2"
+                                    >
+                                        {isUpdating ? (
+                                            <>
+                                                <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                                Sedang Mengupdate...
+                                            </>
+                                        ) : 'Mulai Update Sistem'}
+                                    </button>
+
+                                    {updateStatus && (
+                                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${updateStatus === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                            {updateStatus === 'success' ? 'Update Selesai!' : 'Update Gagal!'}
+                                        </span>
+                                    )}
+                                </div>
+
+                                <div className="bg-gray-900 rounded-xl p-4 overflow-hidden relative">
+                                    <div className="absolute top-0 left-0 w-full h-8 bg-gray-800 flex items-center px-4 gap-2">
+                                        <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                                        <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                        <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                                        <span className="ml-2 text-xs text-gray-400 font-mono">deploy.log</span>
+                                    </div>
+                                    <pre 
+                                        className="text-green-400 font-mono text-xs mt-8 h-[300px] overflow-y-auto whitespace-pre-wrap"
+                                        ref={logEndRef}
+                                    >
+                                        {updateLogs || 'Belum ada proses update yang berjalan. Klik tombol di atas untuk memulai.'}
+                                    </pre>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </AuthenticatedLayout>

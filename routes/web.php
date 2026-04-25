@@ -149,6 +149,8 @@ Route::middleware('auth')->group(function () {
         // Settings
         Route::get('/settings', [\App\Http\Controllers\Admin\SettingController::class, 'index'])->name('settings.index');
         Route::post('/settings', [\App\Http\Controllers\Admin\SettingController::class, 'update'])->name('settings.update');
+        Route::post('/settings/system-update', [\App\Http\Controllers\Admin\SettingController::class, 'systemUpdate'])->name('settings.system-update');
+        Route::get('/settings/update-logs', [\App\Http\Controllers\Admin\SettingController::class, 'updateLogs'])->name('settings.update-logs');
 
         // Notification Settings (Super Admin Only)
         Route::middleware(['role:Super Admin'])->group(function () {

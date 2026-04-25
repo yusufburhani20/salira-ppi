@@ -66,4 +66,38 @@ class SettingController extends Controller
 
         return back()->with('success', 'Pengaturan berhasil diperbarui');
     }
+
+    public function systemUpdate()
+    {
+        // Path to the deploy script
+        $scriptPath = base_path('deploy.sh');
+        $logPath = storage_path('logs/deploy.log');
+
+        if (!file_exists($scriptPath)) {
+            return response()->json(['status' => 'error', 'message' => 'Script deploy.sh tidak ditemukan.'], 404);
+        }
+
+        // Wipe the old log file
+        file_put_contents($logPath, "Memulai pembaruan sistem...\n");
+
+        // Execute the script in the background
+        // We use bash to run it, redirect all output to log, and use & to send it to background
+        exec("bash {$scriptPath} >> {$logPath} 2>&1 &");
+
+        return response()->json(['status' => 'success', 'message' => 'Proses pembaruan sedang berjalan di latar belakang.']);
+    }
+
+    public function updateLogs()
+    {
+        $logPath = storage_path('logs/deploy.log');
+        
+        if (!file_exists($logPath)) {
+            return response()->json(['logs' => 'Belum ada log pembaruan.']);
+        }
+
+        // Read the last 100 lines to avoid massive payloads if log gets big
+        $logs = shell_exec("tail -n 100 {$logPath}");
+
+        return response()->json(['logs' => $logs]);
+    }
 }

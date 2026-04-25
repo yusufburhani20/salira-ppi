@@ -41,3 +41,4 @@ chown -R www:www /www/wwwroot/dev.parkaw.my.id/
 
 echo "✅ DEPLOYMENT SELESAI SUKSES!"
 echo "(Catatan: Jika ada pembaruan fitur pada WhatsApp Gateway, pastikan me-restart Node project di aaPanel)"
+echo "[PROCESS_COMPLETED]"
