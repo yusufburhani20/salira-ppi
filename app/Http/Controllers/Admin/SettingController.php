@@ -106,9 +106,9 @@ class SettingController extends Controller
         $initLog .= "[{$ts}] ✅ Menjalankan deploy.sh di latar belakang...\n";
         file_put_contents($logPath, $initLog);
 
-        // Ambil kredensial dari setting
-        $githubToken = Setting::get('github_token', '');
-        $githubUser  = Setting::get('github_username', '');
+        // Ambil kredensial dari setting dan bersihkan spasi
+        $githubToken = trim(Setting::get('github_token', ''));
+        $githubUser  = trim(Setting::get('github_username', ''));
 
         // Pass GitHub credentials as environment variables to the script
         $envPrefix = '';

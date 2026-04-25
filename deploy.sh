@@ -16,12 +16,23 @@ cd "$APP_DIR" || { echo "$LOG_PREFIX ❌ Gagal masuk ke direktori $APP_DIR"; exi
 echo "$LOG_PREFIX 📥 Menarik kode terbaru dari GitHub..."
 
 if [ -n "$GITHUB_TOKEN" ] && [ -n "$GITHUB_USER" ]; then
+    # Bersihkan whitespace dari variabel
+    GITHUB_USER=$(echo "$GITHUB_USER" | tr -d '[:space:]')
+    GITHUB_TOKEN=$(echo "$GITHUB_TOKEN" | tr -d '[:space:]')
+    
     # Ambil URL repo dari remote origin saat ini
     REPO_URL=$(git remote get-url origin)
 
-    # Ganti protokol menjadi https://USER:TOKEN@... agar bisa autentikasi
-    # Contoh: https://github.com/user/repo.git → https://USER:TOKEN@github.com/user/repo.git
-    AUTHED_URL=$(echo "$REPO_URL" | sed "s|https://|https://${GITHUB_USER}:${GITHUB_TOKEN}@|")
+    # Ekstrak domain dan path repo (hapus https:// dan kredensial lama jika ada)
+    CLEAN_PATH=$(echo "$REPO_URL" | sed -E 's|https://([^@]+@)?github.com/||' | tr -d '[:space:]')
+    
+    # Hapus trailing slash jika ada
+    CLEAN_PATH=${CLEAN_PATH%/}
+
+    # Bentuk URL baru yang bersih dengan kredensial
+    AUTHED_URL="https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/${CLEAN_PATH}"
+    
+    # Pull dengan URL yang sudah di-autentikasi
     git pull "$AUTHED_URL" main 2>&1
 else
     # Jika tidak ada token, coba pull biasa (untuk repo publik atau SSH)
