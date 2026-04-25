@@ -32,16 +32,25 @@ class AcademicYearController extends Controller
 
             $academicYear = AcademicYear::create($validated);
 
+            // Parse year from name (e.g. "2025/2026" -> 2025)
+            $startYear = (int) substr($academicYear->name, 0, 4);
+            $startYear = $startYear > 2000 ? $startYear : date('Y');
+            $endYear = $startYear + 1;
+
             // Default semesters for new academic year
             Semester::create([
                 'academic_year_id' => $academicYear->id,
                 'name' => 'Ganjil',
                 'is_active' => true,
+                'start_date' => $startYear . '-07-01',
+                'end_date' => $startYear . '-12-31',
             ]);
             Semester::create([
                 'academic_year_id' => $academicYear->id,
                 'name' => 'Genap',
                 'is_active' => false,
+                'start_date' => $endYear . '-01-01',
+                'end_date' => $endYear . '-06-30',
             ]);
         });
 
