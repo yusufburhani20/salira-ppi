@@ -54,9 +54,17 @@ export default function SettingIndex({ auth, settings }: PageProps<{ settings: S
                 const hasCompleted = data.logs.includes('[PROCESS_COMPLETED]');
                 const hasFailed = data.logs.includes('[PROCESS_FAILED]');
                 
+                if (isInitial && (hasCompleted || hasFailed)) {
+                    // Jika baru muat halaman dan log lama sudah selesai/gagal, tampilkan layar bersih
+                    setUpdateLogs('');
+                    setUpdateStatus(null);
+                    setIsUpdating(false);
+                    return;
+                }
+
                 if (hasCompleted) {
                     setIsUpdating(false);
-                    // Show success if it just finished or was already finished when we loaded
+                    // Show success if it just finished
                     setUpdateStatus('success');
                 } else if (hasFailed) {
                     setIsUpdating(false);
