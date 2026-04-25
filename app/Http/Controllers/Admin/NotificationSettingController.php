@@ -125,6 +125,15 @@ class NotificationSettingController extends Controller
         return response()->json($status);
     }
 
+    public function restartWhatsapp(WhatsAppService $whatsappService)
+    {
+        $response = $whatsappService->restart();
+        if (isset($response['status']) && $response['status'] === 'success') {
+            return back()->with('success', 'WhatsApp Gateway sedang di-restart. Tunggu beberapa saat untuk QR Code baru.');
+        }
+        return back()->with('error', 'Gagal me-restart WhatsApp Gateway.');
+    }
+
     public function testSend(Request $request)
     {
         $request->validate([

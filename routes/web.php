@@ -156,6 +156,7 @@ Route::middleware('auth')->group(function () {
             Route::post('/settings/notifications/matrix', [\App\Http\Controllers\Admin\NotificationSettingController::class, 'updateMatrix'])->name('settings.notifications.matrix');
             Route::post('/settings/notifications/templates', [\App\Http\Controllers\Admin\NotificationSettingController::class, 'updateTemplates'])->name('settings.notifications.templates');
             Route::get('/settings/whatsapp-status', [\App\Http\Controllers\Admin\NotificationSettingController::class, 'whatsappStatus'])->name('settings.whatsapp-status');
+            Route::post('/settings/whatsapp-restart', [\App\Http\Controllers\Admin\NotificationSettingController::class, 'restartWhatsapp'])->name('settings.whatsapp-restart');
             Route::post('/settings/notifications/test', [\App\Http\Controllers\Admin\NotificationSettingController::class, 'testSend'])->name('settings.notifications.test');
         });
 

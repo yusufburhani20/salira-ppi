@@ -229,7 +229,19 @@ export default function NotificationSettings({ auth, settings, bot_username }: P
                                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                                         {/* WhatsApp QR Code Section */}
                                         <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-3xl border border-gray-200 dark:border-gray-700">
-                                            <h4 className="font-bold text-lg mb-4 flex items-center gap-2"><DevicePhoneMobileIcon className="w-5 h-5 text-[#25D366]" /> Koneksi Perangkat WA</h4>
+                                            <div className="flex items-center justify-between mb-4">
+                                                <h4 className="font-bold text-lg flex items-center gap-2"><DevicePhoneMobileIcon className="w-5 h-5 text-[#25D366]" /> Koneksi Perangkat WA</h4>
+                                                <button 
+                                                    onClick={() => {
+                                                        if(confirm('Apakah Anda yakin ingin me-restart koneksi WhatsApp? Sesi sebelumnya akan dihapus dan Anda perlu scan QR Code baru.')) {
+                                                            router.post(route('admin.settings.whatsapp-restart'), {}, { preserveScroll: true });
+                                                        }
+                                                    }}
+                                                    className="text-xs bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-slate-700 px-3 py-1.5 rounded-lg font-medium transition-colors text-slate-700 dark:text-slate-300"
+                                                >
+                                                    Refresh / Restart
+                                                </button>
+                                            </div>
                                             
                                             <div className="flex flex-col sm:flex-row items-center gap-6">
                                                 <div className="flex-shrink-0 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">

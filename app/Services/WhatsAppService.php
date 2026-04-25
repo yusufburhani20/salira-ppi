@@ -53,4 +53,18 @@ class WhatsAppService
             return ['status' => 'offline', 'error' => $e->getMessage()];
         }
     }
+
+    /**
+     * Restart the WhatsApp Gateway client
+     */
+    public function restart()
+    {
+        try {
+            $response = Http::post("{$this->baseUrl}/restart");
+            return $response->json();
+        } catch (\Exception $e) {
+            Log::error('WhatsApp Service Restart Exception: ' . $e->getMessage());
+            return ['status' => 'error', 'message' => $e->getMessage()];
+        }
+    }
 }

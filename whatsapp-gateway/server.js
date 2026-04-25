@@ -91,6 +91,31 @@ app.get('/status', (req, res) => {
     });
 });
 
+app.post('/restart', async (req, res) => {
+    try {
+        console.log('Restarting WhatsApp Client...');
+        currentState = 'disconnected';
+        currentQR = null;
+        
+        try {
+            await client.destroy();
+        } catch (e) {
+            console.log('Client already destroyed or not initialized');
+        }
+        
+        const fs = require('fs');
+        if (fs.existsSync('./sessions')) {
+            fs.rmSync('./sessions', { recursive: true, force: true });
+        }
+        
+        client.initialize();
+        res.json({ status: 'success', message: 'Client restarting' });
+    } catch (error) {
+        console.error('Error restarting:', error);
+        res.status(500).json({ status: 'error', message: error.message });
+    }
+});
+
 client.initialize();
 
 app.listen(port, () => {
