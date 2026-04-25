@@ -139,6 +139,10 @@ class SettingController extends Controller
             $content = '...[log dipotong]...' . substr($content, -8000);
         }
 
-        return response()->json(['logs' => $content ?: 'Log kosong.']);
+        if (trim($content) === '') {
+            return response()->json(['logs' => 'Belum ada log pembaruan.']);
+        }
+
+        return response()->json(['logs' => $content]);
     }
 }
