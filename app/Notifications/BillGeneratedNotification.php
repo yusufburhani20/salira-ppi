@@ -33,7 +33,9 @@ class BillGeneratedNotification extends Notification implements ShouldQueue
     {
         $channels = ['database'];
         if (Setting::get('notif_channel_email', '1') === '1' && Setting::get('notif_bill_generated_email', '1') === '1') {
-            $channels[] = 'mail';
+            if (!empty($notifiable->parent_email)) {
+                $channels[] = 'mail';
+            }
         }
         if (Setting::get('notif_channel_telegram', '1') === '1' && Setting::get('notif_bill_generated_telegram', '1') === '1') {
             if ($notifiable->telegram_id || $notifiable->parent_telegram_id) {
