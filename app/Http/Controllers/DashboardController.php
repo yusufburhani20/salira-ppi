@@ -43,7 +43,7 @@ class DashboardController extends Controller
         // 2. Weekly Attendance Chart (Last 7 Days)
         // If class is selected, base the total on that class size
         $totalStudents = $classId 
-            ? Student::whereHas('academicClasses', fn($q) => $q->where('class_id', $classId))->count() 
+            ? Student::whereHas('academicClasses', fn($q) => $q->where('academic_classes.id', $classId)->where('class_members.is_active', true))->count() 
             : Student::count();
         $totalStudents = $totalStudents ?: 1;
 

@@ -13,7 +13,7 @@ class Student extends Authenticatable
 
     protected $guarded = ['id'];
     protected $casts = [
-        'birth_date' => 'date',
+        'birth_date' => 'date:Y-m-d',
         'gender' => Gender::class,
         'status' => StudentStatus::class,
     ];

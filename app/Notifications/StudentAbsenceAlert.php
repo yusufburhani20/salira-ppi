@@ -65,7 +65,7 @@ class StudentAbsenceAlert extends Notification
             'message' => "Siswa {$this->student->name} belum tercatat hadir hari ini.",
             'type' => 'warning',
             'student_id' => $this->student->id,
-            'action_url' => '/admin/attendances',
+            'action_url' => '/portal/attendance',
         ];
     }
 

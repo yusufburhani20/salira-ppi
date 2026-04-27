@@ -285,7 +285,7 @@ export default function Authenticated({
                 <div className="flex h-16 items-center justify-between px-5 border-b border-slate-100 dark:border-slate-700/60 flex-shrink-0">
                     <Link href={route('dashboard')} className="flex items-center gap-2" onClick={() => setSidebarOpen(false)}>
                         <img src="/images/Salira.png" alt="SALIRA Logo" className="h-7 w-auto" />
-                        <span className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">
+                        <span className="text-xl font-bold text-indigo-600 dark:text-indigo-400">
                             SALIRA
                         </span>
                     </Link>
@@ -386,7 +386,7 @@ export default function Authenticated({
                     {/* Mobile: show logo */}
                     <div className="lg:hidden flex items-center gap-2">
                         <img src="/images/Salira.png" alt="SALIRA Logo" className="h-7 w-auto" />
-                        <span className="text-lg font-bold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">SALIRA</span>
+                        <span className="text-lg font-bold text-indigo-600 dark:text-indigo-400">SALIRA</span>
                     </div>
 
                     {/* Desktop: page title */}

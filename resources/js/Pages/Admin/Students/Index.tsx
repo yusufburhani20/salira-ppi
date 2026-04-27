@@ -60,7 +60,7 @@ export default function StudentIndex({ students, filters, classes, canManage }: 
         setData({
             nisn: s.nisn ?? '', nis: s.nis ?? '', name: s.name ?? '',
             gender: s.gender ?? 'L', status: s.status ?? 'active',
-            birth_place: s.birth_place ?? '', birth_date: s.birth_date ?? '',
+            birth_place: s.birth_place ?? '', birth_date: s.birth_date ? String(s.birth_date).split('T')[0] : '',
             parent_name: s.parent_name ?? '', parent_phone: s.parent_phone ?? '',
             parent_email: s.parent_email ?? '', parent_telegram_id: s.parent_telegram_id ?? '',
             academic_class_id: s.academic_class_id ? String(s.academic_class_id) : '',

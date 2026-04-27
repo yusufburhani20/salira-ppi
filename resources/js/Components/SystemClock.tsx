@@ -31,14 +31,14 @@ export default function SystemClock() {
 
     if (!currentTime) {
         return (
-            <div className="hidden sm:flex flex-col items-end mr-4 text-slate-600 dark:text-slate-300 w-32 h-10 animate-pulse bg-slate-200 dark:bg-slate-700 rounded">
+            <div className="flex flex-col items-end mr-2 sm:mr-4 text-slate-600 dark:text-slate-300 w-32 h-10 animate-pulse bg-slate-200 dark:bg-slate-700 rounded">
             </div>
         );
     }
 
     return (
-        <div className="hidden sm:flex flex-col items-end mr-4 text-slate-600 dark:text-slate-300">
-            <div className="text-sm font-bold bg-gradient-to-r from-indigo-600 to-violet-500 bg-clip-text text-transparent">
+        <div className="flex flex-col items-end mr-2 sm:mr-4 text-slate-600 dark:text-slate-300">
+            <div className="text-sm font-bold text-indigo-600 dark:text-indigo-400">
                 {formatTime(currentTime)}
             </div>
             <div className="text-xs font-medium opacity-80">

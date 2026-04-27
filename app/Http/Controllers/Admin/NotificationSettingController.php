@@ -88,6 +88,7 @@ class NotificationSettingController extends Controller
             'notif_permission_status_email', 'notif_permission_status_telegram', 'notif_permission_status_whatsapp',
             'notif_announcement_email', 'notif_announcement_telegram', 'notif_announcement_whatsapp',
             'notif_student_report_email', 'notif_student_report_telegram', 'notif_student_report_whatsapp',
+            'attendance_alert_enabled',
         ];
 
         foreach ($keys as $key) {
