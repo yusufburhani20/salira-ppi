@@ -26,14 +26,14 @@ class MidtransService
      */
     public function getSnapToken(Bill $bill)
     {
-        // If already has snap token, return it
-        if ($bill->snap_token) {
+        // If already has snap token and not expired, return it
+        if ($bill->snap_token && $bill->snap_token_expires_at && now()->lt($bill->snap_token_expires_at)) {
             return $bill->snap_token;
         }
 
         if (empty($this->serverKey)) {
             Log::warning('Midtrans Server Key is not set.');
-            return null; // or throw exception
+            return null;
         }
 
         $student = $bill->student;
@@ -41,7 +41,7 @@ class MidtransService
         // Payload for Midtrans
         $params = [
             'transaction_details' => [
-                'order_id' => $bill->bill_number,
+                'order_id' => $bill->bill_number . '-' . time(), // unique order ID to allow retry
                 'gross_amount' => (int) $bill->amount,
             ],
             'customer_details' => [
@@ -65,7 +65,10 @@ class MidtransService
 
             if ($response->successful()) {
                 $snapToken = $response->json('token');
-                $bill->update(['snap_token' => $snapToken]);
+                $bill->update([
+                    'snap_token' => $snapToken,
+                    'snap_token_expires_at' => now()->addHours(24),
+                ]);
                 return $snapToken;
             }
 
@@ -76,6 +79,14 @@ class MidtransService
 
         return null;
     }
+
+    public function regenerateSnapToken(Bill $bill): ?string
+    {
+        // Force clear old token so getSnapToken creates a new one
+        $bill->update(['snap_token' => null, 'snap_token_expires_at' => null]);
+        return $this->getSnapToken($bill);
+    }
+
 
     /**
      * Check transaction status directly to Midtrans API.

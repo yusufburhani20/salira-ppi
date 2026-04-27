@@ -43,10 +43,10 @@ class MidtransController extends Controller
             if ($fraudStatus == 'challenge') {
                 $bill->update(['status' => 'pending']);
             } else if ($fraudStatus == 'accept') {
-                $this->markAsPaid($bill);
+                $this->markAsPaid($bill, $payload);
             }
         } else if ($transactionStatus == 'settlement') {
-            $this->markAsPaid($bill);
+            $this->markAsPaid($bill, $payload);
         } else if ($transactionStatus == 'cancel' || $transactionStatus == 'deny' || $transactionStatus == 'expire') {
             $bill->update(['status' => 'expired']);
         } else if ($transactionStatus == 'pending') {
@@ -56,14 +56,17 @@ class MidtransController extends Controller
         return response()->json(['status' => 'ok']);
     }
 
-    protected function markAsPaid(Bill $bill)
+    protected function markAsPaid(Bill $bill, array $payload = [])
     {
         if ($bill->status !== 'paid') {
+            $paymentMethod = $payload['payment_type'] ?? null;
+
             $bill->update([
-                'status' => 'paid',
-                'paid_at' => now()
+                'status'         => 'paid',
+                'paid_at'        => now(),
+                'payment_method' => $paymentMethod,
             ]);
-            
+
             // Notify via Telegram & Email
             $bill->student->notify(new BillPaidNotification($bill));
         }

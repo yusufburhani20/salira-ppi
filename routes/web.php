@@ -244,6 +244,7 @@ Route::post('/webhook/midtrans', [\App\Http\Controllers\Webhook\MidtransControll
 // Public Invoice Page
 Route::get('/invoice/{bill_number}', [\App\Http\Controllers\InvoiceController::class, 'show'])->name('invoice.show');
 Route::get('/invoice/{bill_number}/pdf', [\App\Http\Controllers\InvoiceController::class, 'downloadPdf'])->name('invoice.pdf');
+Route::post('/invoice/{bill_number}/regenerate-token', [\App\Http\Controllers\InvoiceController::class, 'regenerateToken'])->name('invoice.regenerate-token');
 
 // Student Portal Routes
 Route::prefix('portal')->name('portal.')->group(function () {

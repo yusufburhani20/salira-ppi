@@ -15,20 +15,43 @@ class InvoiceController extends Controller
     {
         $bill = Bill::with('student')->where('bill_number', $bill_number)->firstOrFail();
 
-        // Ensure token exists if unpaid
-        if ($bill->status !== 'paid' && !$bill->snap_token) {
-            $midtransService = new MidtransService();
-            $midtransService->getSnapToken($bill);
-            $bill->refresh();
+        $midtransService = new MidtransService();
+
+        // Ensure token exists and is valid if unpaid
+        if ($bill->status !== 'paid') {
+            if (!$bill->snap_token || ($bill->snap_token_expires_at && now()->gt($bill->snap_token_expires_at))) {
+                $midtransService->regenerateSnapToken($bill);
+                $bill->refresh();
+            }
         }
 
         $isProduction = env('MIDTRANS_IS_PRODUCTION', false);
+        $snapTokenExpired = $bill->snap_token_expires_at && now()->gt($bill->snap_token_expires_at);
 
         return Inertia::render('Invoice/Show', [
-            'bill' => $bill,
-            'isProduction' => $isProduction,
-            'clientKey' => env('MIDTRANS_CLIENT_KEY')
+            'bill'             => $bill,
+            'isProduction'     => $isProduction,
+            'clientKey'        => env('MIDTRANS_CLIENT_KEY'),
+            'snapTokenExpired' => $snapTokenExpired,
         ]);
+    }
+
+    public function regenerateToken($bill_number)
+    {
+        $bill = Bill::with('student')->where('bill_number', $bill_number)->firstOrFail();
+
+        if ($bill->status === 'paid') {
+            return response()->json(['error' => 'Tagihan sudah lunas.'], 422);
+        }
+
+        $midtransService = new MidtransService();
+        $token = $midtransService->regenerateSnapToken($bill);
+
+        if (!$token) {
+            return response()->json(['error' => 'Gagal membuat token baru. Periksa konfigurasi Midtrans.'], 500);
+        }
+
+        return response()->json(['snap_token' => $token]);
     }
 
     public function downloadPdf($bill_number)
