@@ -45,4 +45,9 @@ class Student extends Authenticatable
     {
         return $this->hasMany(StudentConsultation::class);
     }
+
+    public function routeNotificationForMail($notification)
+    {
+        return $this->parent_email;
+    }
 }

@@ -4,6 +4,7 @@ namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
+use Illuminate\Notifications\Messages\MailMessage;
 use App\Models\Setting;
 use App\Services\TelegramService;
 
@@ -31,6 +32,11 @@ class StudentAbsenceAlert extends Notification
         if (Setting::get('notif_channel_whatsapp', '1') === '1' && Setting::get('notif_absence_whatsapp', '1') === '1') {
             if (!empty($notifiable->parent_phone)) {
                 $channels[] = \App\Notifications\Channels\WhatsAppChannel::class;
+            }
+        }
+        if (Setting::get('notif_channel_email', '1') === '1' && Setting::get('notif_absence_email', '1') === '1') {
+            if (!empty($notifiable->parent_email)) {
+                $channels[] = 'mail';
             }
         }
         return $channels;
@@ -80,5 +86,17 @@ class StudentAbsenceAlert extends Notification
             'phone' => $notifiable->parent_phone,
             'message' => $message
         ];
+    }
+
+    public function toMail($notifiable)
+    {
+        if (empty($notifiable->parent_email)) return null;
+
+        return (new MailMessage)
+            ->subject('Peringatan Absensi SALIRA')
+            ->greeting("Halo Bapak/Ibu wali dari {$this->student->name},")
+            ->line("Kami informasikan bahwa hingga pukul " . date('H:i') . ", anak Anda belum tercatat melakukan presensi kehadiran di sekolah.")
+            ->line("Mohon konfirmasi status kehadiran anak Anda melalui portal kami.")
+            ->action('Buka Portal Siswa', url('/portal'));
     }
 }
