@@ -38,6 +38,8 @@ export default function NotificationSettings({ auth, settings, bot_username }: P
         notif_announcement_email: settings.notif_announcement_email as boolean,
         notif_announcement_telegram: settings.notif_announcement_telegram as boolean,
         notif_announcement_whatsapp: settings.notif_announcement_whatsapp as boolean,
+        notif_student_report_email: settings.notif_student_report_email as boolean,
+        notif_student_report_telegram: settings.notif_student_report_telegram as boolean,
         notif_student_report_whatsapp: settings.notif_student_report_whatsapp as boolean,
         attendance_alert_enabled: settings.attendance_alert_enabled as boolean,
         attendance_alert_time: settings.attendance_alert_time as string,
