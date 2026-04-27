@@ -35,6 +35,10 @@ class NotificationController extends Controller
             // Ambil action_url dari data notifikasi
             if (!empty($notification->data['action_url'])) {
                 $url = $notification->data['action_url'];
+                // Fix for old notifications that have incorrect action_url
+                if ($url === '/user/permissions') {
+                    $url = '/permissions';
+                }
             }
         }
 
