@@ -170,6 +170,13 @@ class MidtransService
             ],
             'item_details'      => $itemDetails,
             'enabled_payments'  => $method['enabled_payments'],
+            'shopeepay' => [
+                'callback_url' => route('invoice.show', $bill->bill_number),
+            ],
+            'gopay' => [
+                'enable_callback' => true,
+                'callback_url' => route('invoice.show', $bill->bill_number),
+            ],
         ];
 
         try {
