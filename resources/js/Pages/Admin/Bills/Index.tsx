@@ -120,12 +120,24 @@ export default function BillIndex({ bills, classes, finance_contact }: any) {
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                 {bill.status !== 'paid' && (
-                                                    <button 
-                                                        onClick={() => router.post(route('admin.bills.sync', bill.id))}
-                                                        className="text-indigo-600 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 px-3 py-1 rounded"
-                                                    >
-                                                        Refresh
-                                                    </button>
+                                                    <>
+                                                        <button 
+                                                            onClick={() => router.post(route('admin.bills.sync', bill.id))}
+                                                            className="text-indigo-600 hover:text-indigo-900 bg-indigo-50 hover:bg-indigo-100 px-3 py-1 rounded mb-1 sm:mb-0 sm:mr-2"
+                                                        >
+                                                            Refresh
+                                                        </button>
+                                                        <button 
+                                                            onClick={() => {
+                                                                if(confirm('Apakah Anda yakin tagihan ini sudah dibayar secara CASH? Tagihan akan ditandai lunas dan notifikasi akan dikirim ke wali murid.')) {
+                                                                    router.post(route('admin.bills.mark-paid', bill.id), {}, { preserveScroll: true });
+                                                                }
+                                                            }}
+                                                            className="text-green-600 hover:text-green-900 bg-green-50 hover:bg-green-100 px-3 py-1 rounded"
+                                                        >
+                                                            Lunas Cash
+                                                        </button>
+                                                    </>
                                                 )}
                                                 <a href={route('invoice.show', bill.bill_number)} target="_blank" className="ml-2 text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded border border-gray-200" rel="noreferrer">
                                                     Lihat

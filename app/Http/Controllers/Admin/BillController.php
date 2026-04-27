@@ -128,6 +128,23 @@ class BillController extends Controller
         return redirect()->back()->with('success', $msg);
     }
 
+    public function markAsPaidManual(Request $request, Bill $bill)
+    {
+        if ($bill->status === 'paid') {
+            return redirect()->back()->with('error', 'Tagihan ini sudah lunas.');
+        }
+
+        $bill->update([
+            'status' => 'paid',
+            'paid_at' => now()
+        ]);
+
+        // Kirim notifikasi lunas
+        $bill->student->notify(new \App\Notifications\BillPaidNotification($bill));
+
+        return redirect()->back()->with('success', 'Tagihan berhasil ditandai sebagai lunas (pembayaran manual/cash).');
+    }
+
     public function updateSettings(Request $request)
     {
         $request->validate([
