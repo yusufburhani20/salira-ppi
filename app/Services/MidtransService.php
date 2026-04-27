@@ -88,10 +88,13 @@ class MidtransService
         $feeAmount = (int) ceil($baseFee + $tax);
 
         if ($method['fee_type'] === 'percent') {
-            $label = "Biaya Layanan {$method['label']} ({$method['fee_value']}% + PPN 11%)";
+            $label = "Biaya {$method['label']} ({$method['fee_value']}%+PPN)";
         } else {
-            $label = "Biaya Layanan {$method['label']} (Inc. PPN 11%)";
+            $label = "Biaya {$method['label']} (+PPN)";
         }
+
+        // Pastikan max 50 karakter untuk Midtrans API
+        $label = substr($label, 0, 50);
 
         return ['amount' => $feeAmount, 'label' => $label];
     }
