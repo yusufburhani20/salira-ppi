@@ -25,7 +25,7 @@ class SendAbsenceAlerts extends Command
         $today = Carbon::today()->toDateString();
 
         // 1. Ambil semua siswa AKTIF
-        $students = Student::where('status', 'aktif')->get();
+        $students = Student::where('status', 'active')->get();
 
         $count = 0;
         foreach ($students as $student) {
