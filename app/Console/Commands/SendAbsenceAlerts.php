@@ -24,10 +24,8 @@ class SendAbsenceAlerts extends Command
 
         $today = Carbon::today()->toDateString();
 
-        // 1. Ambil semua siswa AKTIF yang punya nomor Telegram wali
-        $students = Student::where('status', 'aktif')
-            ->whereNotNull('parent_telegram_id')
-            ->get();
+        // 1. Ambil semua siswa AKTIF
+        $students = Student::where('status', 'aktif')->get();
 
         $count = 0;
         foreach ($students as $student) {
@@ -37,7 +35,7 @@ class SendAbsenceAlerts extends Command
                 ->exists();
 
             if (!$hasAttendance) {
-                // 3. Kirim notifikasi langsung ke siswa (channel Telegram dikirim ke parent_telegram_id)
+                // 3. Kirim notifikasi langsung ke siswa (channel Telegram/WA/DB)
                 $student->notify(new StudentAbsenceAlert($student, $today));
                 $count++;
             }
