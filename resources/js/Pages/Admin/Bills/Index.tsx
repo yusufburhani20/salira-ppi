@@ -142,6 +142,9 @@ export default function BillIndex({ bills, classes, finance_contact }: any) {
                                                 <a href={route('invoice.show', bill.bill_number)} target="_blank" className="ml-2 text-gray-600 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded border border-gray-200" rel="noreferrer">
                                                     Lihat
                                                 </a>
+                                                <a href={`/invoice/${bill.bill_number}/pdf`} target="_blank" className="ml-2 text-red-600 hover:text-red-900 bg-red-50 hover:bg-red-100 px-3 py-1 rounded border border-red-200" rel="noreferrer">
+                                                    PDF
+                                                </a>
                                             </td>
                                         </tr>
                                     ))}

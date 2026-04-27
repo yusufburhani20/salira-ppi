@@ -41,6 +41,10 @@ export default function InvoiceShow({ bill, isProduction, clientKey }: any) {
         });
     };
 
+    const handleDownloadPdf = () => {
+        window.open(`/invoice/${bill.bill_number}/pdf`, '_blank');
+    };
+
     return (
         <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
             <Head title={`Invoice ${bill.bill_number}`} />
@@ -116,6 +120,19 @@ export default function InvoiceShow({ bill, isProduction, clientKey }: any) {
                             <p className="text-sm text-green-600 mt-1">Terima kasih atas pembayaran Anda.</p>
                         </div>
                     )}
+
+                    {/* Tombol Download PDF - Tampil untuk semua status */}
+                    <div className="mt-6 border-t border-gray-100 pt-4">
+                        <button
+                            onClick={handleDownloadPdf}
+                            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 border border-indigo-300 rounded-lg text-sm font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-colors"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            Unduh Invoice PDF
+                        </button>
+                    </div>
 
                 </div>
             </div>
