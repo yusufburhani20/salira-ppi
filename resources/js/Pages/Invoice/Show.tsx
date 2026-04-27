@@ -1,243 +1,313 @@
 import { Head } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 
-export default function InvoiceShow({ bill: initialBill, isProduction, clientKey, snapTokenExpired, adminFee }: any) {
-    const [isLoaded, setIsLoaded] = useState(false);
-    const [bill, setBill] = useState(initialBill);
-    const [isRegenerating, setIsRegenerating] = useState(false);
-    const [snapInstance, setSnapInstance] = useState<any>(null);
+// ── Icon components ──────────────────────────────────────────────────────────
+const QrisIcon = () => (
+    <svg viewBox="0 0 48 48" className="w-8 h-8" fill="none">
+        <rect width="48" height="48" rx="8" fill="#00A8E0" opacity=".12"/>
+        <rect x="8" y="8" width="14" height="14" rx="2" stroke="#00A8E0" strokeWidth="2.5"/>
+        <rect x="11" y="11" width="8" height="8" rx="1" fill="#00A8E0"/>
+        <rect x="26" y="8" width="14" height="14" rx="2" stroke="#00A8E0" strokeWidth="2.5"/>
+        <rect x="29" y="11" width="8" height="8" rx="1" fill="#00A8E0"/>
+        <rect x="8" y="26" width="14" height="14" rx="2" stroke="#00A8E0" strokeWidth="2.5"/>
+        <rect x="11" y="29" width="8" height="8" rx="1" fill="#00A8E0"/>
+        <rect x="26" y="26" width="4" height="4" fill="#00A8E0"/>
+        <rect x="34" y="26" width="6" height="4" fill="#00A8E0"/>
+        <rect x="26" y="34" width="6" height="6" fill="#00A8E0"/>
+        <rect x="36" y="32" width="4" height="8" fill="#00A8E0"/>
+    </svg>
+);
+const GopayIcon = () => (
+    <svg viewBox="0 0 48 48" className="w-8 h-8" fill="none">
+        <rect width="48" height="48" rx="8" fill="#00AED6" opacity=".12"/>
+        <circle cx="24" cy="24" r="13" stroke="#00AED6" strokeWidth="2.5"/>
+        <path d="M18 24h8m0 0l-3-3m3 3l-3 3" stroke="#00AED6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+);
+const ShopeepayIcon = () => (
+    <svg viewBox="0 0 48 48" className="w-8 h-8" fill="none">
+        <rect width="48" height="48" rx="8" fill="#EE4D2D" opacity=".12"/>
+        <path d="M24 12c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12S30.627 12 24 12z" stroke="#EE4D2D" strokeWidth="2.5"/>
+        <path d="M20 22s0-4 4-4 4 4 4 4M20 26s0 4 4 4 4-4 4-4" stroke="#EE4D2D" strokeWidth="2.5" strokeLinecap="round"/>
+    </svg>
+);
+const BankIcon = () => (
+    <svg viewBox="0 0 48 48" className="w-8 h-8" fill="none">
+        <rect width="48" height="48" rx="8" fill="#4f46e5" opacity=".10"/>
+        <path d="M10 22h28M24 10l14 12H10L24 10z" stroke="#4f46e5" strokeWidth="2.5" strokeLinejoin="round"/>
+        <rect x="14" y="22" width="4" height="10" fill="#4f46e5" opacity=".4"/>
+        <rect x="22" y="22" width="4" height="10" fill="#4f46e5" opacity=".4"/>
+        <rect x="30" y="22" width="4" height="10" fill="#4f46e5" opacity=".4"/>
+        <rect x="10" y="32" width="28" height="3" rx="1" fill="#4f46e5"/>
+    </svg>
+);
+const StoreIcon = () => (
+    <svg viewBox="0 0 48 48" className="w-8 h-8" fill="none">
+        <rect width="48" height="48" rx="8" fill="#f59e0b" opacity=".12"/>
+        <path d="M10 20v18h28V20" stroke="#f59e0b" strokeWidth="2.5" strokeLinejoin="round"/>
+        <path d="M8 20l4-10h24l4 10" stroke="#f59e0b" strokeWidth="2.5" strokeLinejoin="round"/>
+        <rect x="20" y="28" width="8" height="10" rx="2" fill="#f59e0b" opacity=".5"/>
+        <rect x="14" y="26" width="6" height="6" rx="1" stroke="#f59e0b" strokeWidth="2"/>
+    </svg>
+);
 
+const ICONS: Record<string, () => JSX.Element> = {
+    qris: QrisIcon,
+    gopay: GopayIcon,
+    shopeepay: ShopeepayIcon,
+    bank: BankIcon,
+    store: StoreIcon,
+};
+
+// ── Main Component ────────────────────────────────────────────────────────────
+export default function InvoiceShow({ bill: initialBill, isProduction, clientKey, paymentMethods, adminFee }: any) {
+    const [bill, setBill]               = useState(initialBill);
+    const [isSnapLoaded, setSnapLoaded] = useState(false);
+    const [selectedMethod, setSelected] = useState<string | null>(null);
+    const [isProcessing, setProcessing] = useState(false);
+    const [error, setError]             = useState<string | null>(null);
+
+    // Load Midtrans Snap.js
     useEffect(() => {
-        // Build snap script
         const script = document.createElement('script');
         script.src = isProduction
             ? 'https://app.midtrans.com/snap/snap.js'
             : 'https://app.sandbox.midtrans.com/snap/snap.js';
         script.setAttribute('data-client-key', clientKey);
-
-        script.onload = () => setIsLoaded(true);
+        script.onload = () => setSnapLoaded(true);
         document.body.appendChild(script);
-
-        return () => {
-            if (document.body.contains(script)) {
-                document.body.removeChild(script);
-            }
-        };
+        return () => { if (document.body.contains(script)) document.body.removeChild(script); };
     }, [clientKey, isProduction]);
 
-    const openSnapPayment = (token: string) => {
-        window.snap.pay(token, {
-            onSuccess: function() {
-                window.location.reload();
-            },
-            onPending: function() {
-                alert('Pembayaran sedang diproses. Silakan selesaikan sesuai petunjuk.');
-            },
-            onError: function(result: any) {
-                console.error('Snap Error:', result);
-                alert('Terjadi kesalahan. Silakan klik "Ganti / Coba Lagi" untuk memperbarui sesi pembayaran.');
-            },
-            onClose: function() {
-                // User closed without paying, allow them to reopen
-            }
-        });
-    };
+    const formatRp = (n: number) => 'Rp ' + new Intl.NumberFormat('id-ID').format(n);
 
-    const handlePay = () => {
-        if (!isLoaded || !bill.snap_token) return;
-        openSnapPayment(bill.snap_token);
-    };
+    const handlePay = async (methodKey: string) => {
+        if (!isSnapLoaded) return;
+        setSelected(methodKey);
+        setProcessing(true);
+        setError(null);
 
-    const handleRegenerateToken = async () => {
-        setIsRegenerating(true);
         try {
-            const response = await fetch(`/invoice/${bill.bill_number}/regenerate-token`, {
+            const res = await fetch(`/invoice/${bill.bill_number}/prepare-payment`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ method_group: methodKey }),
             });
-            const data = await response.json();
-            if (data.snap_token) {
-                setBill({ ...bill, snap_token: data.snap_token });
-                // Automatically open payment after regenerate
-                setTimeout(() => openSnapPayment(data.snap_token), 300);
-            } else {
-                alert(data.error || 'Gagal memperbarui sesi. Muat ulang halaman.');
+            const data = await res.json();
+
+            if (!res.ok || data.error) {
+                setError(data.error || 'Gagal menyiapkan pembayaran.');
+                setProcessing(false);
+                return;
             }
+
+            // Update local bill state with new admin_fee
+            setBill((prev: any) => ({ ...prev, admin_fee: data.admin_fee?.amount ?? 0 }));
+
+            window.snap.pay(data.snap_token, {
+                onSuccess: () => window.location.reload(),
+                onPending: () => {
+                    setProcessing(false);
+                    setSelected(null);
+                },
+                onError: () => {
+                    setError('Pembayaran gagal. Silakan pilih metode lain atau coba lagi.');
+                    setProcessing(false);
+                    setSelected(null);
+                },
+                onClose: () => {
+                    setProcessing(false);
+                    setSelected(null);
+                },
+            });
         } catch {
-            alert('Gagal menghubungi server. Periksa koneksi internet Anda.');
-        } finally {
-            setIsRegenerating(false);
+            setError('Tidak dapat menghubungi server. Periksa koneksi internet Anda.');
+            setProcessing(false);
+            setSelected(null);
         }
     };
 
-    const handleDownloadPdf = () => {
-        window.open(`/invoice/${bill.bill_number}/pdf`, '_blank');
+    const statusConfig: Record<string, { label: string; bg: string; text: string; dot: string }> = {
+        paid:    { label: 'LUNAS',          bg: 'bg-green-50',  text: 'text-green-700',  dot: 'bg-green-500' },
+        pending: { label: 'MENUNGGU',        bg: 'bg-yellow-50', text: 'text-yellow-700', dot: 'bg-yellow-500' },
+        expired: { label: 'KADALUARSA',      bg: 'bg-orange-50', text: 'text-orange-700', dot: 'bg-orange-500' },
+        unpaid:  { label: 'BELUM DIBAYAR',   bg: 'bg-red-50',    text: 'text-red-700',    dot: 'bg-red-500' },
+        failed:  { label: 'GAGAL',           bg: 'bg-red-50',    text: 'text-red-700',    dot: 'bg-red-500' },
     };
+    const st = statusConfig[bill.status] ?? statusConfig.unpaid;
 
-    const statusConfig: Record<string, { label: string; className: string }> = {
-        paid: { label: 'LUNAS', className: 'bg-green-100 text-green-800' },
-        pending: { label: 'MENUNGGU PEMBAYARAN', className: 'bg-yellow-100 text-yellow-800' },
-        expired: { label: 'KADALUARSA', className: 'bg-orange-100 text-orange-800' },
-        unpaid: { label: 'BELUM DIBAYAR', className: 'bg-red-100 text-red-800' },
-        failed: { label: 'GAGAL', className: 'bg-red-100 text-red-800' },
-    };
-
-    const status = statusConfig[bill.status] ?? { label: bill.status.toUpperCase(), className: 'bg-gray-100 text-gray-800' };
+    const methodsArray: any[] = paymentMethods ? Object.values(paymentMethods) : [];
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-100 to-indigo-50 flex items-center justify-center p-4">
+        <div className="min-h-screen bg-gradient-to-br from-slate-100 to-indigo-50 flex items-start justify-center p-4 pt-10 pb-16">
             <Head title={`Invoice ${bill.bill_number}`} />
 
-            <div className="max-w-xl w-full bg-white rounded-2xl shadow-xl ring-1 ring-black/5 overflow-hidden">
-                {/* Header */}
-                <div className="bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-8 text-center text-white">
-                    <h1 className="text-2xl font-bold tracking-tight">Kuitansi Pembayaran SPP</h1>
-                    <p className="mt-1.5 text-indigo-200 text-sm">SALIRA - Sistem Administrasi Cerdas</p>
-                </div>
-
-                <div className="px-6 py-8">
-                    {/* Invoice Info */}
-                    <div className="flex justify-between items-end border-b border-gray-100 pb-6 mb-6">
+            <div className="w-full max-w-lg">
+                {/* ── Header card ── */}
+                <div className="bg-gradient-to-r from-indigo-600 to-violet-600 rounded-2xl px-6 pt-8 pb-10 text-white shadow-xl shadow-indigo-200 mb-[-20px] relative z-0">
+                    <p className="text-indigo-200 text-xs font-semibold uppercase tracking-widest mb-1">SALIRA · Kuitansi Pembayaran</p>
+                    <h1 className="text-2xl font-bold">{bill.title}</h1>
+                    <p className="text-indigo-200 text-sm mt-1">Bulan {bill.month} / {bill.year}</p>
+                    <div className="flex justify-between items-end mt-6">
                         <div>
-                            <p className="text-xs text-gray-500 font-medium">Tagihan Kepada:</p>
-                            <h2 className="text-xl font-bold text-gray-900 mt-1">{bill.student.name}</h2>
-                            <p className="text-sm text-gray-500">NIS: {bill.student.nis ?? '-'}</p>
+                            <p className="text-indigo-200 text-xs">Tagihan kepada</p>
+                            <p className="font-bold text-lg leading-tight">{bill.student.name}</p>
+                            <p className="text-indigo-200 text-xs">NIS: {bill.student.nis ?? '-'}</p>
                         </div>
                         <div className="text-right">
-                            <p className="text-xs text-gray-500 font-medium">No. Invoice</p>
-                            <p className="text-xs font-semibold text-gray-700 mt-1">{bill.bill_number}</p>
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold mt-2 ${status.className}`}>
-                                {status.label}
-                            </span>
+                            <p className="text-indigo-200 text-xs">No. Invoice</p>
+                            <p className="text-xs font-mono font-semibold opacity-90">{bill.bill_number}</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* ── Main card ── */}
+                <div className="bg-white rounded-2xl shadow-lg ring-1 ring-black/5 relative z-10 px-6 pt-8 pb-6">
+
+                    {/* Status + Amount */}
+                    <div className="flex items-center justify-between mb-6">
+                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${st.bg} ${st.text}`}>
+                            <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`}></span>
+                            {st.label}
+                        </span>
+                        <div className="text-right">
+                            <p className="text-xs text-gray-400">Tagihan SPP</p>
+                            <p className="text-2xl font-black text-indigo-700">{formatRp(bill.amount)}</p>
                         </div>
                     </div>
 
-                    {/* Detail */}
-                    <div className="space-y-3 mb-8">
-                        <div className="flex justify-between text-sm">
-                            <span className="text-gray-500">Keterangan:</span>
-                            <span className="font-medium text-gray-900 text-right ml-4">{bill.title}</span>
-                        </div>
-                        <div className="flex justify-between text-sm">
-                            <span className="text-gray-500">Periode:</span>
-                            <span className="font-medium text-gray-900">Bulan {bill.month} / {bill.year}</span>
-                        </div>
-                        {bill.paid_at && (
-                            <div className="flex justify-between text-sm">
-                                <span className="text-gray-500">Tanggal Lunas:</span>
-                                <span className="font-medium text-green-700">
-                                    {new Date(bill.paid_at).toLocaleString('id-ID', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                                </span>
+                    {/* ── PAID STATE ── */}
+                    {bill.status === 'paid' && (
+                        <>
+                            <div className="bg-green-50 border border-green-100 rounded-xl p-4 text-center mb-4">
+                                <svg className="mx-auto h-10 w-10 text-green-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <h3 className="font-bold text-green-800">Tagihan Telah Lunas</h3>
+                                <p className="text-xs text-green-600 mt-1">Terima kasih atas pembayaran Anda.</p>
                             </div>
-                        )}
-                        {bill.payment_method && (
-                            <div className="flex justify-between text-sm">
-                                <span className="text-gray-500">Metode Bayar:</span>
-                                <span className="font-medium text-gray-900 capitalize">{bill.payment_method.replace(/_/g, ' ')}</span>
+                            {/* Details */}
+                            <div className="space-y-2 text-sm border-t pt-4">
+                                {bill.paid_at && (
+                                    <div className="flex justify-between">
+                                        <span className="text-gray-500">Tanggal Lunas</span>
+                                        <span className="font-medium text-gray-800">
+                                            {new Date(bill.paid_at).toLocaleString('id-ID', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                                        </span>
+                                    </div>
+                                )}
+                                {bill.payment_method && (
+                                    <div className="flex justify-between">
+                                        <span className="text-gray-500">Metode Bayar</span>
+                                        <span className="font-medium text-gray-800 capitalize">{bill.payment_method.replace(/_/g, ' ')}</span>
+                                    </div>
+                                )}
+                                {adminFee && adminFee.amount > 0 && (
+                                    <div className="flex justify-between">
+                                        <span className="text-gray-500">{adminFee.label}</span>
+                                        <span className="text-orange-600 font-medium">+ {formatRp(adminFee.amount)}</span>
+                                    </div>
+                                )}
+                                <div className="flex justify-between font-bold pt-2 border-t">
+                                    <span className="text-gray-700">Total Dibayar</span>
+                                    <span className="text-indigo-700">{formatRp(bill.amount + (adminFee?.amount ?? 0))}</span>
+                                </div>
                             </div>
-                        )}
-                        <div className="pt-3 mt-2 border-t border-gray-100 space-y-2">
-                            <div className="flex justify-between text-sm">
-                                <span className="text-gray-500">Tagihan SPP</span>
-                                <span className="text-gray-700">Rp {new Intl.NumberFormat('id-ID').format(bill.amount)}</span>
-                            </div>
-                            {adminFee && adminFee.amount > 0 && (
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-gray-500">{adminFee.label}</span>
-                                    <span className="text-orange-600 font-medium">+ Rp {new Intl.NumberFormat('id-ID').format(adminFee.amount)}</span>
+                        </>
+                    )}
+
+                    {/* ── UNPAID / EXPIRED STATE — Method Selection ── */}
+                    {bill.status !== 'paid' && (
+                        <>
+                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Pilih Metode Pembayaran</p>
+
+                            {error && (
+                                <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 flex items-start gap-2">
+                                    <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    {error}
                                 </div>
                             )}
-                            <div className="flex justify-between items-center pt-2 border-t border-gray-100">
-                                <span className="font-bold text-gray-900 text-base">Total Pembayaran</span>
-                                <span className="font-bold text-indigo-600 text-xl">
-                                    Rp {new Intl.NumberFormat('id-ID').format(bill.amount + (adminFee ? adminFee.amount : 0))}
-                                </span>
+
+                            <div className="space-y-3">
+                                {methodsArray.map((method: any) => {
+                                    const Icon = ICONS[method.icon] ?? BankIcon;
+                                    const isThisLoading = isProcessing && selectedMethod === method.key;
+                                    const isDisabled    = isProcessing && selectedMethod !== method.key;
+                                    return (
+                                        <button
+                                            key={method.key}
+                                            onClick={() => handlePay(method.key)}
+                                            disabled={isProcessing || !isSnapLoaded}
+                                            className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 text-left transition-all
+                                                ${isThisLoading
+                                                    ? 'border-indigo-400 bg-indigo-50 scale-[0.99]'
+                                                    : isDisabled
+                                                    ? 'border-gray-100 bg-gray-50 opacity-50 cursor-not-allowed'
+                                                    : 'border-gray-150 hover:border-indigo-300 hover:bg-indigo-50/50 hover:shadow-sm active:scale-[0.98] cursor-pointer'
+                                                }`}
+                                        >
+                                            <div className="flex-shrink-0">
+                                                <Icon />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-bold text-gray-900 text-sm">{method.label}</p>
+                                                <p className="text-xs text-gray-500 truncate">{method.description}</p>
+                                            </div>
+                                            <div className="text-right flex-shrink-0">
+                                                {method.fee_amount > 0 ? (
+                                                    <>
+                                                        <p className="text-xs text-orange-500 font-semibold">
+                                                            +{method.fee_type === 'percent'
+                                                                ? `${method.fee_value}%`
+                                                                : formatRp(method.fee_value)}
+                                                        </p>
+                                                        <p className="text-xs font-bold text-gray-700">Total: {formatRp(method.total)}</p>
+                                                    </>
+                                                ) : (
+                                                    <p className="text-xs font-bold text-green-600">Gratis</p>
+                                                )}
+                                                {isThisLoading
+                                                    ? <span className="inline-block animate-spin w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full mt-1"></span>
+                                                    : <svg className="w-4 h-4 text-gray-300 mt-1 ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7"/></svg>
+                                                }
+                                            </div>
+                                        </button>
+                                    );
+                                })}
                             </div>
-                        </div>
-                    </div>
 
-                    {/* EXPIRED STATE */}
-                    {(bill.status === 'expired' || snapTokenExpired) && bill.status !== 'paid' && (
-                        <div className="mb-4 p-4 bg-orange-50 rounded-xl border border-orange-200 text-center">
-                            <svg className="mx-auto h-10 w-10 text-orange-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <h3 className="text-sm font-bold text-orange-800">Sesi Pembayaran Kadaluarsa</h3>
-                            <p className="text-xs text-orange-600 mt-1">Token pembayaran sudah habis masa berlakunya. Klik tombol di bawah untuk memperbarui.</p>
-                        </div>
-                    )}
-
-                    {/* PAYMENT BUTTONS (for unpaid/expired) */}
-                    {bill.status !== 'paid' && (
-                        <div className="space-y-3 mt-4">
-                            {/* Main Pay / Retry button */}
-                            <button
-                                onClick={handlePay}
-                                disabled={!isLoaded || !bill.snap_token}
-                                className={`w-full flex justify-center items-center gap-2 py-3 px-4 rounded-xl text-sm font-bold text-white shadow-sm transition-all
-                                    ${(!isLoaded || !bill.snap_token) ? 'bg-indigo-300 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98]'}`}
-                            >
-                                {!isLoaded ? (
-                                    <><span className="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full"></span> Menyiapkan...</>
-                                ) : (
-                                    'Bayar Sekarang'
-                                )}
-                            </button>
-
-                            {/* Change method / Regenerate button */}
-                            <button
-                                onClick={handleRegenerateToken}
-                                disabled={isRegenerating || !isLoaded}
-                                className="w-full flex justify-center items-center gap-2 py-2.5 px-4 rounded-xl text-sm font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 hover:bg-indigo-100 transition-all disabled:opacity-60"
-                            >
-                                {isRegenerating ? (
-                                    <><span className="animate-spin inline-block w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full"></span> Memperbarui sesi...</>
-                                ) : (
-                                    <>
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                        </svg>
-                                        Ganti Metode / Perbarui Sesi
-                                    </>
-                                )}
-                            </button>
-                            <p className="text-center text-xs text-gray-400">
-                                Pembayaran diproses dengan aman oleh Midtrans.
+                            {!isSnapLoaded && (
+                                <p className="text-center text-xs text-gray-400 mt-3 flex items-center justify-center gap-1">
+                                    <span className="animate-spin inline-block w-3 h-3 border border-gray-400 border-t-transparent rounded-full"></span>
+                                    Menyiapkan payment gateway...
+                                </p>
+                            )}
+                            <p className="text-center text-xs text-gray-400 mt-4">
+                                Pembayaran diproses dengan aman oleh <span className="font-semibold">Midtrans</span>
                             </p>
-                        </div>
+                        </>
                     )}
 
-                    {/* PAID STATE */}
-                    {bill.status === 'paid' && (
-                        <div className="mt-2 p-4 bg-green-50 rounded-xl text-center border border-green-100">
-                            <svg className="mx-auto h-12 w-12 text-green-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            <h3 className="text-lg font-bold text-green-800">Tagihan Telah Lunas</h3>
-                            <p className="text-sm text-green-600 mt-1">Terima kasih atas pembayaran Anda.</p>
-                        </div>
-                    )}
-
-                    {/* Download PDF Button */}
-                    <div className="mt-5 border-t border-gray-100 pt-4">
+                    {/* ── Download PDF ── */}
+                    <div className="mt-5 pt-4 border-t border-gray-100">
                         <button
-                            onClick={handleDownloadPdf}
+                            onClick={() => window.open(`/invoice/${bill.bill_number}/pdf`, '_blank')}
                             className="w-full flex items-center justify-center gap-2 py-2.5 px-4 border border-indigo-200 rounded-xl text-sm font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-colors"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                             </svg>
                             Unduh Invoice PDF
                         </button>
                     </div>
                 </div>
+
+                <p className="text-center text-xs text-gray-400 mt-4">
+                    © {new Date().getFullYear()} SALIRA · Sistem Administrasi Sekolah
+                </p>
             </div>
         </div>
     );
 }
 
-declare global {
-    interface Window {
-        snap: any;
-    }
-}
+declare global { interface Window { snap: any; } }

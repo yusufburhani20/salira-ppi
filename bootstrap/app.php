@@ -21,7 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
             '/webhook/telegram',
             '/webhook/midtrans',
             '/portal/attendance/scan',
-            '/invoice/*/regenerate-token',
+            '/invoice/*/prepare-payment',
         ]);
 
         $middleware->alias([

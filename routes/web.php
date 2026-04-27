@@ -179,6 +179,12 @@ Route::middleware('auth')->group(function () {
             ->whereDate('date', today())
             ->first();
         $geofences = \App\Models\Geofence::where('is_active', true)->get();
+        $middleware->validateCsrfTokens(except: [
+            '/webhook/telegram',
+            '/webhook/midtrans',
+            '/portal/attendance/scan',
+            '/invoice/*/prepare-payment',
+        ]);
         return Inertia::render('User/Attendances/Scanner', [
             'todayAttendance' => $todayAttendance,
             'geofences' => $geofences
@@ -244,7 +250,7 @@ Route::post('/webhook/midtrans', [\App\Http\Controllers\Webhook\MidtransControll
 // Public Invoice Page
 Route::get('/invoice/{bill_number}', [\App\Http\Controllers\InvoiceController::class, 'show'])->name('invoice.show');
 Route::get('/invoice/{bill_number}/pdf', [\App\Http\Controllers\InvoiceController::class, 'downloadPdf'])->name('invoice.pdf');
-Route::post('/invoice/{bill_number}/regenerate-token', [\App\Http\Controllers\InvoiceController::class, 'regenerateToken'])->name('invoice.regenerate-token');
+Route::post('/invoice/{bill_number}/prepare-payment', [\App\Http\Controllers\InvoiceController::class, 'preparePayment'])->name('invoice.prepare-payment');
 
 // Student Portal Routes
 Route::prefix('portal')->name('portal.')->group(function () {
