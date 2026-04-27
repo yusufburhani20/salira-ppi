@@ -3,12 +3,13 @@
 namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
 use App\Models\Setting;
 use App\Services\TelegramService;
 
-class StudentAbsenceAlert extends Notification
+class StudentAbsenceAlert extends Notification implements ShouldQueue
 {
     use Queueable;
 
