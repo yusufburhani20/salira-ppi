@@ -14,6 +14,10 @@ interface Settings {
     school_favicon: string | null;
     github_username?: string;
     github_token?: string;
+    // Payment fee
+    midtrans_fee_type: 'none' | 'fixed' | 'percent';
+    midtrans_fee_value: string;
+    midtrans_fee_label: string;
 }
 
 export default function SettingIndex({ auth, settings }: PageProps<{ settings: Settings }>) {
@@ -30,6 +34,9 @@ export default function SettingIndex({ auth, settings }: PageProps<{ settings: S
         school_favicon: null as File | null,
         github_username: settings.github_username || '',
         github_token: settings.github_token || '',
+        midtrans_fee_type: settings.midtrans_fee_type || 'none',
+        midtrans_fee_value: settings.midtrans_fee_value || '0',
+        midtrans_fee_label: settings.midtrans_fee_label || 'Biaya Layanan Pembayaran',
     });
 
     const [isUpdating, setIsUpdating] = useState(false);
@@ -250,6 +257,71 @@ export default function SettingIndex({ auth, settings }: PageProps<{ settings: S
                                         </div>
                                     </div>
                                 </div>
+
+                                {/* PENGATURAN BIAYA ADMIN MIDTRANS */}
+                                <div className="pt-8 mt-8 border-t dark:border-gray-700">
+                                    <h3 className="text-lg font-bold flex items-center gap-2 mb-2">
+                                        <svg className="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                                        Biaya Admin Pembayaran Online
+                                    </h3>
+                                    <p className="text-sm text-gray-500 mb-6">Biaya ini dibebankan ke orang tua saat melakukan pembayaran melalui Midtrans (QRIS, Transfer Bank, dll).</p>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        <div>
+                                            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Jenis Biaya</label>
+                                            <select
+                                                value={data.midtrans_fee_type}
+                                                onChange={e => setData('midtrans_fee_type', e.target.value as any)}
+                                                className="w-full rounded-xl border-gray-300 dark:border-gray-700 dark:bg-gray-900 focus:ring-orange-500 focus:border-orange-500"
+                                            >
+                                                <option value="none">Tidak Ada Biaya</option>
+                                                <option value="fixed">Nominal Tetap (Rp)</option>
+                                                <option value="percent">Persentase (%)</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+                                                {data.midtrans_fee_type === 'percent' ? 'Besar Biaya (%)' : 'Besar Biaya (Rp)'}
+                                            </label>
+                                            <input
+                                                type="number"
+                                                min={0}
+                                                step={data.midtrans_fee_type === 'percent' ? '0.1' : '500'}
+                                                value={data.midtrans_fee_value}
+                                                onChange={e => setData('midtrans_fee_value', e.target.value)}
+                                                disabled={data.midtrans_fee_type === 'none'}
+                                                className="w-full rounded-xl border-gray-300 dark:border-gray-700 dark:bg-gray-900 focus:ring-orange-500 focus:border-orange-500 disabled:opacity-50"
+                                                placeholder={data.midtrans_fee_type === 'percent' ? 'Contoh: 0.7' : 'Contoh: 5000'}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Label Biaya (di Invoice)</label>
+                                            <input
+                                                type="text"
+                                                value={data.midtrans_fee_label}
+                                                onChange={e => setData('midtrans_fee_label', e.target.value)}
+                                                disabled={data.midtrans_fee_type === 'none'}
+                                                className="w-full rounded-xl border-gray-300 dark:border-gray-700 dark:bg-gray-900 focus:ring-orange-500 focus:border-orange-500 disabled:opacity-50"
+                                                placeholder="Biaya Layanan Pembayaran"
+                                            />
+                                        </div>
+                                    </div>
+                                    {data.midtrans_fee_type !== 'none' && (
+                                        <div className="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-xl text-sm text-orange-700">
+                                            <strong>Contoh:</strong> Tagihan SPP Rp 250.000 + biaya{' '}
+                                            {data.midtrans_fee_type === 'fixed'
+                                                ? `Rp ${Number(data.midtrans_fee_value).toLocaleString('id-ID')}`
+                                                : `${data.midtrans_fee_value}% = Rp ${Math.round(250000 * Number(data.midtrans_fee_value) / 100).toLocaleString('id-ID')}`
+                                            }
+                                            {' '}→ orang tua membayar{' '}
+                                            <strong>Rp {(
+                                                data.midtrans_fee_type === 'fixed'
+                                                    ? 250000 + Number(data.midtrans_fee_value)
+                                                    : 250000 + Math.round(250000 * Number(data.midtrans_fee_value) / 100)
+                                            ).toLocaleString('id-ID')}</strong>
+                                        </div>
+                                    )}
+                                </div>
+
                                 {isSuperAdmin && (
                                     <div className="pt-8 mt-8 border-t dark:border-gray-700">
                                         <h3 className="text-lg font-bold flex items-center gap-2 mb-6 text-slate-800 dark:text-slate-200">

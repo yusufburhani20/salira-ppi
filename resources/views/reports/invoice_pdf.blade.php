@@ -143,11 +143,19 @@
                 <td>Bulan {{ $bill->month }} / {{ $bill->year }}</td>
                 <td class="text-right">Rp {{ number_format($bill->amount, 0, ',', '.') }}</td>
             </tr>
+            @if(!empty($admin_fee) && $admin_fee['amount'] > 0)
+            <tr>
+                <td>2</td>
+                <td>{{ $admin_fee['label'] }}</td>
+                <td>-</td>
+                <td class="text-right" style="color: #ea580c;">Rp {{ number_format($admin_fee['amount'], 0, ',', '.') }}</td>
+            </tr>
+            @endif
         </tbody>
         <tfoot>
             <tr>
                 <td colspan="3" class="text-right">Total Pembayaran:</td>
-                <td class="text-right total-amount">Rp {{ number_format($bill->amount, 0, ',', '.') }}</td>
+                <td class="text-right total-amount">Rp {{ number_format($bill->amount + (!empty($admin_fee) ? $admin_fee['amount'] : 0), 0, ',', '.') }}</td>
             </tr>
         </tfoot>
     </table>

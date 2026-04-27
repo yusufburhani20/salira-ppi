@@ -25,16 +25,23 @@ class InvoiceController extends Controller
             }
         }
 
-        $isProduction = env('MIDTRANS_IS_PRODUCTION', false);
+        $isProduction    = env('MIDTRANS_IS_PRODUCTION', false);
         $snapTokenExpired = $bill->snap_token_expires_at && now()->gt($bill->snap_token_expires_at);
+
+        // Calculate fee for display (even if already paid, show what was charged)
+        $adminFeeData = $bill->admin_fee > 0
+            ? ['amount' => (int) $bill->admin_fee, 'label' => Setting::get('midtrans_fee_label', 'Biaya Layanan Pembayaran')]
+            : $midtransService->calculateAdminFee((int) $bill->amount);
 
         return Inertia::render('Invoice/Show', [
             'bill'             => $bill,
             'isProduction'     => $isProduction,
             'clientKey'        => env('MIDTRANS_CLIENT_KEY'),
             'snapTokenExpired' => $snapTokenExpired,
+            'adminFee'         => $adminFeeData,
         ]);
     }
+
 
     public function regenerateToken($bill_number)
     {
@@ -58,13 +65,19 @@ class InvoiceController extends Controller
     {
         $bill = Bill::with('student.academicClasses')->where('bill_number', $bill_number)->firstOrFail();
 
-        $logoPath = Setting::get('school_logo', null);
+        $midtransService = new MidtransService();
+        $logoPath  = Setting::get('school_logo', null);
         $schoolName = Setting::get('school_name', 'SALIRA');
+
+        $adminFeeData = $bill->admin_fee > 0
+            ? ['amount' => (int) $bill->admin_fee, 'label' => Setting::get('midtrans_fee_label', 'Biaya Layanan Pembayaran')]
+            : $midtransService->calculateAdminFee((int) $bill->amount);
 
         $pdf = Pdf::loadView('reports.invoice_pdf', [
             'bill'        => $bill,
             'logo'        => $logoPath,
             'school_name' => $schoolName,
+            'admin_fee'   => $adminFeeData,
         ])->setPaper('a4', 'portrait');
 
         $filename = 'Invoice-' . $bill->bill_number . '.pdf';

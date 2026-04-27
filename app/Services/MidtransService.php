@@ -22,6 +22,31 @@ class MidtransService
     }
 
     /**
+     * Calculate admin fee based on settings.
+     * Returns ['amount' => int, 'label' => string] or null if no fee.
+     */
+    public function calculateAdminFee(int $billAmount): ?array
+    {
+        $feeType  = \App\Models\Setting::get('midtrans_fee_type', 'none');
+        $feeValue = (float) \App\Models\Setting::get('midtrans_fee_value', 0);
+        $feeLabel = \App\Models\Setting::get('midtrans_fee_label', 'Biaya Layanan Pembayaran');
+
+        if ($feeType === 'none' || $feeValue <= 0) {
+            return null;
+        }
+
+        if ($feeType === 'fixed') {
+            return ['amount' => (int) $feeValue, 'label' => $feeLabel];
+        }
+
+        if ($feeType === 'percent') {
+            return ['amount' => (int) round($billAmount * $feeValue / 100), 'label' => "{$feeLabel} ({$feeValue}%)"];
+        }
+
+        return null;
+    }
+
+    /**
      * Create snap token for a bill.
      */
     public function getSnapToken(Bill $bill)
@@ -37,26 +62,43 @@ class MidtransService
         }
 
         $student = $bill->student;
+        $sppAmount = (int) $bill->amount;
+
+        // Calculate admin fee
+        $adminFee = $this->calculateAdminFee($sppAmount);
+        $totalAmount = $sppAmount + ($adminFee ? $adminFee['amount'] : 0);
+
+        // Build item_details
+        $itemDetails = [
+            [
+                'id'       => 'SPP-' . $bill->month . '-' . $bill->year,
+                'price'    => $sppAmount,
+                'quantity' => 1,
+                'name'     => $bill->title,
+            ]
+        ];
+
+        if ($adminFee) {
+            $itemDetails[] = [
+                'id'       => 'ADMIN-FEE',
+                'price'    => $adminFee['amount'],
+                'quantity' => 1,
+                'name'     => $adminFee['label'],
+            ];
+        }
 
         // Payload for Midtrans
         $params = [
             'transaction_details' => [
-                'order_id' => $bill->bill_number . '-' . time(), // unique order ID to allow retry
-                'gross_amount' => (int) $bill->amount,
+                'order_id'     => $bill->bill_number . '-' . time(),
+                'gross_amount' => $totalAmount,
             ],
             'customer_details' => [
                 'first_name' => $student->name,
-                'email' => $student->parent_email ?? 'nomail@example.com',
-                'phone' => $student->parent_phone ?? '08111111111',
+                'email'      => $student->parent_email ?? 'nomail@example.com',
+                'phone'      => $student->parent_phone ?? '08111111111',
             ],
-            'item_details' => [
-                [
-                    'id' => 'SPP-' . $bill->month . '-' . $bill->year,
-                    'price' => (int) $bill->amount,
-                    'quantity' => 1,
-                    'name' => $bill->title,
-                ]
-            ]
+            'item_details' => $itemDetails,
         ];
 
         try {
@@ -66,8 +108,9 @@ class MidtransService
             if ($response->successful()) {
                 $snapToken = $response->json('token');
                 $bill->update([
-                    'snap_token' => $snapToken,
+                    'snap_token'            => $snapToken,
                     'snap_token_expires_at' => now()->addHours(24),
+                    'admin_fee'             => $adminFee ? $adminFee['amount'] : 0,
                 ]);
                 return $snapToken;
             }
@@ -79,6 +122,7 @@ class MidtransService
 
         return null;
     }
+
 
     public function regenerateSnapToken(Bill $bill): ?string
     {

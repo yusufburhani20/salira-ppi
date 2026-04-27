@@ -1,7 +1,7 @@
 import { Head } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 
-export default function InvoiceShow({ bill: initialBill, isProduction, clientKey, snapTokenExpired }: any) {
+export default function InvoiceShow({ bill: initialBill, isProduction, clientKey, snapTokenExpired, adminFee }: any) {
     const [isLoaded, setIsLoaded] = useState(false);
     const [bill, setBill] = useState(initialBill);
     const [isRegenerating, setIsRegenerating] = useState(false);
@@ -136,11 +136,23 @@ export default function InvoiceShow({ bill: initialBill, isProduction, clientKey
                                 <span className="font-medium text-gray-900 capitalize">{bill.payment_method.replace(/_/g, ' ')}</span>
                             </div>
                         )}
-                        <div className="pt-4 mt-2 border-t border-gray-100 flex justify-between items-center">
-                            <span className="font-bold text-gray-900 text-base">Total Pembayaran</span>
-                            <span className="font-bold text-indigo-600 text-xl">
-                                Rp {new Intl.NumberFormat('id-ID').format(bill.amount)}
-                            </span>
+                        <div className="pt-3 mt-2 border-t border-gray-100 space-y-2">
+                            <div className="flex justify-between text-sm">
+                                <span className="text-gray-500">Tagihan SPP</span>
+                                <span className="text-gray-700">Rp {new Intl.NumberFormat('id-ID').format(bill.amount)}</span>
+                            </div>
+                            {adminFee && adminFee.amount > 0 && (
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-gray-500">{adminFee.label}</span>
+                                    <span className="text-orange-600 font-medium">+ Rp {new Intl.NumberFormat('id-ID').format(adminFee.amount)}</span>
+                                </div>
+                            )}
+                            <div className="flex justify-between items-center pt-2 border-t border-gray-100">
+                                <span className="font-bold text-gray-900 text-base">Total Pembayaran</span>
+                                <span className="font-bold text-indigo-600 text-xl">
+                                    Rp {new Intl.NumberFormat('id-ID').format(bill.amount + (adminFee ? adminFee.amount : 0))}
+                                </span>
+                            </div>
                         </div>
                     </div>
 
