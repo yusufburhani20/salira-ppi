@@ -176,13 +176,7 @@ class MidtransService
             'enabled_payments'  => $method['enabled_payments'],
         ];
 
-        // Hanya tambahkan config e-wallet jika metode yang dipilih memang e-wallet
-        if ($methodGroup === 'shopeepay') {
-            $params['shopeepay'] = [
-                'callback_url' => route('invoice.show', $bill->bill_number),
-            ];
-        }
-
+        // Hanya tambahkan config e-wallet khusus jika diperlukan (GoPay web)
         if ($methodGroup === 'gopay') {
             $params['gopay'] = [
                 'enable_callback' => true,
