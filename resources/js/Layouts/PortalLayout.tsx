@@ -2,6 +2,7 @@ import { Link, usePage } from '@inertiajs/react';
 import { PropsWithChildren, ReactNode, useState, useEffect } from 'react';
 import Dropdown from '@/Components/Dropdown';
 import ThemeToggle from '@/Components/ThemeToggle';
+import SystemClock from '@/Components/SystemClock';
 
 export default function PortalLayout({ header, children }: PropsWithChildren<{ header?: ReactNode }>) {
     const { props } = usePage();
@@ -168,6 +169,8 @@ export default function PortalLayout({ header, children }: PropsWithChildren<{ h
 
                         {/* Actions */}
                         <div className="flex items-center gap-2">
+                            <SystemClock />
+                            
                             {/* Notification Bell */}
                             <Dropdown>
                                 <Dropdown.Trigger>

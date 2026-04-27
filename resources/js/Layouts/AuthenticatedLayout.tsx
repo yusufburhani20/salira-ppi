@@ -3,6 +3,7 @@ import Dropdown from '@/Components/Dropdown';
 import { Link, usePage } from '@inertiajs/react';
 import { PropsWithChildren, ReactNode, useState, useEffect } from 'react';
 import ThemeToggle from '@/Components/ThemeToggle';
+import SystemClock from '@/Components/SystemClock';
 
 export default function Authenticated({
     header,
@@ -399,6 +400,8 @@ export default function Authenticated({
 
                     {/* Actions */}
                     <div className="flex items-center gap-2">
+                        <SystemClock />
+                        
                         {/* Notification Bell */}
                         <Dropdown>
                             <Dropdown.Trigger>
