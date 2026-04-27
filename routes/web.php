@@ -137,7 +137,6 @@ Route::middleware('auth')->group(function () {
         Route::get('/bills/create', [\App\Http\Controllers\Admin\BillController::class, 'create'])->name('bills.create');
         Route::post('/bills', [\App\Http\Controllers\Admin\BillController::class, 'store'])->name('bills.store');
         Route::post('/bills/sync/{id?}', [\App\Http\Controllers\Admin\BillController::class, 'checkStatus'])->name('bills.sync');
-        Route::post('/bills/{bill}/mark-paid', [\App\Http\Controllers\Admin\BillController::class, 'markAsPaidManual'])->name('bills.mark-paid');
         Route::post('/bills/settings', [\App\Http\Controllers\Admin\BillController::class, 'updateSettings'])->name('bills.settings');
 
         // Finance Analytics
