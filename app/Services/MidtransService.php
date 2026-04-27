@@ -54,7 +54,7 @@ class MidtransService
             'description'      => 'Bayar tunai di kasir Alfamart atau Indomaret terdekat',
             'enabled_payments' => ['alfamart', 'indomaret'],
             'fee_type'         => 'fixed',
-            'fee_value'        => 6000,
+            'fee_value'        => 5000,
             'icon'             => 'store',
         ],
     ];
@@ -78,11 +78,19 @@ class MidtransService
         if (!$method) return null;
 
         if ($method['fee_type'] === 'percent') {
-            $feeAmount = (int) ceil($billAmount * $method['fee_value'] / 100);
-            $label     = "Biaya Layanan {$method['label']} ({$method['fee_value']}%)";
+            $baseFee = $billAmount * $method['fee_value'] / 100;
         } else {
-            $feeAmount = (int) $method['fee_value'];
-            $label     = "Biaya Layanan {$method['label']}";
+            $baseFee = $method['fee_value'];
+        }
+
+        // Add 11% tax (VAT/PPN)
+        $tax = $baseFee * 0.11;
+        $feeAmount = (int) ceil($baseFee + $tax);
+
+        if ($method['fee_type'] === 'percent') {
+            $label = "Biaya Layanan {$method['label']} ({$method['fee_value']}% + PPN 11%)";
+        } else {
+            $label = "Biaya Layanan {$method['label']} (Inc. PPN 11%)";
         }
 
         return ['amount' => $feeAmount, 'label' => $label];
