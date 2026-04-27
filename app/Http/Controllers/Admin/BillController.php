@@ -85,9 +85,6 @@ class BillController extends Controller
                     'amount' => $request->amount,
                 ]);
 
-                // Try to get snap token directly
-                $midtransService->getSnapToken($bill);
-
                 // Notify via Telegram and Email
                 $student->notify(new BillGeneratedNotification($bill));
                 $count++;
