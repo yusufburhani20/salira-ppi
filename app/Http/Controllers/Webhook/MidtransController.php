@@ -23,7 +23,16 @@ class MidtransController extends Controller
             return response()->json(['status' => 'ignore']);
         }
 
-        $bill = Bill::where('bill_number', $orderId)->first();
+        // order_id dari Midtrans formatnya: INV-YYYYMM-XXXXXX-1714207452
+        // Kita perlu membuang suffix timestamp (bagian terakhir setelah dash ke-3)
+        $parts = explode('-', $orderId);
+        if (count($parts) >= 3) {
+            $baseBillNumber = $parts[0] . '-' . $parts[1] . '-' . $parts[2];
+        } else {
+            $baseBillNumber = $orderId;
+        }
+
+        $bill = Bill::where('bill_number', $baseBillNumber)->first();
         if (!$bill) {
             Log::warning('Midtrans Webhook: Bill not found for order_id ' . $orderId);
             return response()->json(['status' => 'not_found']);

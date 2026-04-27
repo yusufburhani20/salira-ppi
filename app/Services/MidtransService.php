@@ -161,9 +161,10 @@ class MidtransService
             ];
         }
 
+        $orderId = $bill->bill_number . '-' . time();
         $params = [
             'transaction_details' => [
-                'order_id'     => $bill->bill_number . '-' . time(),
+                'order_id'     => $orderId,
                 'gross_amount' => $total,
             ],
             'customer_details' => [
@@ -198,6 +199,7 @@ class MidtransService
                     'snap_token'            => $snapToken,
                     'snap_token_expires_at' => now()->addHours(24),
                     'admin_fee'             => $feeAmount,
+                    'midtrans_order_id'     => $orderId,
                 ]);
                 return [
                     'snap_token'    => $snapToken,
@@ -296,9 +298,11 @@ class MidtransService
     {
         if (empty($this->serverKey)) return false;
 
+        $orderId = $bill->midtrans_order_id ?: $bill->bill_number;
+
         $apiUrl = $this->isProduction
-            ? "https://api.midtrans.com/v2/{$bill->bill_number}/status"
-            : "https://api.sandbox.midtrans.com/v2/{$bill->bill_number}/status";
+            ? "https://api.midtrans.com/v2/{$orderId}/status"
+            : "https://api.sandbox.midtrans.com/v2/{$orderId}/status";
 
         try {
             $response = Http::withBasicAuth($this->serverKey, '')->get($apiUrl);
