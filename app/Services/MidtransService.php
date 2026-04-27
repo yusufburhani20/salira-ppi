@@ -167,20 +167,27 @@ class MidtransService
                 'gross_amount' => $total,
             ],
             'customer_details' => [
-                'first_name' => $student->name,
+                'first_name' => substr($student->name, 0, 50),
                 'email'      => $student->parent_email ?? 'nomail@example.com',
                 'phone'      => $student->parent_phone ?? '08111111111',
             ],
             'item_details'      => $itemDetails,
             'enabled_payments'  => $method['enabled_payments'],
-            'shopeepay' => [
-                'callback_url' => route('invoice.show', $bill->bill_number),
-            ],
-            'gopay' => [
-                'enable_callback' => true,
-                'callback_url' => route('invoice.show', $bill->bill_number),
-            ],
         ];
+
+        // Hanya tambahkan config e-wallet jika metode yang dipilih memang e-wallet
+        if ($methodGroup === 'shopeepay') {
+            $params['shopeepay'] = [
+                'callback_url' => route('invoice.show', $bill->bill_number),
+            ];
+        }
+
+        if ($methodGroup === 'gopay') {
+            $params['gopay'] = [
+                'enable_callback' => true,
+                'callback_url'    => route('invoice.show', $bill->bill_number),
+            ];
+        }
 
         try {
             $response = Http::withBasicAuth($this->serverKey, '')->post($this->baseUrl, $params);
