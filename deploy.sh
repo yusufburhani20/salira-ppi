@@ -22,6 +22,10 @@ cd "$APP_DIR" || die "Gagal masuk ke direktori $APP_DIR"
 # Mendukung repo privat via GITHUB_USER + GITHUB_TOKEN dari environment variable
 echo "$LOG_PREFIX 📥 Menarik kode terbaru dari GitHub..."
 
+# Buang perubahan lokal agar git pull tidak konflik
+git checkout -- . 2>/dev/null || true
+git clean -fd 2>/dev/null || true
+
 if [ -n "$GITHUB_TOKEN" ] && [ -n "$GITHUB_USER" ]; then
     # Bersihkan whitespace dari variabel
     GITHUB_USER=$(echo "$GITHUB_USER" | tr -d '[:space:]')
