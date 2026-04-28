@@ -13,8 +13,17 @@ export default function MyStudentsIndex({ classes }: any) {
     const [selectedMonth, setSelectedMonth] = useState<string>('');
 
     const today = new Date();
+
+    // Gunakan tanggal lokal (bukan UTC) agar tidak bergeser karena perbedaan timezone
+    const formatLocal = (d: Date) => {
+        const y   = d.getFullYear();
+        const m   = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${day}`;
+    };
+
     const defaultStart = `${today.getFullYear()}-01-01`;
-    const defaultEnd   = today.toISOString().split('T')[0];
+    const defaultEnd   = formatLocal(today);
 
     const { data, setData, post, processing } = useForm({
         student_ids: [] as number[],
@@ -44,10 +53,10 @@ export default function MyStudentsIndex({ classes }: any) {
     const handleMonthChange = (month: string) => {
         setSelectedMonth(month);
         if (month) {
-            const m   = parseInt(month) - 1;
-            const yr  = today.getFullYear();
-            const s   = new Date(yr, m, 1).toISOString().split('T')[0];
-            const e   = new Date(yr, m + 1, 0).toISOString().split('T')[0];
+            const m  = parseInt(month) - 1;
+            const yr = today.getFullYear();
+            const s  = formatLocal(new Date(yr, m, 1));
+            const e  = formatLocal(new Date(yr, m + 1, 0)); // hari terakhir bulan
             setData(d => ({ ...d, start_date: s, end_date: e }));
         }
     };
