@@ -56,7 +56,7 @@ class AnnouncementNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-                     Lancaster ->subject("PENGUMUMAN PENTING: " . $this->announcement->title)
+                    ->subject("PENGUMUMAN PENTING: " . $this->announcement->title)
                     ->greeting("Halo, {$notifiable->name}!")
                     ->line("Ada pengumuman penting baru dari sekolah:")
                     ->line("**{$this->announcement->title}**")
