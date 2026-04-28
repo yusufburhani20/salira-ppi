@@ -52,6 +52,9 @@ fi
 
 echo "$LOG_PREFIX ✅ git pull berhasil."
 
+# Fix kepemilikan file agar user www bisa membaca/menulis (cegah EACCES)
+chown -R www:www "$APP_DIR" 2>/dev/null || true
+
 # 3. Menginstall dependensi PHP (Composer)
 echo "$LOG_PREFIX 📦 Memperbarui paket PHP (composer install)..."
 /www/server/php/83/bin/php /usr/bin/composer install --no-dev --optimize-autoloader --no-interaction 2>&1 || die "Gagal memperbarui dependensi PHP (Composer)"
