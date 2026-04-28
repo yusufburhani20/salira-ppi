@@ -10,7 +10,7 @@ use Illuminate\Notifications\Notification;
 use App\Models\Setting;
 use App\Services\TelegramService;
 
-class AnnouncementNotification extends Notification
+class AnnouncementNotification extends Notification implements ShouldQueue
 {
     use Queueable;
 

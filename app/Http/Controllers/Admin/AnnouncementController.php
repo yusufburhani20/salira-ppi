@@ -31,12 +31,17 @@ class AnnouncementController extends Controller
 
         $announcement = Announcement::create($validated);
 
-        // Notify Target Students
+        // Kirim notifikasi dengan jeda 3 detik per 10 siswa (cegah spam/rate-limit WA & Telegram)
         if ($validated['target'] === 'all' || $validated['target'] === 'students') {
-            Student::chunk(100, function ($students) use ($announcement) {
+            $delaySeconds = 0;
+            Student::chunk(10, function ($students) use ($announcement, &$delaySeconds) {
                 foreach ($students as $student) {
-                    $student->notify(new AnnouncementNotification($announcement));
+                    $student->notify(
+                        (new AnnouncementNotification($announcement))
+                            ->delay(now()->addSeconds($delaySeconds))
+                    );
                 }
+                $delaySeconds += 3; // Tambah 3 detik jeda setiap batch 10 siswa
             });
         }
 
