@@ -118,6 +118,20 @@ class PortalController extends Controller
 
         $todayStatus = $todayAttendance ? (string) ($todayAttendance->status->value ?? $todayAttendance->status) : null;
 
+        $todayAlphaDetails = [];
+        if ($todayStatus === 'alpha') {
+            $todayAlphaDetails = StudentAttendance::where('student_id', $studentId)
+                ->whereDate('date', Carbon::today())
+                ->where('status', 'alpha')
+                ->whereNotNull('class_agenda_id')
+                ->with('classAgenda:id,subject,lesson_period')
+                ->get()
+                ->map(fn($att) => [
+                    'subject'       => $att->classAgenda->subject ?? 'Mapel Tidak Diketahui',
+                    'lesson_period' => $att->classAgenda->lesson_period,
+                ]);
+        }
+
         // 6. Announcements
         $announcements = Announcement::where('is_active', true)
             ->where(function($q) {
@@ -128,13 +142,14 @@ class PortalController extends Controller
             ->get();
 
         return Inertia::render('Portal/Dashboard', [
-            'student' => $student,
-            'unpaidBillsCount' => $unpaidBills,
-            'attendanceStats' => $attendanceStats,
-            'academics' => $academics,
-            'consultations' => $consultations,
-            'todayStatus' => $todayStatus,
-            'announcements' => $announcements,
+            'student'            => $student,
+            'unpaidBillsCount'   => $unpaidBills,
+            'attendanceStats'    => $attendanceStats,
+            'academics'          => $academics,
+            'consultations'      => $consultations,
+            'todayStatus'        => $todayStatus,
+            'todayAlphaDetails'  => $todayAlphaDetails,
+            'announcements'      => $announcements,
         ]);
     }
 

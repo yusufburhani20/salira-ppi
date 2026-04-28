@@ -2,7 +2,7 @@ import { Head, Link } from '@inertiajs/react';
 import PortalLayout from '@/Layouts/PortalLayout';
 import { useState } from 'react';
 
-export default function Dashboard({ student, unpaidBillsCount, attendanceStats, academics = [], consultations = [], todayStatus, announcements = [] }: any) {
+export default function Dashboard({ student, unpaidBillsCount, attendanceStats, academics = [], consultations = [], todayStatus, todayAlphaDetails = [], announcements = [] }: any) {
     const totalAttendance = attendanceStats.present + attendanceStats.sick + attendanceStats.permission + attendanceStats.absent;
     const presentPercentage = totalAttendance > 0 
         ? Math.round((attendanceStats.present / totalAttendance) * 100) 
@@ -38,8 +38,8 @@ export default function Dashboard({ student, unpaidBillsCount, attendanceStats, 
     const renderTodayStatus = () => {
         if (!todayStatus) {
             return (
-                <div className="bg-white/10 backdrop-blur border border-white/20 rounded-2xl p-4 text-center min-w-[100px]">
-                    <div className="text-sm font-black mt-2 text-slate-300">Belum Ada</div>
+                <div className="bg-white/10 backdrop-blur border border-white/20 rounded-2xl p-4 text-center min-w-[120px]">
+                    <div className="text-sm font-black mt-2 text-slate-300 uppercase tracking-widest">BELUM ADA</div>
                     <div className="text-[10px] font-bold text-blue-200 uppercase mt-2">Absen Hari Ini</div>
                 </div>
             );
@@ -50,7 +50,7 @@ export default function Dashboard({ student, unpaidBillsCount, attendanceStats, 
                 case 'hadir': case 'present': return 'text-emerald-400 border-emerald-400/30 bg-emerald-400/10';
                 case 'sakit': case 'sick': return 'text-amber-400 border-amber-400/30 bg-amber-400/10';
                 case 'izin': case 'permission': return 'text-blue-300 border-blue-400/30 bg-blue-400/10';
-                case 'alpha': case 'absent': return 'text-rose-400 border-rose-400/30 bg-rose-400/10';
+                case 'alpha': case 'absent': return 'text-rose-400 border-rose-400/30 bg-rose-400/10 ring-2 ring-rose-500/20';
                 default: return 'text-white border-white/20 bg-white/10';
             }
         };
@@ -65,10 +65,27 @@ export default function Dashboard({ student, unpaidBillsCount, attendanceStats, 
             }
         };
 
+        const isAlpha = todayStatus.toLowerCase() === 'alpha' || todayStatus.toLowerCase() === 'absent';
+
         return (
-            <div className={`backdrop-blur border rounded-2xl p-4 text-center min-w-[100px] ${getStatusStyles()}`}>
-                <div className="text-xl font-black mt-1 tracking-widest">{getStatusLabel()}</div>
-                <div className="text-[10px] font-bold opacity-80 uppercase mt-1">Status Hari Ini</div>
+            <div className="flex flex-col gap-2 min-w-[120px]">
+                <div className={`backdrop-blur border rounded-2xl p-4 text-center ${getStatusStyles()}`}>
+                    <div className="text-xl font-black mt-1 tracking-widest leading-none">{getStatusLabel()}</div>
+                    <div className="text-[10px] font-bold opacity-80 uppercase mt-2">Status Hari Ini</div>
+                </div>
+                {isAlpha && todayAlphaDetails.length > 0 && (
+                    <div className="bg-rose-600 text-white p-3 rounded-2xl border border-rose-400 shadow-xl animate-pulse">
+                        <div className="text-[9px] font-black uppercase tracking-tighter mb-1 opacity-80">Detail Alpha:</div>
+                        <div className="space-y-1">
+                            {todayAlphaDetails.slice(0, 3).map((d: any, i: number) => (
+                                <div key={i} className="text-[10px] font-bold truncate leading-tight border-b border-white/10 pb-1 last:border-0">
+                                    {d.subject} (J-{d.lesson_period})
+                                </div>
+                            ))}
+                            {todayAlphaDetails.length > 3 && <div className="text-[9px] opacity-60">+{todayAlphaDetails.length - 3} lainnya...</div>}
+                        </div>
+                    </div>
+                )}
             </div>
         );
     };
