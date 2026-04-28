@@ -238,6 +238,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/my-students/{student}/resume-data', [\App\Http\Controllers\Teacher\StudentResumeController::class, 'data'])->name('my-students.resume-data');
         Route::get('/my-students/{student}/resume-pdf', [\App\Http\Controllers\Teacher\StudentResumeController::class, 'pdf'])->name('my-students.resume-pdf');
         Route::post('/my-students/{student}/send-report', [\App\Http\Controllers\Teacher\StudentResumeController::class, 'sendReport'])->name('my-students.send-report');
+        Route::post('/my-students/send-bulk-report', [\App\Http\Controllers\Teacher\StudentResumeController::class, 'sendBulkReport'])->name('my-students.send-bulk-report');
     });
 });
 

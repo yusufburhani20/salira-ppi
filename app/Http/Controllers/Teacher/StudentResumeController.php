@@ -206,4 +206,63 @@ class StudentResumeController extends Controller
 
         return back()->with('success', "Laporan {$student->name} berhasil dikirim ke orang tua.");
     }
+    public function sendBulkReport(Request $request)
+    {
+        $request->validate([
+            'student_ids'   => 'required|array|min:1',
+            'student_ids.*' => 'integer|exists:students,id',
+            'start_date'    => 'required|date',
+            'end_date'      => 'required|date|after_or_equal:start_date',
+        ]);
+
+        $students = Student::whereIn('id', $request->student_ids)->get();
+
+        // Validasi: semua siswa harus milik wali kelas ini
+        foreach ($students as $student) {
+            $this->ensureIsMyStudent($student);
+        }
+
+        $sent    = 0;
+        $skipped = 0;
+        $delay   = 0;
+
+        foreach ($students as $student) {
+            if (!$student->parent_email && !$student->parent_telegram_id) {
+                $skipped++;
+                continue;
+            }
+
+            // Ambil data resume per siswa
+            $fakeRequest = new \Illuminate\Http\Request();
+            $fakeRequest->merge([
+                'start_date' => $request->start_date,
+                'end_date'   => $request->end_date,
+            ]);
+            $dataResponse = $this->data($fakeRequest, $student);
+            $reportData   = $dataResponse->getData(true);
+
+            $student->notify(
+                (new StudentReportNotification(
+                    $student,
+                    auth()->user(),
+                    $request->start_date,
+                    $request->end_date,
+                    $reportData
+                ))->delay(now()->addSeconds($delay))
+            );
+
+            $sent++;
+            // Jeda 3 detik setiap 5 siswa agar tidak kena rate-limit WA/Telegram
+            if ($sent % 5 === 0) {
+                $delay += 3;
+            }
+        }
+
+        $msg = "Laporan berhasil dikirim ke {$sent} siswa.";
+        if ($skipped > 0) {
+            $msg .= " {$skipped} siswa dilewati karena belum ada kontak orang tua.";
+        }
+
+        return back()->with('success', $msg);
+    }
 }
