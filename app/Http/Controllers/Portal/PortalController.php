@@ -8,6 +8,7 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Bill;
 use App\Models\StudentAttendance;
+use Illuminate\Support\Facades\DB;
 use App\Models\StudentScore;
 use App\Models\StudentConsultation;
 use App\Models\Setting;
@@ -31,20 +32,38 @@ class PortalController extends Controller
             ->where('status', '!=', 'paid')
             ->count();
 
-        // 2. Get attendance stats for the date range
+        // 2. Get attendance stats for the date range (unique per day, worst status wins)
         $attendances = StudentAttendance::where('student_id', $student->id)
             ->whereBetween('date', [$startDate, $endDate])
-            ->get(['status']);
+            ->selectRaw("
+                date,
+                CASE MIN(CASE status
+                    WHEN 'alpha'     THEN 1
+                    WHEN 'terlambat' THEN 2
+                    WHEN 'sakit'     THEN 3
+                    WHEN 'izin'      THEN 4
+                    WHEN 'hadir'     THEN 5
+                    ELSE 6 END)
+                WHEN 1 THEN 'alpha'
+                WHEN 2 THEN 'terlambat'
+                WHEN 3 THEN 'sakit'
+                WHEN 4 THEN 'izin'
+                WHEN 5 THEN 'hadir'
+                ELSE 'hadir' END as status
+            ")
+            ->groupBy('date')
+            ->get();
 
         $statusCounts = $attendances->groupBy(function($a) {
-            return (string) ($a->status->value ?? $a->status); // handle enum or string
+            return (string) ($a->status->value ?? $a->status);
         })->map->count();
 
         $attendanceStats = [
-            'present' => (int) ($statusCounts['hadir'] ?? $statusCounts['present'] ?? 0),
-            'sick' => (int) ($statusCounts['sakit'] ?? $statusCounts['sick'] ?? 0),
-            'permission' => (int) ($statusCounts['izin'] ?? $statusCounts['permission'] ?? 0),
-            'absent' => (int) ($statusCounts['alpha'] ?? $statusCounts['absent'] ?? 0),
+            'present'    => (int) ($statusCounts['hadir']     ?? $statusCounts['present']    ?? 0),
+            'sick'       => (int) ($statusCounts['sakit']     ?? $statusCounts['sick']       ?? 0),
+            'permission' => (int) ($statusCounts['izin']      ?? $statusCounts['permission'] ?? 0),
+            'absent'     => (int) ($statusCounts['alpha']     ?? $statusCounts['absent']     ?? 0),
+            'late'       => (int) ($statusCounts['terlambat'] ?? 0),
         ];
 
         // 3. Akademik (Scores grouped by Subject)
@@ -75,9 +94,26 @@ class PortalController extends Controller
             ->take(5) // Just load 5 latest
             ->get();
 
-        // 5. Today's Attendance
+        // 5. Today's Attendance (unique daily record, worst status wins)
         $todayAttendance = StudentAttendance::where('student_id', $studentId)
             ->whereDate('date', Carbon::today())
+            ->selectRaw("
+                date,
+                CASE MIN(CASE status
+                    WHEN 'alpha'     THEN 1
+                    WHEN 'terlambat' THEN 2
+                    WHEN 'sakit'     THEN 3
+                    WHEN 'izin'      THEN 4
+                    WHEN 'hadir'     THEN 5
+                    ELSE 6 END)
+                WHEN 1 THEN 'alpha'
+                WHEN 2 THEN 'terlambat'
+                WHEN 3 THEN 'sakit'
+                WHEN 4 THEN 'izin'
+                WHEN 5 THEN 'hadir'
+                ELSE 'hadir' END as status
+            ")
+            ->groupBy('date')
             ->first();
 
         $todayStatus = $todayAttendance ? (string) ($todayAttendance->status->value ?? $todayAttendance->status) : null;
@@ -139,20 +175,38 @@ class PortalController extends Controller
             $rangeText = $startDate->translatedFormat('d M Y') . ' - ' . $endDate->translatedFormat('d M Y');
         }
 
-        // 1. Attendance stats
+        // 1. Attendance stats (unique per day, worst status wins)
         $attendances = StudentAttendance::where('student_id', $studentId)
             ->whereBetween('date', [$startDate, $endDate])
-            ->get(['status']);
+            ->selectRaw("
+                date,
+                CASE MIN(CASE status
+                    WHEN 'alpha'     THEN 1
+                    WHEN 'terlambat' THEN 2
+                    WHEN 'sakit'     THEN 3
+                    WHEN 'izin'      THEN 4
+                    WHEN 'hadir'     THEN 5
+                    ELSE 6 END)
+                WHEN 1 THEN 'alpha'
+                WHEN 2 THEN 'terlambat'
+                WHEN 3 THEN 'sakit'
+                WHEN 4 THEN 'izin'
+                WHEN 5 THEN 'hadir'
+                ELSE 'hadir' END as status
+            ")
+            ->groupBy('date')
+            ->get();
 
         $statusCounts = $attendances->groupBy(function($a) {
             return (string) ($a->status->value ?? $a->status);
         })->map->count();
 
         $attendanceSummary = [
-            'hadir'     => (int) ($statusCounts['hadir'] ?? $statusCounts['present'] ?? 0),
-            'sakit'     => (int) ($statusCounts['sakit'] ?? $statusCounts['sick'] ?? 0),
-            'izin'      => (int) ($statusCounts['izin'] ?? $statusCounts['permission'] ?? 0),
-            'alpha'     => (int) ($statusCounts['alpha'] ?? $statusCounts['absent'] ?? 0),
+            'hadir'     => (int) ($statusCounts['hadir']     ?? $statusCounts['present']    ?? 0),
+            'sakit'     => (int) ($statusCounts['sakit']     ?? $statusCounts['sick']       ?? 0),
+            'izin'      => (int) ($statusCounts['izin']      ?? $statusCounts['permission'] ?? 0),
+            'alpha'     => (int) ($statusCounts['alpha']     ?? $statusCounts['absent']     ?? 0),
+            'terlambat' => (int) ($statusCounts['terlambat'] ?? 0),
             'total'     => $attendances->count(),
         ];
         
@@ -220,7 +274,28 @@ class PortalController extends Controller
     public function attendance()
     {
         $student = Auth::guard('student')->user();
+
+        // Aggregate to one record per day (worst status wins: alpha > terlambat > sakit > izin > hadir)
         $attendances = StudentAttendance::where('student_id', $student->id)
+            ->selectRaw("
+                MIN(id) as id,
+                date,
+                CASE MIN(CASE status
+                    WHEN 'alpha'     THEN 1
+                    WHEN 'terlambat' THEN 2
+                    WHEN 'sakit'     THEN 3
+                    WHEN 'izin'      THEN 4
+                    WHEN 'hadir'     THEN 5
+                    ELSE 6 END)
+                WHEN 1 THEN 'alpha'
+                WHEN 2 THEN 'terlambat'
+                WHEN 3 THEN 'sakit'
+                WHEN 4 THEN 'izin'
+                WHEN 5 THEN 'hadir'
+                ELSE 'hadir' END as status,
+                GROUP_CONCAT(DISTINCT notes SEPARATOR ' | ') as notes
+            ")
+            ->groupBy('date')
             ->orderBy('date', 'desc')
             ->paginate(20);
 
