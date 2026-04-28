@@ -171,7 +171,7 @@ export default function Dashboard({
                             <div className="w-full overflow-x-auto custom-scrollbar">
                                 <div className="min-w-[480px] relative" style={{ height: '260px' }}>
                                     {/* Y-axis labels + grid lines */}
-                                    <div className="absolute inset-0 flex flex-col justify-between pointer-events-none pb-10">
+                                    <div className="absolute inset-0 flex flex-col justify-between pointer-events-none pb-12">
                                         {[100, 75, 50, 25, 0].map(v => (
                                             <div key={v} className="relative flex items-center">
                                                 <span className="text-[9px] font-bold text-slate-400 w-7 text-right shrink-0 pr-2">{v}</span>
@@ -181,7 +181,7 @@ export default function Dashboard({
                                     </div>
 
                                     {/* Chart bars area — positioned above labels */}
-                                    <div className="absolute left-7 right-0 top-0 bottom-10 flex items-end gap-2 sm:gap-3">
+                                    <div className="absolute left-7 right-0 top-0 bottom-12 flex items-end gap-2 sm:gap-3">
                                         {chartData?.map((item: any, i: number) => (
                                             <div key={i} className="flex-1 h-full flex items-end group relative cursor-pointer">
                                                 <div
@@ -203,11 +203,12 @@ export default function Dashboard({
                                     </div>
 
                                     {/* Labels row — always pinned at bottom */}
-                                    <div className="absolute left-7 right-0 bottom-0 h-10 flex items-start pt-2 gap-2 sm:gap-3 border-t border-slate-200 dark:border-slate-700">
+                                    <div className="absolute left-7 right-0 bottom-0 h-12 flex items-start pt-2 gap-2 sm:gap-3 border-t border-slate-200 dark:border-slate-700">
                                         {chartData?.map((item: any, i: number) => (
-                                            <div key={i} className="flex-1 flex flex-col items-center">
-                                                <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 leading-none">{item.label}</span>
-                                                <span className="text-[9px] font-semibold text-indigo-500 mt-0.5">{item.height}%</span>
+                                            <div key={i} className="flex-1 flex flex-col items-center text-center">
+                                                <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 leading-none">{item.date}</span>
+                                                <span className="text-[9px] font-semibold text-indigo-500 mt-1">{item.height}%</span>
+                                                <span className="text-[8px] font-medium text-slate-400 mt-0.5">{item.present ?? 0}/{item.total ?? 0}</span>
                                             </div>
                                         ))}
                                     </div>
