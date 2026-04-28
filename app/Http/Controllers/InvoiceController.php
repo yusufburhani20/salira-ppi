@@ -135,6 +135,6 @@ class InvoiceController extends Controller
 
         $filename = 'Invoice-' . $bill->bill_number . '.pdf';
 
-        return $pdf->download($filename);
+        return $pdf->stream($filename);
     }
 }
