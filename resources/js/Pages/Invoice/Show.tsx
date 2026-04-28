@@ -173,7 +173,7 @@ export default function InvoiceShow({ bill: initialBill, isProduction, clientKey
                     {/* Status + Amount */}
                     <div className="flex items-center justify-between mb-6">
                         <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${st.bg} ${st.text}`}>
-                            <span className="w-2 h-2 rounded-full inline-block flex-shrink-0" style={{ backgroundColor: 'currentColor' }}></span>
+                            <svg width="8" height="8" viewBox="0 0 8 8" fill="currentColor" aria-hidden="true"><circle cx="4" cy="4" r="4"/></svg>
                             {st.label}
                         </span>
                         <div className="text-right">
