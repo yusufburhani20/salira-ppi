@@ -4,7 +4,7 @@
 # ==========================================
 
 LOG_PREFIX="[$(date '+%H:%M:%S')]"
-APP_DIR="/www/wwwroot/dev.parkaw.my.id"
+APP_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # Fungsi untuk menangani error
 die() {
