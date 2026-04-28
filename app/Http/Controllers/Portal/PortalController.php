@@ -275,7 +275,7 @@ class PortalController extends Controller
     {
         $student = Auth::guard('student')->user();
 
-        // Aggregate to one record per day (worst status wins: alpha > terlambat > sakit > izin > hadir)
+        // Step 1: Aggregate to one record per day (worst status wins)
         $attendances = StudentAttendance::where('student_id', $student->id)
             ->selectRaw("
                 MIN(id) as id,
@@ -298,6 +298,44 @@ class PortalController extends Controller
             ->groupBy('date')
             ->orderBy('date', 'desc')
             ->paginate(20);
+
+        // Step 2: For alpha days, fetch subject & lesson_period detail
+        $alphaDates = $attendances->getCollection()
+            ->filter(fn($a) => $a->status === 'alpha')
+            ->pluck('date')
+            ->map(fn($d) => $d instanceof \Carbon\Carbon ? $d->toDateString() : (string)$d)
+            ->toArray();
+
+        $alphaDetails = [];
+        if (!empty($alphaDates)) {
+            $alphaRecords = StudentAttendance::where('student_id', $student->id)
+                ->whereIn('date', $alphaDates)
+                ->where('status', 'alpha')
+                ->whereNotNull('class_agenda_id')
+                ->with('classAgenda:id,subject,lesson_period')
+                ->get();
+
+            foreach ($alphaRecords as $record) {
+                $date = $record->date instanceof \Carbon\Carbon
+                    ? $record->date->toDateString()
+                    : (string) $record->date;
+                if ($record->classAgenda) {
+                    $alphaDetails[$date][] = [
+                        'subject'       => $record->classAgenda->subject,
+                        'lesson_period' => $record->classAgenda->lesson_period,
+                    ];
+                }
+            }
+        }
+
+        // Step 3: Attach alpha_details to each paginated row
+        $attendances->getCollection()->transform(function ($att) use ($alphaDetails) {
+            $date = $att->date instanceof \Carbon\Carbon
+                ? $att->date->toDateString()
+                : (string) $att->date;
+            $att->alpha_details = $alphaDetails[$date] ?? [];
+            return $att;
+        });
 
         return Inertia::render('Portal/Attendance', [
             'attendances' => $attendances,
