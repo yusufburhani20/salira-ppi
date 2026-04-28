@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm } from '@inertiajs/react';
 import axios from 'axios';
+import { todayLocal } from '@/utils/date';
 import { 
     BookOpenIcon, 
     ClipboardDocumentCheckIcon,
@@ -20,7 +21,7 @@ export default function AgendaCreate({ classes, subjects = [] }: { classes: any[
         subject_id: '',
         subject: '',
         lesson_period: '',
-        date: new Date().toISOString().split('T')[0], // Default to today
+        date: todayLocal(), // Default ke hari ini (timezone lokal)
         topic: '',
         activities: '',
         student_tasks: '',

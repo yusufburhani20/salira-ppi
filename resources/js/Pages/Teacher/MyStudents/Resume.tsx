@@ -2,6 +2,7 @@ import { PageProps } from '@/types';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm, Link } from '@inertiajs/react';
 import React, { useState, useEffect, FormEvent } from 'react';
+import { formatLocalDate, todayLocal, firstDayOfMonth, lastDayOfMonth } from '@/utils/date';
 import { 
     UserIcon, 
     AcademicCapIcon, 
@@ -21,8 +22,8 @@ export default function MyStudentResume({ student }: any) {
     const [error, setError] = useState<string | null>(null);
 
     const { data, setData, post, processing, errors } = useForm({
-        start_date: new Date(new Date().getFullYear(), 0, 1).toISOString().split('T')[0], // 1st of year
-        end_date: new Date().toISOString().split('T')[0], // Today
+        start_date: firstDayOfMonth(new Date().getFullYear(), 0), // 1 Januari
+        end_date: todayLocal(),
     });
 
     const fetchResume = async () => {
@@ -49,12 +50,11 @@ export default function MyStudentResume({ student }: any) {
     const handleMonthChange = (month: string) => {
         const year = new Date().getFullYear();
         if (month) {
-            const start = new Date(year, parseInt(month) - 1, 1);
-            const end = new Date(year, parseInt(month), 0);
+            const m = parseInt(month) - 1;
             setData(d => ({
                 ...d,
-                start_date: start.toISOString().split('T')[0],
-                end_date: end.toISOString().split('T')[0]
+                start_date: firstDayOfMonth(year, m),
+                end_date: lastDayOfMonth(year, m),
             }));
         }
     };

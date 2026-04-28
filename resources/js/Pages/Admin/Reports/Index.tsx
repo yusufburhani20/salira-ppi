@@ -2,6 +2,7 @@ import { PageProps } from '@/types';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm } from '@inertiajs/react';
 import React, { useState, useEffect } from 'react';
+import { todayLocal, firstDayOfMonth, lastDayOfMonth } from '@/utils/date';
 import {
     DocumentChartBarIcon,
     AcademicCapIcon,
@@ -37,8 +38,8 @@ export default function ReportIndex({ auth, classes, subjects }: PageProps<{ cla
     const { data, setData, errors } = useForm({
         academic_class_id: '',
         subject_id: '',
-        start_date: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0], // 1st of current month
-        end_date: new Date().toISOString().split('T')[0], // Today
+        start_date: firstDayOfMonth(new Date().getFullYear(), new Date().getMonth()), // Awal bulan ini
+        end_date: todayLocal(),
         student_id: '',
     });
 
@@ -71,12 +72,11 @@ export default function ReportIndex({ auth, classes, subjects }: PageProps<{ cla
     const handleMonthChange = (month: string) => {
         const year = new Date(data.start_date).getFullYear();
         if (month) {
-            const start = new Date(year, parseInt(month) - 1, 1);
-            const end = new Date(year, parseInt(month), 0);
+            const m = parseInt(month) - 1;
             setData(d => ({
                 ...d,
-                start_date: start.toISOString().split('T')[0],
-                end_date: end.toISOString().split('T')[0]
+                start_date: firstDayOfMonth(year, m),
+                end_date: lastDayOfMonth(year, m),
             }));
         }
     };
