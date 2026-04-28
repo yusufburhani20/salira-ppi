@@ -77,7 +77,7 @@
                 <div class="invoice-number">No. {{ $bill->bill_number }}</div>
                 <div>
                     @if($bill->status === 'paid')
-                        <span class="status-badge status-paid">&#10003; LUNAS</span>
+                        <span class="status-badge status-paid">LUNAS</span>
                     @elseif($bill->status === 'pending')
                         <span class="status-badge status-pending">PENDING</span>
                     @else
