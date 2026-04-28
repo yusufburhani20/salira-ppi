@@ -164,12 +164,12 @@ export default function Login({
                             </div>
                         </div>
 
-                        <a
-                            href="/portal/login"
+                        <Link
+                            href={route('portal.login')}
                             className="block text-center w-full py-3 text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:hover:bg-blue-900/50 rounded-xl transition-colors uppercase tracking-wider"
                         >
                             Masuk ke Portal Siswa & Wali Murid →
-                        </a>
+                        </Link>
                     </div>
                 </div>
             </div>
