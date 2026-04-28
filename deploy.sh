@@ -69,7 +69,7 @@ echo "$LOG_PREFIX 🗄️  Menjalankan migrasi database..."
 
 # 5. Menginstall dan Build Frontend (React/Vite)
 echo "$LOG_PREFIX 🎨 Membangun ulang aset frontend (Vite)..."
-npm install --legacy-peer-deps 2>&1 || die "Gagal menginstall dependensi frontend (NPM)"
+npm install --legacy-peer-deps --cache .npm-cache 2>&1 || die "Gagal menginstall dependensi frontend (NPM)"
 
 # Fix permission folder build agar Vite bisa menghapus file lama (cegah EACCES)
 rm -rf "$APP_DIR/public/build" 2>/dev/null || true
