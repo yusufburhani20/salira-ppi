@@ -93,19 +93,44 @@ class InvoiceController extends Controller
     {
         $bill = Bill::with('student.academicClasses')->where('bill_number', $bill_number)->firstOrFail();
 
-        $midtransService = new MidtransService();
         $logoPath   = Setting::get('school_logo', null);
         $schoolName = Setting::get('school_name', 'SALIRA');
 
-        $adminFeeData = $bill->admin_fee > 0
-            ? ['amount' => (int) $bill->admin_fee, 'label' => Setting::get('midtrans_fee_label', 'Biaya Layanan Pembayaran')]
-            : null;
+        $methodLabels = [
+            'gopay'        => 'GoPay',
+            'shopeepay'    => 'ShopeePay',
+            'qris'         => 'QRIS',
+            'bank_transfer'=> 'Transfer Bank (Virtual Account)',
+            'bca_va'       => 'Transfer BCA Virtual Account',
+            'bni_va'       => 'Transfer BNI Virtual Account',
+            'bri_va'       => 'Transfer BRI Virtual Account',
+            'mandiri_bill' => 'Transfer Mandiri',
+            'permata_va'   => 'Transfer Permata Virtual Account',
+            'echannel'     => 'Mandiri Bill Payment',
+            'other_va'     => 'Virtual Account Lainnya',
+            'cstore'       => 'Gerai (Alfamart/Indomaret)',
+            'alfamart'     => 'Alfamart',
+            'indomaret'    => 'Indomaret',
+            'credit_card'  => 'Kartu Kredit',
+            'manual'       => 'Tunai (Cash)',
+        ];
+
+        $adminFeeData = null;
+        if ($bill->admin_fee > 0) {
+            $methodKey   = $bill->payment_method ?? null;
+            $methodLabel = $methodKey ? ($methodLabels[$methodKey] ?? ucwords(str_replace('_', ' ', $methodKey))) : 'Pembayaran Digital';
+            $adminFeeData = [
+                'amount' => (int) $bill->admin_fee,
+                'label'  => 'Biaya Layanan ' . $methodLabel,
+            ];
+        }
 
         $pdf = Pdf::loadView('reports.invoice_pdf', [
-            'bill'        => $bill,
-            'logo'        => $logoPath,
-            'school_name' => $schoolName,
-            'admin_fee'   => $adminFeeData,
+            'bill'         => $bill,
+            'logo'         => $logoPath,
+            'school_name'  => $schoolName,
+            'admin_fee'    => $adminFeeData,
+            'method_labels'=> $methodLabels,
         ])->setPaper('a4', 'portrait');
 
         $filename = 'Invoice-' . $bill->bill_number . '.pdf';

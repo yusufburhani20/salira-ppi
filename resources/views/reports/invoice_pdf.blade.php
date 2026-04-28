@@ -118,7 +118,12 @@
             <td width="20%" valign="top">
                 <div class="info-box">
                     <span class="info-box-label">Periode:</span>
-                    <div class="info-box-value">Bulan {{ $bill->month }}</div>
+                    <div class="info-box-value">
+                        @php
+                            $bulanNames = ['','Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+                        @endphp
+                        {{ $bulanNames[$bill->month] ?? 'Bulan '.$bill->month }}
+                    </div>
                     <div class="info-box-sub">Tahun {{ $bill->year }}</div>
                 </div>
             </td>
@@ -173,10 +178,16 @@
                     <div class="paid-box-label">Metode Pembayaran:</div>
                     <div class="paid-box-value">
                         @php
-                            $methodMap = [
+                            $methodMap = array_merge([
                                 'credit_card'   => 'Kartu Kredit',
-                                'bank_transfer' => 'Transfer Bank',
-                                'echannel'      => 'Mandiri Bill',
+                                'bank_transfer' => 'Transfer Bank (Virtual Account)',
+                                'bca_va'        => 'BCA Virtual Account',
+                                'bni_va'        => 'BNI Virtual Account',
+                                'bri_va'        => 'BRI Virtual Account',
+                                'permata_va'    => 'Permata Virtual Account',
+                                'other_va'      => 'Virtual Account Lainnya',
+                                'echannel'      => 'Mandiri Bill Payment',
+                                'mandiri_bill'  => 'Mandiri Bill',
                                 'bca_klikpay'   => 'BCA KlikPay',
                                 'cimb_clicks'   => 'CIMB Clicks',
                                 'bri_epay'      => 'BRI ePay',
@@ -186,10 +197,14 @@
                                 'shopeepay'     => 'ShopeePay',
                                 'akulaku'       => 'Akulaku',
                                 'cstore'        => 'Gerai (Alfamart/Indomaret)',
+                                'alfamart'      => 'Alfamart',
+                                'indomaret'     => 'Indomaret',
                                 'manual'        => 'Tunai (Cash)',
-                            ];
+                            ], $method_labels ?? []);
+                            $pm = $bill->payment_method;
+                            $pmLabel = $pm ? ($methodMap[$pm] ?? ucwords(str_replace('_', ' ', $pm))) : 'Pembayaran Digital';
                         @endphp
-                        {{ $methodMap[$bill->payment_method] ?? ($bill->payment_method ? strtoupper($bill->payment_method) : 'Tidak Diketahui') }}
+                        {{ $pmLabel }}
                     </div>
                 </td>
             </tr>
