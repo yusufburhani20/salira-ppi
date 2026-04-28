@@ -29,7 +29,8 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
-        $user = $request->user();
+        // Detect user from either default 'web' guard or 'student' guard
+        $user = $request->user() ?: $request->user('student');
         
         return [
             ...parent::share($request),

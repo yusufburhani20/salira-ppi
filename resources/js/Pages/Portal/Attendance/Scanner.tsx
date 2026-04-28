@@ -99,13 +99,21 @@ export default function Scanner() {
                             <p className="text-xs text-blue-100">Posisikan QR Code di kotak scan</p>
                         </div>
                     </div>
-                    {isGuest && (
+                    {isGuest ? (
                         <Link 
                             href={route('portal.login')} 
                             className="p-2 hover:bg-white/20 rounded-xl transition-colors flex items-center gap-2 text-xs font-bold"
                         >
                             <ArrowLeftOnRectangleIcon className="w-5 h-5" />
                             EXIT
+                        </Link>
+                    ) : (
+                        <Link 
+                            href={route('portal.dashboard')} 
+                            className="p-2 hover:bg-white/20 rounded-xl transition-colors flex items-center gap-2 text-xs font-bold"
+                        >
+                            <ArrowLeftOnRectangleIcon className="w-5 h-5" />
+                            KEMBALI
                         </Link>
                     )}
                 </div>
