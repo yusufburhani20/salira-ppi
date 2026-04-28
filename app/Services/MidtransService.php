@@ -292,6 +292,12 @@ class MidtransService
     {
         if (empty($this->serverKey)) return false;
 
+        // PROTEKSI: Jika tagihan sudah PAID, jangan pernah diubah lagi
+        // Di sandbox Midtrans, transaksi expire setelah ~15 menit walaupun sudah dibayar
+        if ($bill->status === 'paid') {
+            return 'paid';
+        }
+
         $orderId = $bill->midtrans_order_id ?: $bill->bill_number;
 
         $apiUrl = $this->isProduction
@@ -314,10 +320,15 @@ class MidtransService
                 } elseif ($transactionStatus == 'settlement') {
                     return 'paid';
                 } elseif (in_array($transactionStatus, ['cancel', 'deny', 'expire'])) {
-                    $bill->update(['status' => 'expired']);
+                    // Hanya ubah ke expired jika tagihan memang belum pernah dibayar
+                    if ($bill->status !== 'paid') {
+                        $bill->update(['status' => 'expired']);
+                    }
                     return 'expired';
                 } elseif ($transactionStatus == 'pending') {
-                    $bill->update(['status' => 'pending']);
+                    if ($bill->status !== 'paid') {
+                        $bill->update(['status' => 'pending']);
+                    }
                     return 'pending';
                 }
             }

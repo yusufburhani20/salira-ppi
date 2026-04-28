@@ -48,6 +48,13 @@ class MidtransController extends Controller
             }
         }
 
+        // PROTEKSI: Jangan ubah status jika tagihan sudah PAID
+        // Ini mencegah notifikasi expire dari Midtrans (setelah sandbox expire) menimpa status paid
+        if ($bill->status === 'paid') {
+            Log::info('Midtrans Webhook: Bill ' . $baseBillNumber . ' sudah PAID, dilewati.');
+            return response()->json(['status' => 'already_paid']);
+        }
+
         if ($transactionStatus == 'capture') {
             if ($fraudStatus == 'challenge') {
                 $bill->update(['status' => 'pending']);
