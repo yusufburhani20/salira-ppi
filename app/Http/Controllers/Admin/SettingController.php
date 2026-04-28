@@ -23,10 +23,6 @@ class SettingController extends Controller
                 'school_favicon'           => Setting::get('school_favicon') ? Storage::url(Setting::get('school_favicon')) : null,
                 'github_username'          => Setting::get('github_username', ''),
                 'github_token'             => Setting::get('github_token', ''),
-                // Payment fee settings
-                'midtrans_fee_type'        => Setting::get('midtrans_fee_type', 'fixed'),   // 'fixed' | 'percent' | 'none'
-                'midtrans_fee_value'       => Setting::get('midtrans_fee_value', '0'),
-                'midtrans_fee_label'       => Setting::get('midtrans_fee_label', 'Biaya Layanan Pembayaran'),
             ]
         ]);
     }
@@ -43,9 +39,6 @@ class SettingController extends Controller
             'school_favicon'     => 'nullable|image|mimes:ico,png,jpg,jpeg,svg|max:1024',
             'github_username'    => 'nullable|string|max:100',
             'github_token'       => 'nullable|string|max:255',
-            'midtrans_fee_type'  => 'nullable|in:none,fixed,percent',
-            'midtrans_fee_value' => 'nullable|numeric|min:0',
-            'midtrans_fee_label' => 'nullable|string|max:100',
         ]);
 
         Setting::set('school_name', $request->school_name);
@@ -55,9 +48,6 @@ class SettingController extends Controller
         Setting::set('report_location', $request->report_location);
         Setting::set('github_username', $request->github_username);
         Setting::set('github_token', $request->github_token);
-        Setting::set('midtrans_fee_type', $request->midtrans_fee_type ?? 'none');
-        Setting::set('midtrans_fee_value', $request->midtrans_fee_value ?? 0);
-        Setting::set('midtrans_fee_label', $request->midtrans_fee_label ?? 'Biaya Layanan Pembayaran');
 
         if ($request->hasFile('school_logo')) {
             // Delete old logo
