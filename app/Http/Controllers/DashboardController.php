@@ -91,7 +91,7 @@ class DashboardController extends Controller
             $attRankingQuery->where('academic_class_id', $classId);
         }
 
-        $attendanceRanking = $attRankingQuery->limit(5)->get()->map(function($item) {
+        $attendanceRanking = $attRankingQuery->get()->map(function($item) {
             return [
                 'name' => $item->student->name ?? 'Unknown',
                 'value' => $item->total . ' Kehadiran',
@@ -112,7 +112,7 @@ class DashboardController extends Controller
                 ->where('daily_assessments.academic_class_id', $classId);
         }
 
-        $assessmentRanking = $scoreRankingQuery->limit(5)->get()->map(function($item) {
+        $assessmentRanking = $scoreRankingQuery->get()->map(function($item) {
             return [
                 'name' => $item->student->name ?? 'Unknown',
                 'value' => round($item->average, 1),

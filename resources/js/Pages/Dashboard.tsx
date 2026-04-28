@@ -311,17 +311,17 @@ export default function Dashboard({
                 <div className="grid gap-5 grid-cols-1 lg:grid-cols-3">
                     
                     {/* Attendance Ranking */}
-                    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg shadow-slate-200/60 dark:shadow-none border border-slate-100 dark:border-slate-700/50 overflow-hidden">
+                    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg shadow-slate-200/60 dark:shadow-none border border-slate-100 dark:border-slate-700/50 overflow-hidden flex flex-col h-[420px]">
                         <div className="px-6 pt-6 pb-4 border-b border-slate-100 dark:border-slate-700/50 flex items-center gap-3">
                             <div className="w-9 h-9 bg-indigo-100 dark:bg-indigo-900/30 rounded-xl flex items-center justify-center shrink-0">
                                 <TrophyIcon className="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
                             </div>
                             <div>
                                 <h3 className="text-sm font-bold text-slate-900 dark:text-white">Ranking Kehadiran</h3>
-                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Top 5 siswa terajin</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Seluruh data siswa</p>
                             </div>
                         </div>
-                        <div className="p-4 space-y-1">
+                        <div className="flex-1 min-h-0 p-4 space-y-1 overflow-y-auto custom-scrollbar">
                             {attendanceRanking?.length > 0 ? attendanceRanking.map((item: any, i: number) => (
                                 <RankingRow key={i} item={item} rank={i+1} unit="Sesi" />
                             )) : <EmptyRanking />}
@@ -329,17 +329,17 @@ export default function Dashboard({
                     </div>
 
                     {/* Assessment Ranking */}
-                    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg shadow-slate-200/60 dark:shadow-none border border-slate-100 dark:border-slate-700/50 overflow-hidden">
+                    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg shadow-slate-200/60 dark:shadow-none border border-slate-100 dark:border-slate-700/50 overflow-hidden flex flex-col h-[420px]">
                         <div className="px-6 pt-6 pb-4 border-b border-slate-100 dark:border-slate-700/50 flex items-center gap-3">
                             <div className="w-9 h-9 bg-amber-100 dark:bg-amber-900/30 rounded-xl flex items-center justify-center shrink-0">
                                 <AcademicCapIcon className="w-5 h-5 text-amber-600 dark:text-amber-400" />
                             </div>
                             <div>
                                 <h3 className="text-sm font-bold text-slate-900 dark:text-white">Ranking Penilaian</h3>
-                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Top 5 siswa berprestasi</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Seluruh data siswa</p>
                             </div>
                         </div>
-                        <div className="p-4 space-y-1">
+                        <div className="flex-1 min-h-0 p-4 space-y-1 overflow-y-auto custom-scrollbar">
                             {assessmentRanking?.length > 0 ? assessmentRanking.map((item: any, i: number) => (
                                 <RankingRow key={i} item={item} rank={i+1} unit="AVG" />
                             )) : <EmptyRanking />}
