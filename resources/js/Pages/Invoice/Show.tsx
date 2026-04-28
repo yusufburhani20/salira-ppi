@@ -4,50 +4,50 @@ import { useEffect, useState } from 'react';
 // ── Icon components ──────────────────────────────────────────────────────────
 const QrisIcon = () => (
     <svg viewBox="0 0 48 48" className="w-8 h-8" fill="none">
-        <rect width="48" height="48" rx="8" fill="#00A8E0" opacity=".12"/>
-        <rect x="8" y="8" width="14" height="14" rx="2" stroke="#00A8E0" strokeWidth="2.5"/>
-        <rect x="11" y="11" width="8" height="8" rx="1" fill="#00A8E0"/>
-        <rect x="26" y="8" width="14" height="14" rx="2" stroke="#00A8E0" strokeWidth="2.5"/>
-        <rect x="29" y="11" width="8" height="8" rx="1" fill="#00A8E0"/>
-        <rect x="8" y="26" width="14" height="14" rx="2" stroke="#00A8E0" strokeWidth="2.5"/>
-        <rect x="11" y="29" width="8" height="8" rx="1" fill="#00A8E0"/>
-        <rect x="26" y="26" width="4" height="4" fill="#00A8E0"/>
-        <rect x="34" y="26" width="6" height="4" fill="#00A8E0"/>
-        <rect x="26" y="34" width="6" height="6" fill="#00A8E0"/>
-        <rect x="36" y="32" width="4" height="8" fill="#00A8E0"/>
+        <rect width="48" height="48" rx="8" fill="#00A8E0" opacity=".12" />
+        <rect x="8" y="8" width="14" height="14" rx="2" stroke="#00A8E0" strokeWidth="2.5" />
+        <rect x="11" y="11" width="8" height="8" rx="1" fill="#00A8E0" />
+        <rect x="26" y="8" width="14" height="14" rx="2" stroke="#00A8E0" strokeWidth="2.5" />
+        <rect x="29" y="11" width="8" height="8" rx="1" fill="#00A8E0" />
+        <rect x="8" y="26" width="14" height="14" rx="2" stroke="#00A8E0" strokeWidth="2.5" />
+        <rect x="11" y="29" width="8" height="8" rx="1" fill="#00A8E0" />
+        <rect x="26" y="26" width="4" height="4" fill="#00A8E0" />
+        <rect x="34" y="26" width="6" height="4" fill="#00A8E0" />
+        <rect x="26" y="34" width="6" height="6" fill="#00A8E0" />
+        <rect x="36" y="32" width="4" height="8" fill="#00A8E0" />
     </svg>
 );
 const GopayIcon = () => (
     <svg viewBox="0 0 48 48" className="w-8 h-8" fill="none">
-        <rect width="48" height="48" rx="8" fill="#00AED6" opacity=".12"/>
-        <circle cx="24" cy="24" r="13" stroke="#00AED6" strokeWidth="2.5"/>
-        <path d="M18 24h8m0 0l-3-3m3 3l-3 3" stroke="#00AED6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <rect width="48" height="48" rx="8" fill="#00AED6" opacity=".12" />
+        <circle cx="24" cy="24" r="13" stroke="#00AED6" strokeWidth="2.5" />
+        <path d="M18 24h8m0 0l-3-3m3 3l-3 3" stroke="#00AED6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
 );
 const ShopeepayIcon = () => (
     <svg viewBox="0 0 48 48" className="w-8 h-8" fill="none">
-        <rect width="48" height="48" rx="8" fill="#EE4D2D" opacity=".12"/>
-        <path d="M24 12c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12S30.627 12 24 12z" stroke="#EE4D2D" strokeWidth="2.5"/>
-        <path d="M20 22s0-4 4-4 4 4 4 4M20 26s0 4 4 4 4-4 4-4" stroke="#EE4D2D" strokeWidth="2.5" strokeLinecap="round"/>
+        <rect width="48" height="48" rx="8" fill="#EE4D2D" opacity=".12" />
+        <path d="M24 12c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12S30.627 12 24 12z" stroke="#EE4D2D" strokeWidth="2.5" />
+        <path d="M20 22s0-4 4-4 4 4 4 4M20 26s0 4 4 4 4-4 4-4" stroke="#EE4D2D" strokeWidth="2.5" strokeLinecap="round" />
     </svg>
 );
 const BankIcon = () => (
     <svg viewBox="0 0 48 48" className="w-8 h-8" fill="none">
-        <rect width="48" height="48" rx="8" fill="#4f46e5" opacity=".10"/>
-        <path d="M10 22h28M24 10l14 12H10L24 10z" stroke="#4f46e5" strokeWidth="2.5" strokeLinejoin="round"/>
-        <rect x="14" y="22" width="4" height="10" fill="#4f46e5" opacity=".4"/>
-        <rect x="22" y="22" width="4" height="10" fill="#4f46e5" opacity=".4"/>
-        <rect x="30" y="22" width="4" height="10" fill="#4f46e5" opacity=".4"/>
-        <rect x="10" y="32" width="28" height="3" rx="1" fill="#4f46e5"/>
+        <rect width="48" height="48" rx="8" fill="#4f46e5" opacity=".10" />
+        <path d="M10 22h28M24 10l14 12H10L24 10z" stroke="#4f46e5" strokeWidth="2.5" strokeLinejoin="round" />
+        <rect x="14" y="22" width="4" height="10" fill="#4f46e5" opacity=".4" />
+        <rect x="22" y="22" width="4" height="10" fill="#4f46e5" opacity=".4" />
+        <rect x="30" y="22" width="4" height="10" fill="#4f46e5" opacity=".4" />
+        <rect x="10" y="32" width="28" height="3" rx="1" fill="#4f46e5" />
     </svg>
 );
 const StoreIcon = () => (
     <svg viewBox="0 0 48 48" className="w-8 h-8" fill="none">
-        <rect width="48" height="48" rx="8" fill="#f59e0b" opacity=".12"/>
-        <path d="M10 20v18h28V20" stroke="#f59e0b" strokeWidth="2.5" strokeLinejoin="round"/>
-        <path d="M8 20l4-10h24l4 10" stroke="#f59e0b" strokeWidth="2.5" strokeLinejoin="round"/>
-        <rect x="20" y="28" width="8" height="10" rx="2" fill="#f59e0b" opacity=".5"/>
-        <rect x="14" y="26" width="6" height="6" rx="1" stroke="#f59e0b" strokeWidth="2"/>
+        <rect width="48" height="48" rx="8" fill="#f59e0b" opacity=".12" />
+        <path d="M10 20v18h28V20" stroke="#f59e0b" strokeWidth="2.5" strokeLinejoin="round" />
+        <path d="M8 20l4-10h24l4 10" stroke="#f59e0b" strokeWidth="2.5" strokeLinejoin="round" />
+        <rect x="20" y="28" width="8" height="10" rx="2" fill="#f59e0b" opacity=".5" />
+        <rect x="14" y="26" width="6" height="6" rx="1" stroke="#f59e0b" strokeWidth="2" />
     </svg>
 );
 
@@ -61,11 +61,11 @@ const ICONS: Record<string, () => JSX.Element> = {
 
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function InvoiceShow({ bill: initialBill, isProduction, clientKey, paymentMethods, adminFee }: any) {
-    const [bill, setBill]               = useState(initialBill);
+    const [bill, setBill] = useState(initialBill);
     const [isSnapLoaded, setSnapLoaded] = useState(false);
     const [selectedMethod, setSelected] = useState<string | null>(null);
     const [isProcessing, setProcessing] = useState(false);
-    const [error, setError]             = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
 
     // Load Midtrans Snap.js
     useEffect(() => {
@@ -107,8 +107,8 @@ export default function InvoiceShow({ bill: initialBill, isProduction, clientKey
             window.snap.pay(data.snap_token, {
                 onSuccess: () => window.location.reload(),
                 onPending: () => { setProcessing(false); setSelected(null); },
-                onError:   () => { setError('Pembayaran gagal. Silakan pilih metode lain atau coba lagi.'); setProcessing(false); setSelected(null); },
-                onClose:   () => { setProcessing(false); setSelected(null); },
+                onError: () => { setError('Pembayaran gagal. Silakan pilih metode lain atau coba lagi.'); setProcessing(false); setSelected(null); },
+                onClose: () => { setProcessing(false); setSelected(null); },
             });
         } catch {
             setError('Tidak dapat menghubungi server. Periksa koneksi internet Anda.');
@@ -118,11 +118,11 @@ export default function InvoiceShow({ bill: initialBill, isProduction, clientKey
     };
 
     const statusConfig: Record<string, { label: string; bg: string; text: string; dot: string }> = {
-        paid:    { label: 'LUNAS',         bg: 'bg-green-50',  text: 'text-green-700',  dot: 'bg-green-500'  },
-        pending: { label: 'MENUNGGU',      bg: 'bg-yellow-50', text: 'text-yellow-700', dot: 'bg-yellow-500' },
-        expired: { label: 'KADALUARSA',    bg: 'bg-orange-50', text: 'text-orange-700', dot: 'bg-orange-500' },
-        unpaid:  { label: 'BELUM DIBAYAR', bg: 'bg-red-50',    text: 'text-red-700',    dot: 'bg-red-500'    },
-        failed:  { label: 'GAGAL',         bg: 'bg-red-50',    text: 'text-red-700',    dot: 'bg-red-500'    },
+        paid: { label: 'LUNAS', bg: 'bg-green-50', text: 'text-green-700', dot: 'bg-green-500' },
+        pending: { label: 'MENUNGGU', bg: 'bg-yellow-50', text: 'text-yellow-700', dot: 'bg-yellow-500' },
+        expired: { label: 'KADALUARSA', bg: 'bg-orange-50', text: 'text-orange-700', dot: 'bg-orange-500' },
+        unpaid: { label: 'BELUM DIBAYAR', bg: 'bg-red-50', text: 'text-red-700', dot: 'bg-red-500' },
+        failed: { label: 'GAGAL', bg: 'bg-red-50', text: 'text-red-700', dot: 'bg-red-500' },
     };
     const billStatus = String(bill.status || 'unpaid');
     const st = statusConfig[billStatus] ?? statusConfig['unpaid'];
@@ -173,7 +173,7 @@ export default function InvoiceShow({ bill: initialBill, isProduction, clientKey
                     {/* Status + Amount */}
                     <div className="flex items-center justify-between mb-6">
                         <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${st.bg} ${st.text}`}>
-                            &#x25CF;&nbsp;{st.label}
+                            ● <span className="ml-1">{st.label}</span>
                         </span>
                         <div className="text-right">
                             <p className="text-xs text-gray-400">Tagihan SPP</p>
@@ -186,7 +186,7 @@ export default function InvoiceShow({ bill: initialBill, isProduction, clientKey
                         <>
                             <div className="bg-green-50 border border-green-100 rounded-xl p-4 text-center mb-4">
                                 <svg className="mx-auto h-10 w-10 text-green-500 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                 </svg>
                                 <h3 className="font-bold text-green-800">Tagihan Telah Lunas</h3>
                                 <p className="text-xs text-green-600 mt-1">Terima kasih atas pembayaran Anda.</p>
@@ -232,7 +232,7 @@ export default function InvoiceShow({ bill: initialBill, isProduction, clientKey
 
                             {error && (
                                 <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 flex items-start gap-2">
-                                    <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                                    <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                                     {error}
                                 </div>
                             )}
@@ -241,7 +241,7 @@ export default function InvoiceShow({ bill: initialBill, isProduction, clientKey
                                 {methodsArray.map((method: any) => {
                                     const Icon = ICONS[method.icon] ?? BankIcon;
                                     const isThisLoading = isProcessing && selectedMethod === method.key;
-                                    const isDisabled    = isProcessing && selectedMethod !== method.key;
+                                    const isDisabled = isProcessing && selectedMethod !== method.key;
                                     return (
                                         <button
                                             key={method.key}
@@ -251,8 +251,8 @@ export default function InvoiceShow({ bill: initialBill, isProduction, clientKey
                                                 ${isThisLoading
                                                     ? 'border-indigo-400 bg-indigo-50 scale-[0.99]'
                                                     : isDisabled
-                                                    ? 'border-gray-100 bg-gray-50 opacity-50 cursor-not-allowed'
-                                                    : 'border-gray-150 hover:border-indigo-300 hover:bg-indigo-50/50 hover:shadow-sm active:scale-[0.98] cursor-pointer'
+                                                        ? 'border-gray-100 bg-gray-50 opacity-50 cursor-not-allowed'
+                                                        : 'border-gray-150 hover:border-indigo-300 hover:bg-indigo-50/50 hover:shadow-sm active:scale-[0.98] cursor-pointer'
                                                 }`}
                                         >
                                             <div className="flex-shrink-0">
@@ -277,7 +277,7 @@ export default function InvoiceShow({ bill: initialBill, isProduction, clientKey
                                                 )}
                                                 {isThisLoading
                                                     ? <span className="inline-block animate-spin w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full mt-1"></span>
-                                                    : <svg className="w-4 h-4 text-gray-300 mt-1 ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7"/></svg>
+                                                    : <svg className="w-4 h-4 text-gray-300 mt-1 ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
                                                 }
                                             </div>
                                         </button>
@@ -306,7 +306,7 @@ export default function InvoiceShow({ bill: initialBill, isProduction, clientKey
                             className="w-full flex items-center justify-center gap-2 py-2.5 px-4 border border-indigo-200 rounded-xl text-sm font-semibold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 transition-colors"
                         >
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
                             Unduh Invoice PDF
                         </a>
