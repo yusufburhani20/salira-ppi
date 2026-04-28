@@ -60,11 +60,7 @@ echo "$LOG_PREFIX 📦 Memperbarui paket PHP (composer install)..."
 echo "$LOG_PREFIX 🗄️  Menjalankan migrasi database..."
 /www/server/php/83/bin/php artisan migrate --force 2>&1 || die "Gagal menjalankan migrasi database"
 
-# 5. [DINONAKTIFKAN] Build frontend tidak diperlukan lagi
-# public/build sudah di-commit ke git dan langsung tersedia setelah git pull
-echo "$LOG_PREFIX 🎨 Aset frontend sudah tersedia dari git (build dilakukan secara lokal)..."
-
-# 6. Membersihkan Cache Laravel
+# 5. Membersihkan Cache Laravel
 echo "$LOG_PREFIX 🧹 Membersihkan cache sistem..."
 /www/server/php/83/bin/php artisan optimize:clear 2>&1
 
