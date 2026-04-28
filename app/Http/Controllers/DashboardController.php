@@ -60,6 +60,8 @@ class DashboardController extends Controller
                 'label' => $i === 0 ? 'Hari ini' : 'H-'.$i,
                 'height' => $percentage,
                 'date' => $date->format('d/m'),
+                'present' => $presentCount,
+                'total' => $totalStudents,
             ];
         }
 

@@ -192,8 +192,9 @@ export default function Dashboard({
                                                     <div className="absolute inset-x-2 top-1 h-0.5 bg-white/30 rounded-full"></div>
                                                     {/* Tooltip — rendered INSIDE the bar at the top, avoids overflow clipping */}
                                                     <div className="absolute inset-x-0 top-0 flex items-start justify-center pt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
-                                                        <div className="bg-slate-900/90 backdrop-blur-sm text-white text-[9px] font-bold px-2 py-1 rounded-md shadow-lg whitespace-nowrap">
-                                                            {item.date} · {item.height}%
+                                                        <div className="bg-slate-900/90 backdrop-blur-sm text-white text-[9px] font-bold px-2 py-1 rounded-md shadow-lg whitespace-nowrap text-center">
+                                                            {item.date} · {item.height}%<br/>
+                                                            <span className="text-[8px] text-slate-300 font-medium">{item.present ?? 0} dari {item.total ?? 0} siswa</span>
                                                         </div>
                                                     </div>
                                                 </div>
