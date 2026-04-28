@@ -179,12 +179,7 @@ Route::middleware('auth')->group(function () {
             ->whereDate('date', today())
             ->first();
         $geofences = \App\Models\Geofence::where('is_active', true)->get();
-        $middleware->validateCsrfTokens(except: [
-            '/webhook/telegram',
-            '/webhook/midtrans',
-            '/portal/attendance/scan',
-            '/invoice/*/prepare-payment',
-        ]);
+        
         return Inertia::render('User/Attendances/Scanner', [
             'todayAttendance' => $todayAttendance,
             'geofences' => $geofences
