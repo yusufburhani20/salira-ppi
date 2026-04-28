@@ -192,7 +192,7 @@ export default function Dashboard({
                             <div className="w-full overflow-x-auto custom-scrollbar">
                                 <div className="relative" style={{ height: '260px', minWidth: Math.max(480, (chartData?.length || 0) * 40) + 'px' }}>
                                     {/* Y-axis labels + grid lines */}
-                                    <div className="absolute inset-0 flex flex-col justify-between pointer-events-none pb-12">
+                                    <div className="absolute inset-0 flex flex-col justify-between pointer-events-none pb-12 pt-12">
                                         {[100, 75, 50, 25, 0].map(v => (
                                             <div key={v} className="relative flex items-center">
                                                 <span className="text-[9px] font-bold text-slate-400 w-7 text-right shrink-0 pr-2">{v}</span>
@@ -202,22 +202,26 @@ export default function Dashboard({
                                     </div>
 
                                     {/* Chart bars area — positioned above labels */}
-                                    <div className="absolute left-7 right-0 top-0 bottom-12 flex items-end gap-2 sm:gap-3">
+                                    <div className="absolute left-7 right-0 top-12 bottom-12 flex items-end gap-2 sm:gap-3">
                                         {chartData?.map((item: any, i: number) => (
                                             <div key={i} className="flex-1 h-full flex items-end group relative cursor-pointer">
+                                                {/* Tooltip — rendered ABOVE the bar */}
+                                                <div 
+                                                    className="absolute inset-x-0 flex items-end justify-center pb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-20"
+                                                    style={{ bottom: `${item.height || 0}%` }}
+                                                >
+                                                    <div className="bg-slate-900/90 backdrop-blur-sm text-white text-[9px] font-bold px-2 py-1 rounded-md shadow-lg whitespace-nowrap text-center mb-1">
+                                                        {item.date} · {item.height}%<br/>
+                                                        <span className="text-[8px] text-slate-300 font-medium">{item.present ?? 0} dari {item.total ?? 0} siswa</span>
+                                                    </div>
+                                                </div>
+
                                                 <div
                                                     className="w-full bg-gradient-to-t from-indigo-600 to-indigo-400 rounded-t-lg transition-all duration-700 ease-out group-hover:brightness-110 shadow-md shadow-indigo-500/20 min-h-[3px] relative overflow-hidden"
                                                     style={{ height: `${item.height || 0}%` }}
                                                 >
                                                     {/* Shine on top */}
                                                     <div className="absolute inset-x-2 top-1 h-0.5 bg-white/30 rounded-full"></div>
-                                                    {/* Tooltip — rendered INSIDE the bar at the top, avoids overflow clipping */}
-                                                    <div className="absolute inset-x-0 top-0 flex items-start justify-center pt-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
-                                                        <div className="bg-slate-900/90 backdrop-blur-sm text-white text-[9px] font-bold px-2 py-1 rounded-md shadow-lg whitespace-nowrap text-center">
-                                                            {item.date} · {item.height}%<br/>
-                                                            <span className="text-[8px] text-slate-300 font-medium">{item.present ?? 0} dari {item.total ?? 0} siswa</span>
-                                                        </div>
-                                                    </div>
                                                 </div>
                                             </div>
                                         ))}
