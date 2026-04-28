@@ -14,7 +14,7 @@ use Inertia\Inertia;
 
 class LeaderDashboardController extends Controller
 {
-    public function index()
+    public function index(\Illuminate\Http\Request $request)
     {
         $today = Carbon::today()->toDateString();
         
@@ -40,16 +40,31 @@ class LeaderDashboardController extends Controller
             ->get()
             ->keyBy('status');
 
-        // 4. Tren Kehadiran 7 Hari Terakhir
+        // 4. Tren Kehadiran Siswa
+        $startDate = $request->start_date ? Carbon::parse($request->start_date) : Carbon::today()->subDays(6);
+        $endDate = $request->end_date ? Carbon::parse($request->end_date) : Carbon::today();
+        
+        if ($startDate->greaterThan($endDate)) {
+            $temp = $startDate;
+            $startDate = $endDate;
+            $endDate = $temp;
+        }
+
+        $diffInDays = $startDate->diffInDays($endDate);
+        if ($diffInDays > 30) {
+            $startDate = (clone $endDate)->subDays(30);
+            $diffInDays = 30;
+        }
+
         $weeklyTrend = [];
-        for ($i = 6; $i >= 0; $i--) {
-            $date = Carbon::today()->subDays($i);
+        for ($i = $diffInDays; $i >= 0; $i--) {
+            $date = (clone $endDate)->subDays($i);
             $count = StudentAttendance::whereDate('date', $date->toDateString())
                 ->whereIn('status', ['hadir', 'tap'])
                 ->count();
             
             $weeklyTrend[] = [
-                'date' => $date->format('d M'),
+                'date' => $date->format('d/m'),
                 'count' => $count
             ];
         }
@@ -98,7 +113,11 @@ class LeaderDashboardController extends Controller
             ],
             'activeUsers' => $activeUsers,
             'lastLogins' => $lastLogins,
-            'inventoryStats' => $inventoryStats
+            'inventoryStats' => $inventoryStats,
+            'filters' => [
+                'start_date' => $startDate->format('Y-m-d'),
+                'end_date' => $endDate->format('Y-m-d'),
+            ]
         ]);
     }
 }

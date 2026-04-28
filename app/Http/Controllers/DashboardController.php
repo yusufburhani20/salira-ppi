@@ -40,16 +40,30 @@ class DashboardController extends Controller
             'items_borrowed' => InventoryItem::where('status', 'dipinjam')->count(),
         ];
 
-        // 2. Weekly Attendance Chart (Last 7 Days)
-        // If class is selected, base the total on that class size
+        // 2. Attendance Chart (Custom Range or Last 7 Days)
         $totalStudents = $classId 
             ? Student::whereHas('academicClasses', fn($q) => $q->where('academic_classes.id', $classId)->where('class_members.is_active', true))->count() 
             : Student::count();
         $totalStudents = $totalStudents ?: 1;
 
+        $startDate = $request->start_date ? Carbon::parse($request->start_date) : Carbon::today()->subDays(6);
+        $endDate = $request->end_date ? Carbon::parse($request->end_date) : Carbon::today();
+        
+        if ($startDate->greaterThan($endDate)) {
+            $temp = $startDate;
+            $startDate = $endDate;
+            $endDate = $temp;
+        }
+
+        $diffInDays = $startDate->diffInDays($endDate);
+        if ($diffInDays > 30) { // Max 31 days
+            $startDate = (clone $endDate)->subDays(30);
+            $diffInDays = 30;
+        }
+
         $chartData = [];
-        for ($i = 6; $i >= 0; $i--) {
-            $date = Carbon::today()->subDays($i);
+        for ($i = $diffInDays; $i >= 0; $i--) {
+            $date = (clone $endDate)->subDays($i);
             $presentQuery = StudentAttendance::where('status', 'hadir')->whereDate('date', $date);
             if ($classId) $presentQuery->where('academic_class_id', $classId);
             
@@ -57,7 +71,7 @@ class DashboardController extends Controller
             $percentage = round(($presentCount / $totalStudents) * 100);
             
             $chartData[] = [
-                'label' => $i === 0 ? 'Hari ini' : 'H-'.$i,
+                'label' => $date->isToday() ? 'Hari ini' : 'H-'.$i,
                 'height' => $percentage,
                 'date' => $date->format('d/m'),
                 'present' => $presentCount,
@@ -142,7 +156,11 @@ class DashboardController extends Controller
             'assessmentRanking' => $assessmentRanking,
             'inventoryStats' => $inventoryStats,
             'classes' => $classes,
-            'filters' => $request->only('academic_class_id')
+            'filters' => [
+                'academic_class_id' => $request->academic_class_id,
+                'start_date' => $startDate->format('Y-m-d'),
+                'end_date' => $endDate->format('Y-m-d'),
+            ]
         ]);
     }
 }

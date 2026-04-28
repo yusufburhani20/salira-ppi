@@ -1,5 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head } from '@inertiajs/react';
+import { useState } from 'react';
+import { Head, router } from '@inertiajs/react';
 import StatCard from '@/Components/StatCard';
 import { 
     DocumentChartBarIcon, 
@@ -14,7 +15,19 @@ import {
     ArchiveBoxIcon
 } from '@heroicons/react/24/outline';
 
-export default function LeaderDashboard({ stats, activeUsers, lastLogins, inventoryStats }: any) {
+export default function LeaderDashboard({ stats, activeUsers, lastLogins, inventoryStats, filters }: any) {
+    const [startDate, setStartDate] = useState(filters?.start_date || '');
+    const [endDate, setEndDate] = useState(filters?.end_date || '');
+
+    const handleFilterChange = (start: string, end: string) => {
+        setStartDate(start);
+        setEndDate(end);
+        router.get(route('admin.dashboard.leader'), { start_date: start, end_date: end }, { 
+            preserveState: true,
+            preserveScroll: true,
+            only: ['stats', 'filters']
+        });
+    };
     const studentPresentRate = Math.round((stats.students.present / (stats.students.total || 1)) * 100);
     const teacherPresentRate = Math.round((stats.teachers.present / (stats.teachers.total || 1)) * 100);
 
@@ -116,15 +129,32 @@ export default function LeaderDashboard({ stats, activeUsers, lastLogins, invent
                     
                     {/* Chart — takes 58% on desktop */}
                     <div className="w-full lg:w-[58%] bg-white dark:bg-slate-800 rounded-2xl shadow-lg shadow-slate-200/60 dark:shadow-none border border-slate-100 dark:border-slate-700/50 overflow-hidden flex flex-col">
-                        <div className="px-6 pt-6 pb-4 border-b border-slate-100 dark:border-slate-700/50">
-                            <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                                Tren Kehadiran Siswa
-                            </h3>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">7 Hari Terakhir</p>
+                        <div className="px-6 pt-6 pb-4 border-b border-slate-100 dark:border-slate-700/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                            <div>
+                                <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                    Tren Kehadiran Siswa
+                                </h3>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Grafik kehadiran berdasarkan rentang waktu yang dipilih</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <input 
+                                    type="date" 
+                                    value={startDate} 
+                                    onChange={(e) => handleFilterChange(e.target.value, endDate)}
+                                    className="text-xs rounded-md border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-1"
+                                />
+                                <span className="text-slate-400 text-xs">-</span>
+                                <input 
+                                    type="date" 
+                                    value={endDate} 
+                                    onChange={(e) => handleFilterChange(startDate, e.target.value)}
+                                    className="text-xs rounded-md border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-1"
+                                />
+                            </div>
                         </div>
                         <div className="flex-1 p-5 sm:p-6 bg-slate-50/50 dark:bg-slate-900/20">
                             <div className="w-full overflow-x-auto custom-scrollbar">
-                                <div className="min-w-[480px] relative" style={{ height: '260px' }}>
+                                <div className="relative" style={{ height: '260px', minWidth: Math.max(480, (stats.weeklyTrend?.length || 0) * 40) + 'px' }}>
                                     {/* Y-axis labels + grid lines */}
                                     <div className="absolute inset-0 flex flex-col justify-between pointer-events-none pb-12">
                                         {[100, 75, 50, 25, 0].map(v => (
@@ -167,7 +197,7 @@ export default function LeaderDashboard({ stats, activeUsers, lastLogins, invent
                                                 <div key={i} className="flex-1 flex flex-col items-center text-center">
                                                     <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 leading-none">{item.date}</span>
                                                     <span className="text-[9px] font-semibold text-indigo-500 mt-1">{height}%</span>
-                                                    <span className="text-[8px] font-medium text-slate-400 mt-0.5">{item.count ?? 0}/{stats.students.total ?? 0}</span>
+                                                    <span className="text-[8px] font-medium text-slate-400 mt-0.5">{item.count ?? 0} dari {stats.students.total ?? 0} siswa</span>
                                                 </div>
                                             )
                                         })}

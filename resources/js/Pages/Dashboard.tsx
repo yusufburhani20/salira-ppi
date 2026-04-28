@@ -27,10 +27,14 @@ export default function Dashboard({
     filters 
 }: any) {
     const [classId, setClassId] = useState(filters?.academic_class_id || '');
+    const [startDate, setStartDate] = useState(filters?.start_date || '');
+    const [endDate, setEndDate] = useState(filters?.end_date || '');
 
-    const handleFilterChange = (id: string) => {
+    const handleFilterChange = (id: string, start: string, end: string) => {
         setClassId(id);
-        router.get(route('dashboard'), { academic_class_id: id }, { 
+        setStartDate(start);
+        setEndDate(end);
+        router.get(route('dashboard'), { academic_class_id: id, start_date: start, end_date: end }, { 
             preserveState: true,
             preserveScroll: true,
             only: ['stats', 'chartData', 'attendanceRanking', 'assessmentRanking', 'filters']
@@ -52,8 +56,8 @@ export default function Dashboard({
                         <FunnelIcon className="w-4 h-4 text-slate-400 shrink-0" />
                         <select 
                             value={classId}
-                            onChange={(e) => handleFilterChange(e.target.value)}
-                            className="text-xs font-semibold border-none bg-transparent focus:ring-0 text-slate-600 dark:text-slate-300 cursor-pointer"
+                            onChange={(e) => handleFilterChange(e.target.value, startDate, endDate)}
+                            className="text-xs font-semibold border-none bg-transparent focus:ring-0 text-slate-600 dark:text-slate-300 cursor-pointer py-0 pl-1 pr-7"
                         >
                             <option value="">Semua Kelas</option>
                             {classes?.map((c: any) => (
@@ -163,13 +167,30 @@ export default function Dashboard({
                     
                     {/* Chart — takes 60% on desktop */}
                     <div className="w-full lg:w-[58%] bg-white dark:bg-slate-800 rounded-2xl shadow-lg shadow-slate-200/60 dark:shadow-none border border-slate-100 dark:border-slate-700/50 overflow-hidden flex flex-col">
-                        <div className="px-6 pt-6 pb-4 border-b border-slate-100 dark:border-slate-700/50">
-                            <h3 className="text-sm font-bold text-slate-900 dark:text-white">Persentase Kehadiran Siswa</h3>
-                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Analisis statistik presensi selama 7 hari terakhir</p>
+                        <div className="px-6 pt-6 pb-4 border-b border-slate-100 dark:border-slate-700/50 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                            <div>
+                                <h3 className="text-sm font-bold text-slate-900 dark:text-white">Persentase Kehadiran Siswa</h3>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Grafik kehadiran berdasarkan rentang waktu yang dipilih</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <input 
+                                    type="date" 
+                                    value={startDate} 
+                                    onChange={(e) => handleFilterChange(classId, e.target.value, endDate)}
+                                    className="text-xs rounded-md border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-1"
+                                />
+                                <span className="text-slate-400 text-xs">-</span>
+                                <input 
+                                    type="date" 
+                                    value={endDate} 
+                                    onChange={(e) => handleFilterChange(classId, startDate, e.target.value)}
+                                    className="text-xs rounded-md border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-1"
+                                />
+                            </div>
                         </div>
                         <div className="flex-1 p-5 sm:p-6 bg-slate-50/50 dark:bg-slate-900/20">
                             <div className="w-full overflow-x-auto custom-scrollbar">
-                                <div className="min-w-[480px] relative" style={{ height: '260px' }}>
+                                <div className="relative" style={{ height: '260px', minWidth: Math.max(480, (chartData?.length || 0) * 40) + 'px' }}>
                                     {/* Y-axis labels + grid lines */}
                                     <div className="absolute inset-0 flex flex-col justify-between pointer-events-none pb-12">
                                         {[100, 75, 50, 25, 0].map(v => (
@@ -208,7 +229,7 @@ export default function Dashboard({
                                             <div key={i} className="flex-1 flex flex-col items-center text-center">
                                                 <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 leading-none">{item.date}</span>
                                                 <span className="text-[9px] font-semibold text-indigo-500 mt-1">{item.height}%</span>
-                                                <span className="text-[8px] font-medium text-slate-400 mt-0.5">{item.present ?? 0}/{item.total ?? 0}</span>
+                                                <span className="text-[8px] font-medium text-slate-400 mt-0.5">{item.present ?? 0} dari {item.total ?? 0} siswa</span>
                                             </div>
                                         ))}
                                     </div>
