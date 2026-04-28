@@ -18,15 +18,38 @@ class InvoiceController extends Controller
         $isProduction = env('MIDTRANS_IS_PRODUCTION', false);
         $midtransService = new MidtransService();
 
-        // For display of payment methods with fees
-        $paymentMethods = $midtransService->getPaymentMethodsWithFees((int) $bill->amount);
+        // For display of payment methods with fees (only needed when not paid)
+        $paymentMethods = $bill->status !== 'paid'
+            ? $midtransService->getPaymentMethodsWithFees((int) $bill->amount)
+            : null;
+
+        // Map payment_type from Midtrans to a readable method label
+        $methodLabels = [
+            'gopay'        => 'GoPay',
+            'shopeepay'    => 'ShopeePay',
+            'qris'         => 'QRIS',
+            'bank_transfer'=> 'Transfer Bank (Virtual Account)',
+            'bca_va'       => 'Transfer BCA Virtual Account',
+            'bni_va'       => 'Transfer BNI Virtual Account',
+            'bri_va'       => 'Transfer BRI Virtual Account',
+            'mandiri_bill' => 'Transfer Mandiri',
+            'permata_va'   => 'Transfer Permata Virtual Account',
+            'echannel'     => 'Mandiri Bill Payment',
+            'other_va'     => 'Virtual Account Lainnya',
+            'cstore'       => 'Gerai (Alfamart/Indomaret)',
+            'alfamart'     => 'Alfamart',
+            'indomaret'    => 'Indomaret',
+            'credit_card'  => 'Kartu Kredit',
+        ];
 
         // For already-paid bills: show what was charged
         $adminFeeData = null;
-        if ($bill->status === 'paid' && $bill->admin_fee > 0) {
+        if ($bill->admin_fee > 0) {
+            $methodKey   = $bill->payment_method ?? null;
+            $methodLabel = $methodKey ? ($methodLabels[$methodKey] ?? ucwords(str_replace('_', ' ', $methodKey))) : 'Pembayaran Digital';
             $adminFeeData = [
                 'amount' => (int) $bill->admin_fee,
-                'label'  => Setting::get('midtrans_fee_label', 'Biaya Layanan Pembayaran'),
+                'label'  => 'Biaya Layanan ' . $methodLabel,
             ];
         }
 
@@ -35,7 +58,8 @@ class InvoiceController extends Controller
             'isProduction'   => $isProduction,
             'clientKey'      => env('MIDTRANS_CLIENT_KEY'),
             'paymentMethods' => $paymentMethods,
-            'adminFee'       => $adminFeeData, // only for paid bills
+            'adminFee'       => $adminFeeData,
+            'methodLabels'   => $methodLabels,
         ]);
     }
 

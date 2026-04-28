@@ -69,6 +69,7 @@ export default function InvoiceShow({ bill: initialBill, isProduction, clientKey
 
     // Load Midtrans Snap.js
     useEffect(() => {
+        if (!clientKey) return;
         const script = document.createElement('script');
         script.src = isProduction
             ? 'https://app.midtrans.com/snap/snap.js'
@@ -101,24 +102,13 @@ export default function InvoiceShow({ bill: initialBill, isProduction, clientKey
                 return;
             }
 
-            // Update local bill state with new admin_fee
             setBill((prev: any) => ({ ...prev, admin_fee: data.admin_fee?.amount ?? 0 }));
 
             window.snap.pay(data.snap_token, {
                 onSuccess: () => window.location.reload(),
-                onPending: () => {
-                    setProcessing(false);
-                    setSelected(null);
-                },
-                onError: () => {
-                    setError('Pembayaran gagal. Silakan pilih metode lain atau coba lagi.');
-                    setProcessing(false);
-                    setSelected(null);
-                },
-                onClose: () => {
-                    setProcessing(false);
-                    setSelected(null);
-                },
+                onPending: () => { setProcessing(false); setSelected(null); },
+                onError:   () => { setError('Pembayaran gagal. Silakan pilih metode lain atau coba lagi.'); setProcessing(false); setSelected(null); },
+                onClose:   () => { setProcessing(false); setSelected(null); },
             });
         } catch {
             setError('Tidak dapat menghubungi server. Periksa koneksi internet Anda.');
@@ -128,15 +118,30 @@ export default function InvoiceShow({ bill: initialBill, isProduction, clientKey
     };
 
     const statusConfig: Record<string, { label: string; bg: string; text: string; dot: string }> = {
-        paid:    { label: 'LUNAS',          bg: 'bg-green-50',  text: 'text-green-700',  dot: 'bg-green-500' },
-        pending: { label: 'MENUNGGU',        bg: 'bg-yellow-50', text: 'text-yellow-700', dot: 'bg-yellow-500' },
-        expired: { label: 'KADALUARSA',      bg: 'bg-orange-50', text: 'text-orange-700', dot: 'bg-orange-500' },
-        unpaid:  { label: 'BELUM DIBAYAR',   bg: 'bg-red-50',    text: 'text-red-700',    dot: 'bg-red-500' },
-        failed:  { label: 'GAGAL',           bg: 'bg-red-50',    text: 'text-red-700',    dot: 'bg-red-500' },
+        paid:    { label: 'LUNAS',         bg: 'bg-green-50',  text: 'text-green-700',  dot: 'bg-green-500'  },
+        pending: { label: 'MENUNGGU',      bg: 'bg-yellow-50', text: 'text-yellow-700', dot: 'bg-yellow-500' },
+        expired: { label: 'KADALUARSA',    bg: 'bg-orange-50', text: 'text-orange-700', dot: 'bg-orange-500' },
+        unpaid:  { label: 'BELUM DIBAYAR', bg: 'bg-red-50',    text: 'text-red-700',    dot: 'bg-red-500'    },
+        failed:  { label: 'GAGAL',         bg: 'bg-red-50',    text: 'text-red-700',    dot: 'bg-red-500'    },
     };
-    const st = statusConfig[bill.status] ?? statusConfig.unpaid;
+    const st = statusConfig[bill.status as string] ?? statusConfig['unpaid'];
 
     const methodsArray: any[] = paymentMethods ? Object.values(paymentMethods) : [];
+
+    // Format payment_method code to readable text (no question marks)
+    const formatMethodLabel = (raw: string | null | undefined): string => {
+        if (!raw) return 'Pembayaran Digital';
+        const map: Record<string, string> = {
+            gopay: 'GoPay', shopeepay: 'ShopeePay', qris: 'QRIS',
+            bank_transfer: 'Transfer Bank', bca_va: 'BCA Virtual Account',
+            bni_va: 'BNI Virtual Account', bri_va: 'BRI Virtual Account',
+            mandiri_bill: 'Mandiri Bill', permata_va: 'Permata Virtual Account',
+            echannel: 'Mandiri Echannel', other_va: 'Virtual Account',
+            cstore: 'Gerai (Alfamart/Indomaret)', alfamart: 'Alfamart',
+            indomaret: 'Indomaret', credit_card: 'Kartu Kredit',
+        };
+        return map[raw] ?? raw.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+    };
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-100 to-indigo-50 flex items-start justify-center p-4 pt-10 pb-16">
@@ -151,8 +156,8 @@ export default function InvoiceShow({ bill: initialBill, isProduction, clientKey
                     <div className="flex justify-between items-end mt-6">
                         <div>
                             <p className="text-indigo-200 text-xs">Tagihan kepada</p>
-                            <p className="font-bold text-lg leading-tight">{bill.student.name}</p>
-                            <p className="text-indigo-200 text-xs">NIS: {bill.student.nis ?? '-'}</p>
+                            <p className="font-bold text-lg leading-tight">{bill.student?.name ?? '-'}</p>
+                            <p className="text-indigo-200 text-xs">NIS: {bill.student?.nis ?? '-'}</p>
                         </div>
                         <div className="text-right">
                             <p className="text-indigo-200 text-xs">No. Invoice</p>
@@ -196,12 +201,16 @@ export default function InvoiceShow({ bill: initialBill, isProduction, clientKey
                                         </span>
                                     </div>
                                 )}
-                                {bill.payment_method && (
-                                    <div className="flex justify-between">
-                                        <span className="text-gray-500">Metode Bayar</span>
-                                        <span className="font-medium text-gray-800 capitalize">{bill.payment_method.replace(/_/g, ' ')}</span>
-                                    </div>
-                                )}
+                                <div className="flex justify-between">
+                                    <span className="text-gray-500">Metode Bayar</span>
+                                    <span className="font-medium text-gray-800">
+                                        {formatMethodLabel(bill.payment_method)}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-gray-500">Tagihan SPP</span>
+                                    <span className="font-medium text-gray-800">{formatRp(bill.amount)}</span>
+                                </div>
                                 {adminFee && adminFee.amount > 0 && (
                                     <div className="flex justify-between">
                                         <span className="text-gray-500">{adminFee.label}</span>
@@ -210,7 +219,7 @@ export default function InvoiceShow({ bill: initialBill, isProduction, clientKey
                                 )}
                                 <div className="flex justify-between font-bold pt-2 border-t">
                                     <span className="text-gray-700">Total Dibayar</span>
-                                    <span className="text-indigo-700">{formatRp(bill.amount + (adminFee?.amount ?? 0))}</span>
+                                    <span className="text-indigo-700">{formatRp(Number(bill.amount) + (adminFee?.amount ?? 0))}</span>
                                 </div>
                             </div>
                         </>
