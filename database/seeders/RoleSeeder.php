@@ -31,70 +31,34 @@ class RoleSeeder extends Seeder
             Role::firstOrCreate(['name' => $role]);
         }
 
-        // Create Super Admin User
-        $superAdmin = User::firstOrCreate(
-            ['email' => 'admin@salira.com'],
-            [
-                'name' => 'System Administrator',
-                'nip' => '000000',
-                'password' => Hash::make('password'),
-                'status' => UserStatus::active->value,
-                'email_verified_at' => now(),
-            ]
-        );
-        
-        $superAdmin->assignRole('Super Admin');
+        // Helper function to create users safely
+        $createUser = function($email, $data, $roleName) {
+            // Cek termasuk data yang di-soft delete agar tidak tabrakan NIP
+            $user = User::withTrashed()->where('email', $email)->orWhere('nip', $data['nip'])->first();
+            
+            if (!$user) {
+                $user = User::create(array_merge($data, [
+                    'email' => $email,
+                    'password' => Hash::make('password'),
+                    'status' => UserStatus::active->value,
+                    'email_verified_at' => now(),
+                ]));
+            } else {
+                // Jika user ada tapi di-soft delete, restore saja
+                if ($user->trashed()) {
+                    $user->restore();
+                }
+            }
+            
+            $user->assignRole($roleName);
+            return $user;
+        };
 
-        // Create Demo Pimpinan
-        $pimpinan = User::firstOrCreate(
-            ['email' => 'pimpinan@salira.com'],
-            [
-                'name' => 'Bapak Pimpinan',
-                'nip' => '111111',
-                'password' => Hash::make('password'),
-                'status' => UserStatus::active->value,
-                'email_verified_at' => now(),
-            ]
-        );
-        $pimpinan->assignRole('Pimpinan');
-
-        // Create Demo Guru
-        $guru = User::firstOrCreate(
-            ['email' => 'guru@salira.com'],
-            [
-                'name' => 'Bapak Guru',
-                'nip' => '222222',
-                'password' => Hash::make('password'),
-                'status' => UserStatus::active->value,
-                'email_verified_at' => now(),
-            ]
-        );
-        $guru->assignRole('Guru/Dosen');
-
-        // Create Demo Wali Kelas
-        $waliKelas = User::firstOrCreate(
-            ['email' => 'walikelas@salira.com'],
-            [
-                'name' => 'Ibu Wali Kelas',
-                'nip' => '333333',
-                'password' => Hash::make('password'),
-                'status' => UserStatus::active->value,
-                'email_verified_at' => now(),
-            ]
-        );
-        $waliKelas->assignRole('Wali Kelas');
-
-        // Create Demo Bendahara
-        $bendahara = User::firstOrCreate(
-            ['email' => 'bendahara@salira.com'],
-            [
-                'name' => 'Bendahara Sekolah',
-                'nip' => '444444',
-                'password' => Hash::make('password'),
-                'status' => UserStatus::active->value,
-                'email_verified_at' => now(),
-            ]
-        );
-        $bendahara->assignRole('Bendahara');
+        // Create Users
+        $createUser('admin@salira.com', ['name' => 'System Administrator', 'nip' => '000000'], 'Super Admin');
+        $createUser('pimpinan@salira.com', ['name' => 'Bapak Pimpinan', 'nip' => '111111'], 'Pimpinan');
+        $createUser('guru@salira.com', ['name' => 'Bapak Guru', 'nip' => '222222'], 'Guru/Dosen');
+        $createUser('walikelas@salira.com', ['name' => 'Ibu Wali Kelas', 'nip' => '333333'], 'Wali Kelas');
+        $createUser('bendahara@salira.com', ['name' => 'Bendahara Sekolah', 'nip' => '444444'], 'Bendahara');
     }
 }
