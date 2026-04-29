@@ -1,6 +1,7 @@
 import { Head, Link } from '@inertiajs/react';
 import PortalLayout from '@/Layouts/PortalLayout';
 import { useState } from 'react';
+import SystemClock from '@/Components/SystemClock';
 
 export default function Dashboard({ student, unpaidBillsCount, attendanceStats, academics = [], consultations = [], todayStatus, todayAlphaDetails = [], announcements = [] }: any) {
     const totalAttendance = attendanceStats.present + attendanceStats.sick + attendanceStats.permission + attendanceStats.absent;
@@ -97,6 +98,9 @@ export default function Dashboard({ student, unpaidBillsCount, attendanceStats, 
             <Head title="Dashboard Siswa" />
 
             <div className="space-y-6">
+                <div className="flex justify-end -mb-2">
+                    <SystemClock />
+                </div>
 
                 {/* ANNOUNCEMENTS SECTION */}
                 {announcements.length > 0 && (

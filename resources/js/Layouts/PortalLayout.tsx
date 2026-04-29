@@ -169,8 +169,6 @@ export default function PortalLayout({ header, children }: PropsWithChildren<{ h
 
                         {/* Actions */}
                         <div className="flex items-center gap-2">
-                            <SystemClock />
-                            
                             {/* Notification Bell */}
                             <Dropdown>
                                 <Dropdown.Trigger>

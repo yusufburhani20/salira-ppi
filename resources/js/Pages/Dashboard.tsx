@@ -12,6 +12,7 @@ import {
     QrCodeIcon,
     ArchiveBoxIcon,
 } from '@heroicons/react/24/outline';
+import SystemClock from '@/Components/SystemClock';
 import { useState } from 'react';
 
 export default function Dashboard({ 
@@ -71,6 +72,10 @@ export default function Dashboard({
             <Head title="Dashboard" />
 
             <div className="space-y-6">
+                
+                <div className="flex justify-end mb-2">
+                    <SystemClock />
+                </div>
                 
                 {/* ── SECTION 1: Welcome Banner with Quick Actions ── */}
                 <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-700 via-indigo-600 to-violet-700 text-white shadow-2xl shadow-indigo-500/20 isolate">

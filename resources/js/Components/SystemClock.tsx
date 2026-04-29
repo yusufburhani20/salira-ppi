@@ -37,11 +37,11 @@ export default function SystemClock() {
     }
 
     return (
-        <div className="flex flex-col items-end mr-2 sm:mr-4 text-slate-600 dark:text-slate-300">
-            <div className="text-sm font-bold text-indigo-600 dark:text-indigo-400">
+        <div className="flex flex-col items-end text-slate-600 dark:text-slate-300">
+            <div className="text-sm font-black text-indigo-600 dark:text-indigo-400 leading-none">
                 {formatTime(currentTime)}
             </div>
-            <div className="text-xs font-medium opacity-80">
+            <div className="text-[10px] font-bold opacity-60 uppercase tracking-widest mt-1">
                 {formatDate(currentTime)}
             </div>
         </div>

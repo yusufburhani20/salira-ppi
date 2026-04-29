@@ -14,6 +14,7 @@ import {
     CheckCircleIcon,
     ArchiveBoxIcon
 } from '@heroicons/react/24/outline';
+import SystemClock from '@/Components/SystemClock';
 
 export default function LeaderDashboard({ stats, activeUsers, lastLogins, inventoryStats, filters }: any) {
     const [startDate, setStartDate] = useState(filters?.start_date || '');
@@ -47,6 +48,10 @@ export default function LeaderDashboard({ stats, activeUsers, lastLogins, invent
             <Head title="Leader Dashboard" />
 
             <div className="space-y-6">
+                
+                <div className="flex justify-end mb-2">
+                    <SystemClock />
+                </div>
                 
                 {/* ── SECTION 1: Welcome Banner with Quick Actions ── */}
                 <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-700 via-indigo-600 to-violet-700 text-white shadow-2xl shadow-indigo-500/20 isolate">
