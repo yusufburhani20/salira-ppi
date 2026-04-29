@@ -98,9 +98,6 @@ export default function Dashboard({ student, unpaidBillsCount, attendanceStats, 
             <Head title="Dashboard Siswa" />
 
             <div className="space-y-6">
-                <div className="flex justify-end -mb-2">
-                    <SystemClock />
-                </div>
 
                 {/* ANNOUNCEMENTS SECTION */}
                 {announcements.length > 0 && (
@@ -140,6 +137,10 @@ export default function Dashboard({ student, unpaidBillsCount, attendanceStats, 
                 {/* Hero Welcome Unit */}
                 <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl shadow-lg p-8 relative overflow-hidden text-white">
                     <div className="absolute right-0 top-0 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl pointer-events-none transform translate-x-1/2 -translate-y-1/2"></div>
+                    
+                    <div className="absolute top-6 right-6 sm:top-8 sm:right-8 z-20">
+                        <SystemClock light />
+                    </div>
                     <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                         <div className="flex-1">
                             <p className="text-blue-100 font-semibold mb-1 text-sm tracking-widest uppercase">Tahun Ajaran 2026/2027</p>

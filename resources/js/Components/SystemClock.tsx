@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
 
-export default function SystemClock() {
+type Props = {
+    light?: boolean;
+};
+
+export default function SystemClock({ light = false }: Props) {
     const [currentTime, setCurrentTime] = useState<Date | null>(null);
 
     useEffect(() => {
@@ -29,19 +33,27 @@ export default function SystemClock() {
         });
     };
 
+    const getTimezoneAbbr = (date: Date) => {
+        const offset = -date.getTimezoneOffset() / 60;
+        if (offset === 7) return 'WIB';
+        if (offset === 8) return 'WITA';
+        if (offset === 9) return 'WIT';
+        return '';
+    };
+
     if (!currentTime) {
         return (
-            <div className="flex flex-col items-end mr-2 sm:mr-4 text-slate-600 dark:text-slate-300 w-32 h-10 animate-pulse bg-slate-200 dark:bg-slate-700 rounded">
+            <div className={`w-32 h-10 animate-pulse rounded ${light ? 'bg-white/10' : 'bg-slate-200 dark:bg-slate-700'}`}>
             </div>
         );
     }
 
     return (
-        <div className="flex flex-col items-end text-slate-600 dark:text-slate-300">
-            <div className="text-sm font-black text-indigo-600 dark:text-indigo-400 leading-none">
-                {formatTime(currentTime)}
+        <div className={`flex flex-col items-end ${light ? 'text-white' : 'text-slate-600 dark:text-slate-300'}`}>
+            <div className={`text-base font-black leading-none ${light ? 'text-amber-400' : 'text-indigo-600 dark:text-indigo-400'}`}>
+                {formatTime(currentTime)} <span className="text-[10px] opacity-80 ml-0.5">{getTimezoneAbbr(currentTime)}</span>
             </div>
-            <div className="text-[10px] font-bold opacity-60 uppercase tracking-widest mt-1">
+            <div className={`text-[10px] font-bold uppercase tracking-widest mt-1.5 ${light ? 'opacity-80' : 'opacity-60'}`}>
                 {formatDate(currentTime)}
             </div>
         </div>

@@ -49,16 +49,16 @@ export default function LeaderDashboard({ stats, activeUsers, lastLogins, invent
 
             <div className="space-y-6">
                 
-                <div className="flex justify-end mb-2">
-                    <SystemClock />
-                </div>
-                
                 {/* ── SECTION 1: Welcome Banner with Quick Actions ── */}
                 <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-700 via-indigo-600 to-violet-700 text-white shadow-2xl shadow-indigo-500/20 isolate">
                     {/* Decorative blobs */}
                     <div className="absolute -top-24 -right-24 w-72 h-72 bg-white/5 rounded-full blur-3xl pointer-events-none" />
                     <div className="absolute -bottom-20 -left-16 w-64 h-64 bg-violet-500/10 rounded-full blur-3xl pointer-events-none" />
                     <div className="absolute top-1/2 right-1/4 w-40 h-40 bg-amber-400/5 rounded-full blur-2xl pointer-events-none" />
+
+                    <div className="absolute top-6 right-6 sm:top-8 sm:right-8 z-20">
+                        <SystemClock light />
+                    </div>
 
                     <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center gap-8 p-6 sm:p-8 lg:p-10">
                         {/* Left: Hero Text */}
