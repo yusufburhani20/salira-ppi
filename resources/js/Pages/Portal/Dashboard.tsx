@@ -205,47 +205,83 @@ export default function Dashboard({ student, unpaidBillsCount, attendanceStats, 
                             )}
                         </div>
 
-                        <div className="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
-                            <div className="flex justify-between items-center mb-1">
-                                <h4 className="text-lg font-bold text-slate-800">Capaian Kehadiran</h4>
-                                <Link href={route('portal.attendance')} className="text-xs font-bold text-blue-600 hover:underline">Detail →</Link>
+                        {/* REDESIGNED ATTENDANCE SECTION */}
+                        <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-200 overflow-hidden group">
+                            <div className="p-6 pb-0 flex justify-between items-center">
+                                <div>
+                                    <h4 className="text-xl font-black text-slate-800 tracking-tight">Capaian Kehadiran</h4>
+                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">6 Bulan Terakhir</p>
+                                </div>
+                                <Link 
+                                    href={route('portal.attendance')} 
+                                    className="w-10 h-10 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-blue-600 hover:text-white transition-all shadow-sm group/btn"
+                                >
+                                    <svg className="w-5 h-5 group-hover/btn:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5-5 5M6 7l5 5-5 5" /></svg>
+                                </Link>
                             </div>
-                            <p className="text-xs text-slate-500 mb-6">Persentase persentase kehadiran Anda (6 Bulan Terakhir).</p>
                             
-                            <div className="flex items-center justify-center mb-6">
-                                <div className="relative w-32 h-32 flex items-center justify-center rounded-full border-[12px] border-slate-100">
-                                    <div 
-                                        className="absolute inset-0 rounded-full border-[12px] border-blue-500"
-                                        style={{ 
-                                            clipPath: `polygon(0 0, 100% 0, 100% 100%, 0 100%)`, 
-                                            transform: `rotate(${(presentPercentage / 100) * 360}deg)`,
-                                            borderRightColor: presentPercentage < 50 ? 'transparent' : 'inherit',
-                                            borderBottomColor: presentPercentage < 75 ? 'transparent' : 'inherit',
-                                            borderLeftColor: presentPercentage < 25 ? 'transparent' : 'inherit',
-                                        }}
-                                    ></div>
-                                    <div className="flex flex-col items-center">
-                                        <span className="text-3xl font-black text-slate-800">{presentPercentage}%</span>
-                                    </div>
+                            {/* SVG Progress Ring */}
+                            <div className="flex items-center justify-center py-10 relative">
+                                <svg className="w-48 h-48 transform -rotate-90">
+                                    {/* Background track */}
+                                    <circle
+                                        cx="96" cy="96" r="80"
+                                        stroke="currentColor" strokeWidth="12"
+                                        fill="transparent"
+                                        className="text-slate-100"
+                                    />
+                                    {/* Progress bar */}
+                                    <circle
+                                        cx="96" cy="96" r="80"
+                                        stroke="currentColor" strokeWidth="12"
+                                        fill="transparent"
+                                        strokeDasharray={2 * Math.PI * 80}
+                                        strokeDashoffset={2 * Math.PI * 80 * (1 - presentPercentage / 100)}
+                                        strokeLinecap="round"
+                                        className="text-blue-600 transition-all duration-1000 ease-out"
+                                    />
+                                </svg>
+                                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                    <span className="text-4xl font-black text-slate-800 tracking-tighter">{presentPercentage}%</span>
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">Hadir</span>
                                 </div>
                             </div>
-
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="bg-emerald-50 rounded-xl p-3 flex justify-between items-center text-emerald-800">
-                                    <span className="text-xs font-bold uppercase">Hadir</span>
-                                    <span className="text-lg font-black">{attendanceStats.present}</span>
-                                </div>
-                                <div className="bg-amber-50 rounded-xl p-3 flex justify-between items-center text-amber-800">
-                                    <span className="text-xs font-bold uppercase">Sakit</span>
-                                    <span className="text-lg font-black">{attendanceStats.sick}</span>
-                                </div>
-                                <div className="bg-blue-50 rounded-xl p-3 flex justify-between items-center text-blue-800">
-                                    <span className="text-xs font-bold uppercase">Izin</span>
-                                    <span className="text-lg font-black">{attendanceStats.permission}</span>
-                                </div>
-                                <div className="bg-rose-50 rounded-xl p-3 flex justify-between items-center text-rose-800">
-                                    <span className="text-xs font-bold uppercase">Alpa</span>
-                                    <span className="text-lg font-black">{attendanceStats.absent}</span>
+                            
+                            {/* Status Cards Grid */}
+                            <div className="p-6 pt-0">
+                                <div className="grid grid-cols-2 gap-3">
+                                    {[
+                                        { label: 'Hadir', value: attendanceStats.present, color: 'emerald', icon: '✓' },
+                                        { label: 'Sakit', value: attendanceStats.sick, color: 'amber', icon: '🤒' },
+                                        { label: 'Izin', value: attendanceStats.permission, color: 'blue', icon: '📋' },
+                                        { label: 'Alpha', value: attendanceStats.absent, color: 'rose', icon: '✗' },
+                                        { label: 'Terlambat', value: attendanceStats.late || 0, color: 'orange', icon: '⏰', full: true },
+                                    ].map((s) => (
+                                        <div 
+                                            key={s.label} 
+                                            className={`rounded-2xl p-3 flex items-center gap-3 border transition-all hover:shadow-md ${
+                                                s.color === 'emerald' ? 'bg-emerald-50 border-emerald-100 text-emerald-800' :
+                                                s.color === 'amber' ? 'bg-amber-50 border-amber-100 text-amber-800' :
+                                                s.color === 'blue' ? 'bg-blue-50 border-blue-100 text-blue-800' :
+                                                s.color === 'rose' ? 'bg-rose-50 border-rose-100 text-rose-800' :
+                                                'bg-orange-50 border-orange-100 text-orange-800'
+                                            } ${s.full ? 'col-span-2' : ''}`}
+                                        >
+                                            <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-lg ${
+                                                s.color === 'emerald' ? 'bg-emerald-200/50' :
+                                                s.color === 'amber' ? 'bg-amber-200/50' :
+                                                s.color === 'blue' ? 'bg-blue-200/50' :
+                                                s.color === 'rose' ? 'bg-rose-200/50' :
+                                                'bg-orange-200/50'
+                                            }`}>
+                                                {s.icon}
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className="text-[10px] font-black uppercase tracking-widest opacity-60 leading-none">{s.label}</p>
+                                                <p className="text-lg font-black mt-1 leading-none">{s.value}</p>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
                         </div>
