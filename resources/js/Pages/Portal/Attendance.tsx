@@ -1,10 +1,11 @@
 import PortalLayout from '@/Layouts/PortalLayout';
-import { Head, Link } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { useState } from 'react';
 
-type AlphaDetail = {
+type AttendanceDetail = {
     subject: string;
     lesson_period: string;
+    status: string;
 };
 
 type AttendanceRecord = {
@@ -12,7 +13,7 @@ type AttendanceRecord = {
     date: string;
     status: string;
     notes: string | null;
-    alpha_details: AlphaDetail[];
+    details: AttendanceDetail[];
 };
 
 type PaginatedAttendance = {
@@ -70,7 +71,6 @@ function AttendanceCard({ att }: { att: AttendanceRecord }) {
     const [expanded, setExpanded] = useState(false);
     const statusKey = (att.status || 'hadir').toLowerCase();
     const cfg = STATUS_CONFIG[statusKey] ?? STATUS_CONFIG['hadir'];
-    const isAlpha = statusKey === 'alpha';
 
     const formattedDate = new Date(att.date + 'T00:00:00').toLocaleDateString('id-ID', {
         weekday: 'long',
@@ -92,27 +92,27 @@ function AttendanceCard({ att }: { att: AttendanceRecord }) {
                 <div className="flex-1 min-w-0">
                     <div className={`text-xs font-black uppercase tracking-widest mb-1 ${cfg.text}`}>{cfg.label}</div>
                     <div className="text-base font-bold text-slate-800 leading-snug">{formattedDate}</div>
-                    {att.notes && !isAlpha && (
+                    {att.notes && (
                         <div className="text-sm text-slate-500 mt-1 truncate">{att.notes}</div>
                     )}
-                    {isAlpha && att.alpha_details.length > 0 && (
-                        <div className={`text-sm font-semibold mt-1 ${cfg.text}`}>
-                            {att.alpha_details.length} mata pelajaran tidak hadir
+                    {att.details.length > 0 && (
+                        <div className={`text-xs font-bold mt-1.5 px-2.5 py-1 rounded-lg inline-block ${cfg.badge} bg-opacity-20 ${cfg.text} border ${cfg.border}`}>
+                            {att.details.length} Jam Pelajaran Tercatat
                         </div>
                     )}
                 </div>
 
-                {/* Expand button — only for alpha with detail */}
-                {isAlpha && att.alpha_details.length > 0 && (
+                {/* Expand button */}
+                {att.details.length > 0 && (
                     <button
                         onClick={() => setExpanded(!expanded)}
                         className={`flex-shrink-0 flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-black transition-all ${
                             expanded
-                                ? 'bg-rose-600 text-white shadow-md'
-                                : 'bg-rose-100 text-rose-700 hover:bg-rose-200'
+                                ? 'bg-slate-800 text-white shadow-md'
+                                : 'bg-white text-slate-700 border-2 border-slate-200 hover:border-slate-300 shadow-sm'
                         }`}
                     >
-                        <span>{expanded ? 'Tutup' : 'Lihat Detail'}</span>
+                        <span>{expanded ? 'Tutup' : 'Rincian'}</span>
                         <svg
                             className={`w-4 h-4 transition-transform ${expanded ? 'rotate-180' : ''}`}
                             fill="none" stroke="currentColor" viewBox="0 0 24 24"
@@ -123,32 +123,35 @@ function AttendanceCard({ att }: { att: AttendanceRecord }) {
                 )}
             </div>
 
-            {/* Alpha detail panel */}
-            {isAlpha && expanded && att.alpha_details.length > 0 && (
-                <div className="border-t-2 border-rose-200 bg-white px-5 py-4">
-                    <p className="text-xs font-black uppercase tracking-widest text-rose-500 mb-3">
-                        Tidak hadir pada:
+            {/* Detail panel */}
+            {expanded && att.details.length > 0 && (
+                <div className="border-t-2 border-slate-200 bg-white/50 px-5 py-4 space-y-2">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">
+                        Rincian per Mata Pelajaran:
                     </p>
-                    <div className="space-y-2">
-                        {att.alpha_details.map((detail, idx) => (
-                            <div
-                                key={idx}
-                                className="flex items-center justify-between bg-rose-50 border border-rose-200 rounded-xl px-4 py-3"
-                            >
-                                <div className="flex items-center gap-3">
-                                    <div className="w-8 h-8 rounded-lg bg-rose-200 flex items-center justify-center flex-shrink-0">
-                                        <svg className="w-4 h-4 text-rose-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                                        </svg>
+                    <div className="grid grid-cols-1 gap-2">
+                        {att.details.map((detail, idx) => {
+                            const dCfg = STATUS_CONFIG[detail.status.toLowerCase()] ?? STATUS_CONFIG['hadir'];
+                            return (
+                                <div
+                                    key={idx}
+                                    className={`flex items-center justify-between bg-white border ${dCfg.border} rounded-xl px-4 py-3 shadow-sm`}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${dCfg.badge} bg-opacity-10 ${dCfg.text}`}>
+                                            <span className="text-sm">{dCfg.icon}</span>
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span className="font-bold text-slate-800 text-sm">{detail.subject}</span>
+                                            <span className="text-[10px] font-black uppercase opacity-40">Jam ke-{detail.lesson_period}</span>
+                                        </div>
                                     </div>
-                                    <span className="font-bold text-rose-900 text-sm">{detail.subject}</span>
+                                    <span className={`text-[10px] font-black px-3 py-1.5 rounded-lg border ${dCfg.badge} bg-opacity-10 ${dCfg.text} ${dCfg.border}`}>
+                                        {dCfg.label}
+                                    </span>
                                 </div>
-                                <span className="text-xs font-black bg-rose-600 text-white px-3 py-1.5 rounded-lg">
-                                    Jam ke-{detail.lesson_period}
-                                </span>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
             )}
@@ -156,79 +159,119 @@ function AttendanceCard({ att }: { att: AttendanceRecord }) {
     );
 }
 
-export default function Attendance({ attendances }: { attendances: PaginatedAttendance }) {
-    const stats = attendances.data.reduce(
-        (acc, att) => {
-            const s = (att.status || 'hadir').toLowerCase();
-            if (s === 'hadir')     acc.hadir++;
-            else if (s === 'sakit')     acc.sakit++;
-            else if (s === 'izin')      acc.izin++;
-            else if (s === 'alpha')     acc.alpha++;
-            else if (s === 'terlambat') acc.terlambat++;
-            return acc;
-        },
-        { hadir: 0, sakit: 0, izin: 0, alpha: 0, terlambat: 0 }
-    );
+export default function Attendance({ attendances, attendanceStats, filters }: { attendances: PaginatedAttendance; attendanceStats: any; filters: any }) {
+    const [month, setMonth] = useState(filters.month || '');
+    const [year, setYear] = useState(filters.year || new Date().getFullYear().toString());
+
+    const handleFilter = () => {
+        router.get(route('portal.attendance'), { month, year }, { preserveState: true });
+    };
+
+    const months = [
+        { v: '01', l: 'Januari' }, { v: '02', l: 'Februari' }, { v: '03', l: 'Maret' },
+        { v: '04', l: 'April' }, { v: '05', l: 'Mei' }, { v: '06', l: 'Juni' },
+        { v: '07', l: 'Juli' }, { v: '08', l: 'Agustus' }, { v: '09', l: 'September' },
+        { v: '10', l: 'Oktober' }, { v: '11', l: 'November' }, { v: '12', l: 'Desember' }
+    ];
+
+    const stats = [
+        { label: 'Hadir',     value: attendanceStats.hadir,     color: 'bg-emerald-50 text-emerald-800 border-emerald-200' },
+        { label: 'Sakit',     value: attendanceStats.sakit,     color: 'bg-amber-50 text-amber-800 border-amber-200' },
+        { label: 'Izin',      value: attendanceStats.izin,      color: 'bg-blue-50 text-blue-800 border-blue-200' },
+        { label: 'Alfa',      value: attendanceStats.alpha,     color: 'bg-rose-50 text-rose-800 border-rose-200' },
+        { label: 'Terlambat', value: attendanceStats.terlambat, color: 'bg-orange-50 text-orange-800 border-orange-200' },
+    ];
 
     return (
         <PortalLayout header="Riwayat Kehadiran">
             <Head title="Kehadiran Siswa" />
 
-            <div className="max-w-3xl mx-auto space-y-6 pb-20">
+            <div className="max-w-4xl mx-auto space-y-6 pb-20">
 
                 {/* Summary strip */}
-                <div className="grid grid-cols-4 gap-3">
-                    {[
-                        { label: 'Hadir',     value: stats.hadir,     color: 'bg-emerald-100 text-emerald-800 border-emerald-200' },
-                        { label: 'Sakit',     value: stats.sakit,     color: 'bg-amber-100 text-amber-800 border-amber-200' },
-                        { label: 'Izin',      value: stats.izin,      color: 'bg-blue-100 text-blue-800 border-blue-200' },
-                        { label: 'Alfa',      value: stats.alpha,     color: 'bg-rose-100 text-rose-800 border-rose-200' },
-                    ].map(s => (
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                    {stats.map(s => (
                         <div key={s.label} className={`rounded-2xl border-2 p-4 text-center ${s.color}`}>
                             <div className="text-3xl font-black">{s.value}</div>
-                            <div className="text-xs font-bold uppercase tracking-widest mt-1">{s.label}</div>
+                            <div className="text-[10px] font-bold uppercase tracking-widest mt-1 opacity-70">{s.label}</div>
                         </div>
                     ))}
                 </div>
 
-                {/* Header */}
-                <div className="bg-white rounded-2xl border border-slate-200 px-6 py-5 flex items-center justify-between">
+                {/* Filters */}
+                <div className="bg-white rounded-3xl border border-slate-200 p-6 shadow-sm">
+                    <div className="flex flex-col md:flex-row items-end gap-4">
+                        <div className="flex-1 w-full">
+                            <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Filter Bulan</label>
+                            <select 
+                                value={month}
+                                onChange={(e) => setMonth(e.target.value)}
+                                className="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 transition-all cursor-pointer"
+                            >
+                                <option value="">Semua Bulan (Last 6 Months)</option>
+                                {months.map(m => <option key={m.v} value={m.v}>{m.l}</option>)}
+                            </select>
+                        </div>
+                        <div className="w-full md:w-32">
+                            <label className="block text-xs font-black text-slate-400 uppercase tracking-widest mb-2">Tahun</label>
+                            <select 
+                                value={year}
+                                onChange={(e) => setYear(e.target.value)}
+                                className="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 transition-all cursor-pointer"
+                            >
+                                {[new Date().getFullYear(), new Date().getFullYear()-1].map(y => (
+                                    <option key={y} value={y}>{y}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <button 
+                            onClick={handleFilter}
+                            className="w-full md:w-auto px-8 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-indigo-200 transition-all"
+                        >
+                            Cari Data
+                        </button>
+                    </div>
+                </div>
+
+                {/* List Header */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-2">
                     <div>
-                        <h2 className="text-xl font-bold text-slate-800">Log Presensi Harian</h2>
-                        <p className="text-sm text-slate-500 mt-0.5">
-                            Menampilkan {attendances.total} hari tercatat
+                        <h2 className="text-xl font-black text-slate-800">Log Presensi Harian</h2>
+                        <p className="text-sm text-slate-500 font-medium mt-0.5">
+                            Menampilkan {attendances.total} hari tercatat dalam periode ini
                         </p>
                     </div>
-                    <div className="text-sm font-bold text-slate-400">
-                        Hal. {attendances.current_page}/{attendances.last_page}
+                    <div className="text-sm font-bold text-slate-400 bg-white px-4 py-2 rounded-xl border border-slate-100 shadow-sm">
+                        Halaman {attendances.current_page} dari {attendances.last_page}
                     </div>
                 </div>
 
                 {/* Cards */}
                 {attendances.data.length > 0 ? (
-                    <div className="space-y-3">
+                    <div className="grid grid-cols-1 gap-4">
                         {attendances.data.map((att) => (
                             <AttendanceCard key={att.id} att={att} />
                         ))}
                     </div>
                 ) : (
-                    <div className="bg-white rounded-2xl border border-slate-200 py-16 text-center text-slate-400">
-                        <div className="text-5xl mb-3">📋</div>
-                        <p className="font-semibold">Belum ada data kehadiran tersedia.</p>
+                    <div className="bg-white rounded-[2.5rem] border-4 border-dashed border-slate-100 py-20 text-center text-slate-300">
+                        <div className="text-7xl mb-6">🗓️</div>
+                        <p className="text-lg font-black text-slate-400">Belum ada data kehadiran tersedia.</p>
+                        <p className="text-sm font-bold mt-2">Coba sesuaikan filter bulan atau tahun Anda.</p>
                     </div>
                 )}
 
                 {/* Pagination */}
                 {attendances.links && attendances.links.length > 3 && (
-                    <div className="flex flex-wrap justify-center gap-2 pt-2">
+                    <div className="flex flex-wrap justify-center gap-2 pt-6">
                         {attendances.links.map((link, k) => (
                             <button
                                 key={k}
                                 disabled={!link.url}
                                 onClick={() => link.url && (window.location.href = link.url)}
-                                className={`px-5 py-3 text-sm font-bold rounded-xl border-2 transition-all ${
+                                className={`px-5 py-3 text-sm font-black rounded-xl border-2 transition-all ${
                                     link.active
-                                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-md'
+                                        ? 'bg-indigo-600 text-white border-indigo-600 shadow-lg'
                                         : link.url
                                             ? 'bg-white text-slate-600 border-slate-200 hover:border-indigo-300 hover:text-indigo-600'
                                             : 'bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed'

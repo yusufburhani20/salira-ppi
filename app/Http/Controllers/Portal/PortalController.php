@@ -286,12 +286,58 @@ class PortalController extends Controller
         ]);
     }
 
-    public function attendance()
+    public function attendance(Request $request)
     {
         $student = Auth::guard('student')->user();
+        $month = $request->month;
+        $year = $request->year ?? date('Y');
 
-        // Step 1: Aggregate to one record per day (worst status wins)
-        $attendances = StudentAttendance::where('student_id', $student->id)
+        // 1. Base Query for Daily Summary (worst status wins)
+        $query = StudentAttendance::where('student_id', $student->id);
+
+        if ($month) {
+            $query->whereMonth('date', $month)->whereYear('date', $year);
+        } else {
+            // Default: Last 6 months
+            $query->where('date', '>=', Carbon::now()->subMonths(6)->startOfMonth());
+        }
+
+        // Calculation for Overall Stats (based on filtered range)
+        $allAttendances = (clone $query)
+            ->selectRaw("
+                date,
+                CASE MIN(CASE status
+                    WHEN 'alpha'     THEN 1
+                    WHEN 'terlambat' THEN 2
+                    WHEN 'sakit'     THEN 3
+                    WHEN 'izin'      THEN 4
+                    WHEN 'hadir'     THEN 5
+                    ELSE 6 END)
+                WHEN 1 THEN 'alpha'
+                WHEN 2 THEN 'terlambat'
+                WHEN 3 THEN 'sakit'
+                WHEN 4 THEN 'izin'
+                WHEN 5 THEN 'hadir'
+                ELSE 'hadir' END as status
+            ")
+            ->groupBy('date')
+            ->get();
+
+        $statusCounts = $allAttendances->groupBy(function($a) {
+            return (string) ($a->status->value ?? $a->status);
+        })->map->count();
+
+        $attendanceStats = [
+            'hadir'     => (int) ($statusCounts['hadir']     ?? 0),
+            'sakit'     => (int) ($statusCounts['sakit']     ?? 0),
+            'izin'      => (int) ($statusCounts['izin']      ?? 0),
+            'alpha'     => (int) ($statusCounts['alpha']     ?? 0),
+            'terlambat' => (int) ($statusCounts['terlambat'] ?? 0),
+            'total'     => $allAttendances->count(),
+        ];
+
+        // 2. Paginated Results
+        $attendances = (clone $query)
             ->selectRaw("
                 MIN(id) as id,
                 date,
@@ -312,48 +358,53 @@ class PortalController extends Controller
             ")
             ->groupBy('date')
             ->orderBy('date', 'desc')
-            ->paginate(20);
+            ->paginate(15)
+            ->withQueryString();
 
-        // Step 2: For alpha days, fetch subject & lesson_period detail
-        $alphaDates = $attendances->getCollection()
-            ->filter(fn($a) => $a->status === 'alpha')
+        // 3. Fetch Full Details (all statuses) for all dates in current page
+        $dates = $attendances->getCollection()
             ->pluck('date')
             ->map(fn($d) => $d instanceof \Carbon\Carbon ? $d->toDateString() : (string)$d)
             ->toArray();
 
-        $alphaDetails = [];
-        if (!empty($alphaDates)) {
-            $alphaRecords = StudentAttendance::where('student_id', $student->id)
-                ->whereIn('date', $alphaDates)
-                ->where('status', 'alpha')
+        $details = [];
+        if (!empty($dates)) {
+            $records = StudentAttendance::where('student_id', $student->id)
+                ->whereIn('date', $dates)
                 ->whereNotNull('class_agenda_id')
                 ->with('classAgenda:id,subject,lesson_period')
                 ->get();
 
-            foreach ($alphaRecords as $record) {
+            foreach ($records as $record) {
                 $date = $record->date instanceof \Carbon\Carbon
                     ? $record->date->toDateString()
                     : (string) $record->date;
                 if ($record->classAgenda) {
-                    $alphaDetails[$date][] = [
+                    $details[$date][] = [
                         'subject'       => $record->classAgenda->subject,
                         'lesson_period' => $record->classAgenda->lesson_period,
+                        'status'        => (string) ($record->status->value ?? $record->status),
                     ];
                 }
             }
         }
 
-        // Step 3: Attach alpha_details to each paginated row
-        $attendances->getCollection()->transform(function ($att) use ($alphaDetails) {
+        // Attach details to each paginated row
+        $attendances->getCollection()->transform(function ($att) use ($details) {
             $date = $att->date instanceof \Carbon\Carbon
                 ? $att->date->toDateString()
                 : (string) $att->date;
-            $att->alpha_details = $alphaDetails[$date] ?? [];
+            $att->details = $details[$date] ?? [];
             return $att;
         });
 
         return Inertia::render('Portal/Attendance', [
-            'attendances' => $attendances,
+            'attendances'     => $attendances,
+            'attendanceStats' => $attendanceStats,
+            'filters'         => [
+                'month' => $month,
+                'year'  => $year,
+            ]
         ]);
     }
 
