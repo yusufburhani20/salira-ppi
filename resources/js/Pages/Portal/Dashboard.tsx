@@ -214,37 +214,40 @@ export default function Dashboard({ student, unpaidBillsCount, attendanceStats, 
                                 </div>
                                 <Link 
                                     href={route('portal.attendance')} 
-                                    className="w-10 h-10 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 hover:bg-blue-600 hover:text-white transition-all shadow-sm group/btn"
+                                    className="text-[10px] font-black uppercase tracking-wider text-blue-600 hover:text-blue-700 bg-blue-50 px-3 py-2 rounded-xl transition-all flex items-center gap-1.5"
                                 >
-                                    <svg className="w-5 h-5 group-hover/btn:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13 7l5 5-5 5M6 7l5 5-5 5" /></svg>
+                                    Lihat Rincian Absensi
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M9 5l7 7-7 7" /></svg>
                                 </Link>
                             </div>
                             
                             {/* SVG Progress Ring */}
                             <div className="flex items-center justify-center py-10 relative">
-                                <svg className="w-48 h-48 transform -rotate-90">
-                                    {/* Background track */}
-                                    <circle
-                                        cx="96" cy="96" r="80"
-                                        stroke="currentColor" strokeWidth="12"
-                                        fill="transparent"
-                                        className="text-slate-100"
-                                    />
-                                    {/* Progress bar */}
-                                    <circle
-                                        cx="96" cy="96" r="80"
-                                        stroke="currentColor" strokeWidth="12"
-                                        fill="transparent"
-                                        strokeDasharray={2 * Math.PI * 80}
-                                        strokeDashoffset={2 * Math.PI * 80 * (1 - presentPercentage / 100)}
-                                        strokeLinecap="round"
-                                        className="text-blue-600 transition-all duration-1000 ease-out"
-                                    />
-                                </svg>
-                                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                                    <span className="text-4xl font-black text-slate-800 tracking-tighter">{presentPercentage}%</span>
-                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">Hadir</span>
-                                </div>
+                                <Link href={route('portal.attendance')} className="relative group/ring">
+                                    <svg className="w-48 h-48 transform -rotate-90 group-hover/ring:scale-105 transition-transform duration-500">
+                                        {/* Background track */}
+                                        <circle
+                                            cx="96" cy="96" r="80"
+                                            stroke="currentColor" strokeWidth="12"
+                                            fill="transparent"
+                                            className="text-slate-100"
+                                        />
+                                        {/* Progress bar */}
+                                        <circle
+                                            cx="96" cy="96" r="80"
+                                            stroke="currentColor" strokeWidth="12"
+                                            fill="transparent"
+                                            strokeDasharray={2 * Math.PI * 80}
+                                            strokeDashoffset={2 * Math.PI * 80 * (1 - presentPercentage / 100)}
+                                            strokeLinecap="round"
+                                            className="text-blue-600 transition-all duration-1000 ease-out"
+                                        />
+                                    </svg>
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                                        <span className="text-4xl font-black text-slate-800 tracking-tighter group-hover/ring:scale-110 transition-transform">{presentPercentage}%</span>
+                                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1">Hadir</span>
+                                    </div>
+                                </Link>
                             </div>
                             
                             {/* Status Cards Grid */}
@@ -257,14 +260,15 @@ export default function Dashboard({ student, unpaidBillsCount, attendanceStats, 
                                         { label: 'Alpha', value: attendanceStats.absent, color: 'rose', icon: '✗' },
                                         { label: 'Terlambat', value: attendanceStats.late || 0, color: 'orange', icon: '⏰', full: true },
                                     ].map((s) => (
-                                        <div 
+                                        <Link 
                                             key={s.label} 
-                                            className={`rounded-2xl p-3 flex items-center gap-3 border transition-all hover:shadow-md ${
-                                                s.color === 'emerald' ? 'bg-emerald-50 border-emerald-100 text-emerald-800' :
-                                                s.color === 'amber' ? 'bg-amber-50 border-amber-100 text-amber-800' :
-                                                s.color === 'blue' ? 'bg-blue-50 border-blue-100 text-blue-800' :
-                                                s.color === 'rose' ? 'bg-rose-50 border-rose-100 text-rose-800' :
-                                                'bg-orange-50 border-orange-100 text-orange-800'
+                                            href={route('portal.attendance')}
+                                            className={`rounded-2xl p-3 flex items-center gap-3 border transition-all hover:shadow-md hover:scale-[1.02] active:scale-95 ${
+                                                s.color === 'emerald' ? 'bg-emerald-50 border-emerald-100 text-emerald-800 hover:border-emerald-300' :
+                                                s.color === 'amber' ? 'bg-amber-50 border-amber-100 text-amber-800 hover:border-amber-300' :
+                                                s.color === 'blue' ? 'bg-blue-50 border-blue-100 text-blue-800 hover:border-blue-300' :
+                                                s.color === 'rose' ? 'bg-rose-50 border-rose-100 text-rose-800 hover:border-rose-300' :
+                                                'bg-orange-50 border-orange-100 text-orange-800 hover:border-orange-300'
                                             } ${s.full ? 'col-span-2' : ''}`}
                                         >
                                             <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-lg ${
@@ -280,7 +284,7 @@ export default function Dashboard({ student, unpaidBillsCount, attendanceStats, 
                                                 <p className="text-[10px] font-black uppercase tracking-widest opacity-60 leading-none">{s.label}</p>
                                                 <p className="text-lg font-black mt-1 leading-none">{s.value}</p>
                                             </div>
-                                        </div>
+                                        </Link>
                                     ))}
                                 </div>
                             </div>
