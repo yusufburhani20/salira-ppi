@@ -7,8 +7,18 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 let currentQR = null;
+let currentState = 'disconnected';
 
 app.use(bodyParser.json());
+
+// Handle process level errors to prevent crashes
+process.on('uncaughtException', (err) => {
+    console.error('CRITICAL: Uncaught Exception:', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('CRITICAL: Unhandled Rejection at:', promise, 'reason:', reason);
+});
 
 // Initialize Client with LocalAuth for session persistence
 const client = new Client({
@@ -17,7 +27,16 @@ const client = new Client({
     }),
     puppeteer: {
         headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
+        args: [
+            '--no-sandbox', 
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage', // Help with memory issues in Docker/Linux
+            '--disable-accelerated-2d-canvas',
+            '--no-first-run',
+            '--no-zygote',
+            '--single-process', // Use less memory
+            '--disable-gpu'
+        ]
     }
 });
 
@@ -26,8 +45,6 @@ client.on('qr', (qr) => {
     currentQR = qr;
     qrcode.generate(qr, { small: true });
 });
-
-let currentState = 'disconnected';
 
 client.on('ready', () => {
     console.log('WhatsApp Client is READY!');
@@ -50,6 +67,14 @@ client.on('disconnected', (reason) => {
     console.log('WhatsApp Client was DISCONNECTED', reason);
     currentQR = null;
     currentState = 'disconnected';
+    
+    // Attempt re-initialization after a delay if it wasn't a manual logout
+    if (reason !== 'NAVIGATION') {
+        console.log('Attempting to re-initialize client in 5 seconds...');
+        setTimeout(() => {
+            client.initialize().catch(err => console.error('Retry init failed:', err));
+        }, 5000);
+    }
 });
 
 // API Endpoint to send message
@@ -60,16 +85,20 @@ app.post('/send-message', async (req, res) => {
         return res.status(400).json({ status: 'error', message: 'Phone and message are required' });
     }
 
+    if (currentState !== 'connected') {
+        return res.status(503).json({ status: 'error', message: 'WhatsApp client is not connected' });
+    }
+
     try {
-        // Format phone number to WhatsApp ID (628123... -> 628123...@c.us)
-        let formattedPhone = String(phone).replace(/\D/g, ''); // Remove non-digits
+        // Format phone number to WhatsApp ID
+        let formattedPhone = String(phone).replace(/\D/g, ''); 
         if (formattedPhone.startsWith('0')) {
             formattedPhone = '62' + formattedPhone.slice(1);
         }
         
         const chatId = formattedPhone + '@c.us';
         
-        // Check if number is registered on WA
+        // Check registration
         const isRegistered = await client.isRegisteredUser(chatId);
         
         if (!isRegistered) {
@@ -84,10 +113,19 @@ app.post('/send-message', async (req, res) => {
     }
 });
 
+const startTime = Date.now();
+
 app.get('/status', (req, res) => {
+    const memUsage = process.memoryUsage();
     res.json({ 
         status: currentState,
-        qr: currentQR
+        qr: currentQR,
+        uptime: Math.floor((Date.now() - startTime) / 1000),
+        memory: {
+            rss: Math.round(memUsage.rss / 1024 / 1024) + ' MB',
+            heapTotal: Math.round(memUsage.heapTotal / 1024 / 1024) + ' MB',
+        },
+        version: '1.0.1'
     });
 });
 
@@ -105,10 +143,14 @@ app.post('/restart', async (req, res) => {
         
         const fs = require('fs');
         if (fs.existsSync('./sessions')) {
-            fs.rmSync('./sessions', { recursive: true, force: true });
+            try {
+                fs.rmSync('./sessions', { recursive: true, force: true });
+            } catch (e) {
+                console.error('Error removing sessions:', e);
+            }
         }
         
-        client.initialize();
+        client.initialize().catch(err => console.error('Restart init failed:', err));
         res.json({ status: 'success', message: 'Client restarting' });
     } catch (error) {
         console.error('Error restarting:', error);
@@ -116,7 +158,10 @@ app.post('/restart', async (req, res) => {
     }
 });
 
-client.initialize();
+// Initial start
+client.initialize().catch(err => {
+    console.error('Error during initial initialization:', err);
+});
 
 app.listen(port, () => {
     console.log(`WhatsApp Gateway API listening at http://localhost:${port}`);

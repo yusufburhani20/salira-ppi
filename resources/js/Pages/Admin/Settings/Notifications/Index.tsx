@@ -14,6 +14,7 @@ interface Settings {
 export default function NotificationSettings({ auth, settings, bot_username }: PageProps<{ settings: Settings, bot_username: string }>) {
     const [waStatus, setWaStatus] = useState<string>('checking...');
     const [qrCode, setQrCode] = useState<string | null>(null);
+    const [waInfo, setWaInfo] = useState<any>(null);
 
     // Form for Master Switches and Matrix
     const { data: matrixData, setData: setMatrixData, post: postMatrix, processing: processingMatrix } = useForm({
@@ -75,9 +76,11 @@ export default function NotificationSettings({ auth, settings, bot_username }: P
                 const response = await axios.get(route('admin.settings.whatsapp-status'));
                 setWaStatus(response.data.status);
                 setQrCode(response.data.qr || null);
+                setWaInfo(response.data);
             } catch (error) {
                 setWaStatus('offline');
                 setQrCode(null);
+                setWaInfo(null);
             }
         };
 
@@ -99,6 +102,14 @@ export default function NotificationSettings({ auth, settings, bot_username }: P
         postTest(route('admin.settings.notifications.test'), {
             onSuccess: () => resetTest('target'),
         });
+    };
+
+    const formatUptime = (seconds: number) => {
+        if (!seconds) return '0s';
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        const s = seconds % 60;
+        return `${h > 0 ? h + 'j ' : ''}${m > 0 ? m + 'm ' : ''}${s}s`;
     };
 
     const classNames = (...classes: string[]) => classes.filter(Boolean).join(' ');
@@ -232,21 +243,21 @@ export default function NotificationSettings({ auth, settings, bot_username }: P
                                         {/* WhatsApp QR Code Section */}
                                         <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-3xl border border-gray-200 dark:border-gray-700">
                                             <div className="flex items-center justify-between mb-4">
-                                                <h4 className="font-bold text-lg flex items-center gap-2"><DevicePhoneMobileIcon className="w-5 h-5 text-[#25D366]" /> Koneksi Perangkat WA</h4>
+                                                <h4 className="font-bold text-lg flex items-center gap-2"><DevicePhoneMobileIcon className="w-5 h-5 text-[#25D366]" /> Manajemen WhatsApp Gateway</h4>
                                                 <button 
                                                     onClick={() => {
                                                         if(confirm('Apakah Anda yakin ingin me-restart koneksi WhatsApp? Sesi sebelumnya akan dihapus dan Anda perlu scan QR Code baru.')) {
                                                             router.post(route('admin.settings.whatsapp-restart'), {}, { preserveScroll: true });
                                                         }
                                                     }}
-                                                    className="text-xs bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-slate-700 px-3 py-1.5 rounded-lg font-medium transition-colors text-slate-700 dark:text-slate-300"
+                                                    className="text-xs bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-slate-700 px-3 py-1.5 rounded-lg font-bold transition-colors text-rose-600 dark:text-rose-400 shadow-sm"
                                                 >
-                                                    Refresh / Restart
+                                                    Restart Gateway
                                                 </button>
                                             </div>
                                             
-                                            <div className="flex flex-col sm:flex-row items-center gap-6">
-                                                <div className="flex-shrink-0 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                                            <div className="flex flex-col sm:flex-row items-start gap-6">
+                                                <div className="flex-shrink-0 bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mx-auto sm:mx-0">
                                                     {qrCode ? (
                                                         <QRCodeCanvas value={qrCode} size={150} level="M" />
                                                     ) : waStatus === 'connected' ? (
@@ -258,21 +269,45 @@ export default function NotificationSettings({ auth, settings, bot_username }: P
                                                         </div>
                                                     ) : (
                                                         <div className="w-[150px] h-[150px] flex items-center justify-center bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
-                                                            <span className="text-gray-400 text-xs font-medium animate-pulse">Menunggu Gateway...</span>
+                                                            <span className="text-gray-400 text-xs font-medium animate-pulse text-center px-4">Memeriksa Layanan Gateway...</span>
                                                         </div>
                                                     )}
                                                 </div>
-                                                <div className="text-sm text-gray-600 dark:text-gray-400">
-                                                    {waStatus === 'connected' ? (
-                                                        <p>Sistem notifikasi WhatsApp sudah aktif dan terhubung. Pesan akan dikirim secara otomatis melalui nomor yang tertaut.</p>
-                                                    ) : waStatus === 'disconnected' && qrCode ? (
-                                                        <p>Silakan buka aplikasi WhatsApp di ponsel Anda, buka menu <strong>Perangkat Tertaut</strong>, dan scan QR Code untuk menghubungkan sistem.</p>
-                                                    ) : (
-                                                        <p>Memeriksa status gateway Node.js... Pastikan service berjalan di port 3000.</p>
+                                                <div className="flex-1 w-full space-y-4">
+                                                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                                                        {waStatus === 'connected' ? (
+                                                            <p className="font-medium text-slate-800 dark:text-slate-200">Sistem notifikasi WhatsApp sudah aktif. Pesan akan dikirim otomatis.</p>
+                                                        ) : waStatus === 'disconnected' && qrCode ? (
+                                                            <p className="font-medium text-slate-800 dark:text-slate-200">Buka WA &gt; Perangkat Tertaut &gt; Tautkan Perangkat.</p>
+                                                        ) : (
+                                                            <p className="italic text-gray-400">Menghubungkan ke service Node.js di port 3000...</p>
+                                                        )}
+                                                    </div>
+
+                                                    {waInfo && (
+                                                        <div className="grid grid-cols-2 gap-2 text-[10px] uppercase tracking-wider font-bold">
+                                                            <div className="bg-white dark:bg-slate-800 p-2 rounded-lg border border-slate-100 dark:border-slate-700">
+                                                                <span className="block text-slate-400 mb-0.5">Uptime</span>
+                                                                <span className="text-slate-700 dark:text-slate-300">{formatUptime(waInfo.uptime)}</span>
+                                                            </div>
+                                                            <div className="bg-white dark:bg-slate-800 p-2 rounded-lg border border-slate-100 dark:border-slate-700">
+                                                                <span className="block text-slate-400 mb-0.5">Memory (RSS)</span>
+                                                                <span className="text-slate-700 dark:text-slate-300">{waInfo.memory?.rss || '-'}</span>
+                                                            </div>
+                                                            <div className="bg-white dark:bg-slate-800 p-2 rounded-lg border border-slate-100 dark:border-slate-700">
+                                                                <span className="block text-slate-400 mb-0.5">Versi Gateway</span>
+                                                                <span className="text-slate-700 dark:text-slate-300">{waInfo.version}</span>
+                                                            </div>
+                                                            <div className="bg-white dark:bg-slate-800 p-2 rounded-lg border border-slate-100 dark:border-slate-700">
+                                                                <span className="block text-slate-400 mb-0.5">Status Proses</span>
+                                                                <span className="text-green-500">Active (PM2)</span>
+                                                            </div>
+                                                        </div>
                                                     )}
                                                 </div>
                                             </div>
                                         </div>
+
 
                                         {/* Test Send Section */}
                                         <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-3xl border border-gray-200 dark:border-gray-700">
