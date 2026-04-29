@@ -12,7 +12,8 @@ export default function ExpenseIndex({ expenses, categories }: any) {
         amount: '',
         date: new Date().toISOString().split('T')[0],
         description: '',
-        attachment: null as any
+        attachment: null as any,
+        _method: 'POST' as any // Default to POST
     });
 
     const formatCurrency = (value: number) => {
@@ -22,6 +23,7 @@ export default function ExpenseIndex({ expenses, categories }: any) {
     const openCreateModal = () => {
         setEditingExpense(null);
         reset();
+        setData('_method', 'POST');
         setIsModalOpen(true);
     };
 
@@ -32,7 +34,8 @@ export default function ExpenseIndex({ expenses, categories }: any) {
             amount: expense.amount,
             date: expense.date,
             description: expense.description,
-            attachment: null
+            attachment: null,
+            _method: 'PUT'
         });
         setIsModalOpen(true);
     };
@@ -40,11 +43,9 @@ export default function ExpenseIndex({ expenses, categories }: any) {
     const submit = (e: React.FormEvent) => {
         e.preventDefault();
         if (editingExpense) {
-            // Use post with _method=PUT for file uploads in Laravel
             post(route('admin.finance.expenses.update', editingExpense.id), {
                 forceFormData: true,
                 onSuccess: () => setIsModalOpen(false),
-                data: { ...data, _method: 'PUT' } as any
             });
         } else {
             post(route('admin.finance.expenses.store'), {
