@@ -83,9 +83,9 @@ Route::middleware('auth')->group(function () {
         });
     });
 
-    // Admin Group C: Super Admin, Admin, Pimpinan
+    // Admin Group C: Super Admin, Admin, Pimpinan, Bendahara
     // Laporan, Approval, Tagihan, Keuangan, Absensi
-    Route::middleware(['role:Super Admin|Admin|Pimpinan'])->prefix('admin')->name('admin.')->group(function () {
+    Route::middleware(['role:Super Admin|Admin|Pimpinan|Bendahara'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('/leader-dashboard', [\App\Http\Controllers\Admin\LeaderDashboardController::class, 'index'])->name('leader-dashboard');
         
         // Approvals (Pimpinan & Admin)
@@ -142,6 +142,12 @@ Route::middleware('auth')->group(function () {
 
         // Finance Analytics
         Route::get('/finance', [\App\Http\Controllers\Admin\FinanceController::class, 'index'])->name('finance.index');
+        
+        // Finance Categories
+        Route::resource('/finance/categories', \App\Http\Controllers\Admin\FinanceCategoryController::class)->names('finance.categories');
+        
+        // Expenses
+        Route::resource('/finance/expenses', \App\Http\Controllers\Admin\ExpenseController::class)->names('finance.expenses');
     });
 
     // Admin Group D: Super Admin, Admin

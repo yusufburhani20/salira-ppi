@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Bill extends Model
 {
     protected $fillable = [
-        'bill_number', 'student_id', 'title', 'month', 'year', 'amount',
+        'bill_number', 'student_id', 'category_id', 'title', 'month', 'year', 'amount',
         'status', 'snap_token', 'snap_token_expires_at', 'paid_at',
         'payment_method', 'admin_fee', 'midtrans_order_id',
     ];
@@ -21,5 +21,10 @@ class Bill extends Model
     public function student()
     {
         return $this->belongsTo(Student::class);
+    }
+
+    public function category()
+    {
+        return $this->belongsTo(FinanceCategory::class, 'category_id');
     }
 }

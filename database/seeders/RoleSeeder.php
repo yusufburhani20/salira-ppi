@@ -23,7 +23,8 @@ class RoleSeeder extends Seeder
             'Admin',
             'Guru/Dosen',
             'Wali Kelas',
-            'Staff/TU'
+            'Staff/TU',
+            'Bendahara'
         ];
 
         foreach ($roles as $role) {
@@ -82,5 +83,18 @@ class RoleSeeder extends Seeder
             ]
         );
         $waliKelas->assignRole('Wali Kelas');
+
+        // Create Demo Bendahara
+        $bendahara = User::firstOrCreate(
+            ['email' => 'bendahara@salira.com'],
+            [
+                'name' => 'Bendahara Sekolah',
+                'nip' => '444444',
+                'password' => Hash::make('password'),
+                'status' => UserStatus::active->value,
+                'email_verified_at' => now(),
+            ]
+        );
+        $bendahara->assignRole('Bendahara');
     }
 }
