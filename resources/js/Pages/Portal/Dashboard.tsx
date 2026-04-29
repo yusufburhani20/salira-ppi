@@ -138,9 +138,7 @@ export default function Dashboard({ student, unpaidBillsCount, attendanceStats, 
                 <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-3xl shadow-lg p-8 relative overflow-hidden text-white">
                     <div className="absolute right-0 top-0 w-64 h-64 bg-white opacity-5 rounded-full blur-3xl pointer-events-none transform translate-x-1/2 -translate-y-1/2"></div>
                     
-                    <div className="absolute top-6 right-6 sm:top-8 sm:right-8 z-20">
-                        <SystemClock light />
-                    </div>
+
                     <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                         <div className="flex-1">
                             <p className="text-blue-100 font-semibold mb-1 text-sm tracking-widest uppercase">Tahun Ajaran 2026/2027</p>
@@ -158,14 +156,17 @@ export default function Dashboard({ student, unpaidBillsCount, attendanceStats, 
                         </div>
                         
                         {/* Quick Status Badges */}
-                        <div className="flex gap-3">
-                            {renderTodayStatus()}
+                        <div className="flex flex-col items-end gap-4">
+                            <SystemClock light />
+                            <div className="flex gap-3">
+                                {renderTodayStatus()}
                             <div className="bg-white/10 backdrop-blur border border-white/20 rounded-2xl p-4 text-center min-w-[100px]">
                                 <div className="text-2xl font-black mt-0.5">{totalAttendance}</div>
                                 <div className="text-[10px] font-bold text-blue-200 uppercase mt-1.5">Total Absensi</div>
                             </div>
                         </div>
                     </div>
+                </div>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

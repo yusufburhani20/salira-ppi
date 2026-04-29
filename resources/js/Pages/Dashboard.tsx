@@ -80,9 +80,7 @@ export default function Dashboard({
                     <div className="absolute -bottom-20 -left-16 w-64 h-64 bg-violet-500/10 rounded-full blur-3xl pointer-events-none" />
                     <div className="absolute top-1/2 right-1/4 w-40 h-40 bg-amber-400/5 rounded-full blur-2xl pointer-events-none" />
 
-                    <div className="absolute top-6 right-6 sm:top-8 sm:right-8 z-20">
-                        <SystemClock light />
-                    </div>
+
 
                     <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center gap-8 p-6 sm:p-8 lg:p-10">
                         {/* Left: Hero Text */}
@@ -107,6 +105,9 @@ export default function Dashboard({
 
                         {/* Right: Quick Action Cards */}
                         <div className="w-full lg:w-auto flex flex-col sm:flex-row lg:flex-col gap-3 lg:min-w-[220px]">
+                            <div className="mb-2 lg:mb-4">
+                                <SystemClock light />
+                            </div>
                             <a 
                                 href={route('admin.reports.index')} 
                                 className="group flex items-center gap-4 bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/15 hover:border-white/30 rounded-xl p-4 transition-all duration-200 active:scale-95"
