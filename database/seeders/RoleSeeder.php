@@ -33,8 +33,10 @@ class RoleSeeder extends Seeder
 
         // Helper function to create users safely
         $createUser = function($email, $data, $roleName) {
-            // Cek termasuk data yang di-soft delete agar tidak tabrakan NIP
-            $user = User::withTrashed()->where('email', $email)->orWhere('nip', $data['nip'])->first();
+            // Cari user berdasarkan email ATAU nip
+            $user = User::where('email', $email)
+                        ->orWhere('nip', $data['nip'])
+                        ->first();
             
             if (!$user) {
                 $user = User::create(array_merge($data, [
@@ -44,9 +46,10 @@ class RoleSeeder extends Seeder
                     'email_verified_at' => now(),
                 ]));
             } else {
-                // Jika user ada tapi di-soft delete, restore saja
-                if ($user->trashed()) {
-                    $user->restore();
+                // Jika user sudah ada (baik email atau nip sama), 
+                // pastikan emailnya sesuai (opsional, untuk konsistensi)
+                if ($user->email !== $email) {
+                    $user->update(['email' => $email]);
                 }
             }
             
