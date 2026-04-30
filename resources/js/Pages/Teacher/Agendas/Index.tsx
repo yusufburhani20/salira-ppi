@@ -32,7 +32,7 @@ interface Agenda {
     attendances?: any[];
 }
 
-export default function AgendaIndex({ auth, agendas, classes, filters }: PageProps<{ agendas: Agenda[], classes: any[], filters: any }>) {
+export default function AgendaIndex({ auth, agendas, classes, subjects = [], filters }: PageProps<{ agendas: Agenda[], classes: any[], subjects: any[], filters: any }>) {
     const [selectedAgenda, setSelectedAgenda] = useState<Agenda | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -132,7 +132,7 @@ export default function AgendaIndex({ auth, agendas, classes, filters }: PagePro
 
                     {/* Filter Bar */}
                     <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
                             <div className="space-y-1">
                                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Pilih Kelas</label>
                                 <select 
@@ -143,6 +143,19 @@ export default function AgendaIndex({ auth, agendas, classes, filters }: PagePro
                                     <option value="">Semua Kelas</option>
                                     {classes.map((c: any) => (
                                         <option key={c.id} value={c.id}>{c.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Mata Pelajaran</label>
+                                <select 
+                                    value={filters.subject_id || ''}
+                                    onChange={(e) => updateFilter('subject_id', e.target.value)}
+                                    className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 text-sm focus:ring-indigo-500"
+                                >
+                                    <option value="">Semua Mapel</option>
+                                    {subjects.map((s: any) => (
+                                        <option key={s.id} value={s.id}>{s.name}</option>
                                     ))}
                                 </select>
                             </div>

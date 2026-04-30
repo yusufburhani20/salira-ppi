@@ -35,6 +35,9 @@ class ClassAgendaController extends Controller
         if ($request->end_date) {
             $query->whereDate('date', '<=', $request->end_date);
         }
+        if ($request->subject_id) {
+            $query->where('subject_id', $request->subject_id);
+        }
 
         $agendas = $query->latest('date')
             ->latest('id')
@@ -43,7 +46,8 @@ class ClassAgendaController extends Controller
         return Inertia::render('Teacher/Agendas/Index', [
             'agendas' => $agendas,
             'classes' => AcademicClass::all(),
-            'filters' => $request->only(['academic_class_id', 'start_date', 'end_date'])
+            'subjects' => Subject::all(),
+            'filters' => $request->only(['academic_class_id', 'start_date', 'end_date', 'subject_id'])
         ]);
     }
 
@@ -319,7 +323,11 @@ class ClassAgendaController extends Controller
             $matrix = $this->prepareDetailedAttendanceReport($request);
         }
 
-        $subjectName = $request->subject_id ? \App\Models\Subject::find($request->subject_id)->name : 'Semua Mapel';
+        $subjectName = 'Semua Mapel';
+        if ($request->subject_id) {
+            $subj = \App\Models\Subject::find($request->subject_id);
+            $subjectName = $subj ? $subj->name : 'Semua Mapel';
+        }
 
         $meta = [
             'school_name' => \App\Models\Setting::get('school_name', 'SALIRA ACADEMY'),
@@ -502,7 +510,11 @@ class ClassAgendaController extends Controller
             ];
         }
 
-        $subjectName = $request->subject_id ? Subject::find($request->subject_id)->name : 'Semua Mapel';
+        $subjectName = 'Semua Mapel';
+        if ($request->subject_id) {
+            $subj = Subject::find($request->subject_id);
+            $subjectName = $subj ? $subj->name : 'Semua Mapel';
+        }
 
         return [
             'dates' => $dates,
