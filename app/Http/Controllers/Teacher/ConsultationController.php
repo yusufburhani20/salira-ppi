@@ -144,7 +144,17 @@ class ConsultationController extends Controller
     public function exportExcel(Request $request)
     {
         $data = $this->getExportData($request);
-        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\ConsultationRecapExport($data), 'rekap_bimbingan.xlsx');
+        $className = $request->academic_class_id ? AcademicClass::find($request->academic_class_id)->name : 'Semua Kelas';
+        $range = ($request->start_date ?? 'Awal') . ' - ' . ($request->end_date ?? 'Sekarang');
+
+        $meta = [
+            'school_name' => \App\Models\Setting::get('school_name', 'SALIRA ACADEMY'),
+            'class_name' => $className,
+            'range' => $range,
+            'teacher_name' => Auth::user()->name
+        ];
+
+        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\ConsultationRecapExport($data, $meta), 'rekap_bimbingan.xlsx');
     }
 
     public function exportPdf(Request $request)
@@ -153,10 +163,23 @@ class ConsultationController extends Controller
         $className = $request->academic_class_id ? AcademicClass::find($request->academic_class_id)->name : 'Semua Kelas';
         $range = ($request->start_date ?? 'Awal') . ' - ' . ($request->end_date ?? 'Sekarang');
         
+        $logo = \App\Models\Setting::get('school_logo');
+        $logoPath = null;
+        if ($logo) {
+            if (file_exists(public_path('storage/' . $logo))) {
+                $logoPath = public_path('storage/' . $logo);
+            } elseif (file_exists(storage_path('app/public/' . $logo))) {
+                $logoPath = storage_path('app/public/' . $logo);
+            } elseif (file_exists(public_path($logo))) {
+                $logoPath = public_path($logo);
+            }
+        }
+
         $settings = [
             'title' => 'Rekap Bimbingan Siswa (Konseling)',
             'school_name' => \App\Models\Setting::get('school_name', 'SALIRA ACADEMY'),
-            'logo' => \App\Models\Setting::get('school_logo'),
+            'school_address' => \App\Models\Setting::get('school_address'),
+            'logo' => $logoPath,
             'class_name' => $className,
             'range' => $range,
             'teacher_name' => Auth::user()->name

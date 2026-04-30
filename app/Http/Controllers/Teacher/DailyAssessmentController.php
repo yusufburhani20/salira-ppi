@@ -226,7 +226,18 @@ class DailyAssessmentController extends Controller
     public function exportExcel(Request $request)
     {
         $data = $this->getExportData($request);
-        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\AssessmentRecapExport($data), 'rekap_penilaian.xlsx');
+        $className = $request->academic_class_id ? AcademicClass::find($request->academic_class_id)->name : 'Semua Kelas';
+        $subjectName = $request->subject_id ? Subject::find($request->subject_id)->name : 'Semua Mapel';
+
+        $meta = [
+            'school_name' => \App\Models\Setting::get('school_name', 'SALIRA ACADEMY'),
+            'class_name' => $className,
+            'subject_name' => $subjectName,
+            'range' => $data['range'],
+            'teacher_name' => Auth::user()->name
+        ];
+
+        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\AssessmentRecapExport($data, $meta), 'rekap_penilaian.xlsx');
     }
 
     public function exportPdf(Request $request)
@@ -235,10 +246,23 @@ class DailyAssessmentController extends Controller
         $className = $request->academic_class_id ? AcademicClass::find($request->academic_class_id)->name : 'Semua Kelas';
         $subjectName = $request->subject_id ? Subject::find($request->subject_id)->name : 'Semua Mapel';
         
+        $logo = \App\Models\Setting::get('school_logo');
+        $logoPath = null;
+        if ($logo) {
+            if (file_exists(public_path('storage/' . $logo))) {
+                $logoPath = public_path('storage/' . $logo);
+            } elseif (file_exists(storage_path('app/public/' . $logo))) {
+                $logoPath = storage_path('app/public/' . $logo);
+            } elseif (file_exists(public_path($logo))) {
+                $logoPath = public_path($logo);
+            }
+        }
+
         $settings = [
             'title' => 'Rekap Penilaian Harian',
             'school_name' => \App\Models\Setting::get('school_name', 'SALIRA ACADEMY'),
-            'logo' => \App\Models\Setting::get('school_logo'),
+            'school_address' => \App\Models\Setting::get('school_address'),
+            'logo' => $logoPath,
             'class_name' => $className,
             'subject_name' => $subjectName,
             'range' => $data['range'],

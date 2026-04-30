@@ -313,7 +313,20 @@ class ClassAgendaController extends Controller
     public function exportExcel(Request $request)
     {
         $data = $this->getExportData($request);
-        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\AgendaRecapExport($data), 'jurnal_mengajar.xlsx');
+        
+        $matrix = null;
+        if ($request->academic_class_id && $request->start_date && $request->end_date) {
+            $matrix = $this->prepareDetailedAttendanceReport($request);
+        }
+
+        $meta = [
+            'school_name' => \App\Models\Setting::get('school_name', 'SALIRA ACADEMY'),
+            'class_name' => $request->academic_class_id ? \App\Models\AcademicClass::find($request->academic_class_id)->name : 'Semua Kelas',
+            'range' => ($request->start_date ?? 'Awal') . ' - ' . ($request->end_date ?? 'Sekarang'),
+            'teacher_name' => Auth::user()->name
+        ];
+
+        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\AgendaRecapExport($data, $matrix, $meta), 'jurnal_mengajar.xlsx');
     }
 
     public function exportPdf(Request $request)

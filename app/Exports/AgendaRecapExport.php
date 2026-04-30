@@ -2,54 +2,35 @@
 
 namespace App\Exports;
 
-use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\WithHeadings;
+use Illuminate\Contracts\View\View;
+use Maatwebsite\Excel\Concerns\FromView;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithTitle;
 
-class AgendaRecapExport implements FromCollection, WithHeadings, ShouldAutoSize
+class AgendaRecapExport implements FromView, ShouldAutoSize, WithTitle
 {
     protected $data;
+    protected $matrix;
+    protected $meta;
 
-    public function __construct($data)
+    public function __construct($data, $matrix = null, $meta = [])
     {
         $this->data = $data;
+        $this->matrix = $matrix;
+        $this->meta = $meta;
     }
 
-    public function collection()
+    public function view(): View
     {
-        return collect($this->data)->map(function($item) {
-            $attendances = collect($item['attendances'] ?? []);
-            $hadir = $attendances->where('status', 'hadir')->count();
-            $sakit = $attendances->where('status', 'sakit')->count();
-            $izin = $attendances->where('status', 'izin')->count();
-            $alpha = $attendances->where('status', 'alpha')->count();
-            
-            $absentDetails = $attendances->whereIn('status', ['sakit', 'izin', 'alpha'])
-                ->map(function($a) {
-                    return ($a['student']['name'] ?? 'Siswa') . ' (' . strtoupper(substr($a['status'], 0, 1)) . ')';
-                })->implode(', ');
-
-            return [
-                'Tanggal' => $item['date'],
-                'Jam' => $item['lesson_period'],
-                'Guru' => $item['teacher']['name'] ?? '-',
-                'Mapel' => $item['subject']['name'] ?? ($item['subject_name'] ?? '-'),
-                'Topik' => $item['topic'],
-                'H' => $hadir,
-                'S' => $sakit,
-                'I' => $izin,
-                'A' => $alpha,
-                'Keterangan' => $absentDetails ?: '-',
-            ];
-        });
+        return view('exports.agenda_excel', [
+            'data' => $this->data,
+            'matrix' => $this->matrix,
+            'meta' => $this->meta
+        ]);
     }
 
-    public function headings(): array
+    public function title(): string
     {
-        return [
-            ['Rekap Jurnal Mengajar'],
-            [],
-            ['Tanggal', 'Jam', 'Guru', 'Mata Pelajaran', 'Topik Pembelajaran', 'H', 'S', 'I', 'A', 'Keterangan Absensi']
-        ];
+        return 'Jurnal & Presensi';
     }
 }
