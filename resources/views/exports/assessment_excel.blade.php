@@ -4,41 +4,41 @@
         <th colspan="{{ count($assessments) + 2 }}" style="font-weight: bold; font-size: 16px; text-align: center;">REKAP PENILAIAN HARIAN</th>
     </tr>
     <tr>
-        <th colspan="{{ count($assessments) + 2 }}" style="font-weight: bold; font-size: 14px; text-align: center; color: #4b5563;">{{ $meta['school_name'] }}</th>
+        <th colspan="{{ count($assessments) + 2 }}" style="font-weight: bold; font-size: 14px; text-align: center; color: #000;">{{ $meta['school_name'] }}</th>
     </tr>
     <tr></tr>
     <tr>
-        <th style="font-weight: bold; background-color: #f8fafc; border: 1px solid #e2e8f0;">Kelas:</th>
-        <th colspan="{{ count($assessments) + 1 }}" style="border: 1px solid #e2e8f0;">{{ $meta['class_name'] }}</th>
+        <th style="font-weight: bold; background-color: #eee; border: 1px solid #000;">Kelas:</th>
+        <th colspan="{{ count($assessments) + 1 }}" style="border: 1px solid #000;">{{ $meta['class_name'] }}</th>
     </tr>
     <tr>
-        <th style="font-weight: bold; background-color: #f8fafc; border: 1px solid #e2e8f0;">Mata Pelajaran:</th>
-        <th colspan="{{ count($assessments) + 1 }}" style="border: 1px solid #e2e8f0;">{{ $meta['subject_name'] }}</th>
+        <th style="font-weight: bold; background-color: #eee; border: 1px solid #000;">Mata Pelajaran:</th>
+        <th colspan="{{ count($assessments) + 1 }}" style="border: 1px solid #000;">{{ $meta['subject_name'] }}</th>
     </tr>
     <tr>
-        <th style="font-weight: bold; background-color: #f8fafc; border: 1px solid #e2e8f0;">Periode:</th>
-        <th colspan="{{ count($assessments) + 1 }}" style="border: 1px solid #e2e8f0;">{{ $meta['range'] }}</th>
+        <th style="font-weight: bold; background-color: #eee; border: 1px solid #000;">Periode:</th>
+        <th colspan="{{ count($assessments) + 1 }}" style="border: 1px solid #000;">{{ $meta['range'] }}</th>
     </tr>
     <tr>
-        <th style="font-weight: bold; background-color: #f8fafc; border: 1px solid #e2e8f0;">Guru:</th>
-        <th colspan="{{ count($assessments) + 1 }}" style="border: 1px solid #e2e8f0;">{{ $meta['teacher_name'] }}</th>
+        <th style="font-weight: bold; background-color: #eee; border: 1px solid #000;">Guru:</th>
+        <th colspan="{{ count($assessments) + 1 }}" style="border: 1px solid #000;">{{ $meta['teacher_name'] }}</th>
     </tr>
     <tr></tr>
     <tr>
-        <th style="font-weight: bold; background-color: #4f46e5; color: #ffffff; border: 2px solid #000000; text-align: center; width: 200px;">Nama Siswa</th>
+        <th style="font-weight: bold; background-color: #000; color: #ffffff; border: 2px solid #000000; text-align: center; width: 200px;">Nama Siswa</th>
         @foreach($assessments as $a)
-            <th style="font-weight: bold; background-color: #f1f5f9; border: 2px solid #000000; text-align: center; width: 100px;">
+            <th style="font-weight: bold; background-color: #eee; border: 2px solid #000000; text-align: center; width: 100px;">
                 {{ \Carbon\Carbon::parse($a['date'])->format('d/m') }}<br>
                 {{ $a['title'] }}
             </th>
         @endforeach
-        <th style="font-weight: bold; background-color: #f1f5f9; border: 2px solid #000000; text-align: center; width: 100px;">Rata-rata</th>
+        <th style="font-weight: bold; background-color: #eee; border: 2px solid #000000; text-align: center; width: 100px;">Rata-rata</th>
     </tr>
     </thead>
     <tbody>
     @foreach($students as $studentName)
         <tr>
-            <td style="border: 1px solid #cbd5e1; font-weight: bold;">{{ $studentName }}</td>
+            <td style="border: 1px solid #000; font-weight: bold;">{{ $studentName }}</td>
             @php $total = 0; $count = 0; @endphp
             @foreach($assessments as $a)
                 @php 
@@ -51,11 +51,11 @@
                         $count++;
                     }
                 @endphp
-                <td style="border: 1px solid #cbd5e1; text-align: center; {{ $val != '-' ? 'font-weight: bold; color: #4338ca;' : 'color: #94a3b8;' }}">
+                <td style="border: 1px solid #000; text-align: center; {{ $val != '-' ? 'font-weight: bold;' : 'color: #333;' }}">
                     {{ $val }}
                 </td>
             @endforeach
-            <td style="border: 1px solid #cbd5e1; text-align: center; font-weight: bold; background-color: #f8fafc;">
+            <td style="border: 1px solid #000; text-align: center; font-weight: bold; background-color: #f9f9f9;">
                 {{ $count > 0 ? number_format($total / $count, 2) : '-' }}
             </td>
         </tr>

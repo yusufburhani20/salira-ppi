@@ -314,6 +314,11 @@ class ClassAgendaController extends Controller
     {
         $data = $this->getExportData($request);
         
+        $matrix = null;
+        if ($request->academic_class_id && $request->start_date && $request->end_date) {
+            $matrix = $this->prepareDetailedAttendanceReport($request);
+        }
+
         $subjectName = $request->subject_id ? \App\Models\Subject::find($request->subject_id)->name : 'Semua Mapel';
 
         $meta = [
