@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Notifications\PortalNotification;
 use App\Models\Student;
+use App\Enums\AttendanceStatus;
 
 use Barryvdh\DomPDF\Facade\Pdf;
 use Maatwebsite\Excel\Facades\Excel;
@@ -316,6 +317,7 @@ class ClassAgendaController extends Controller
 
     public function exportExcel(Request $request)
     {
+        Carbon::setLocale('id');
         $data = $this->getExportData($request);
         
         $matrix = null;
@@ -329,11 +331,14 @@ class ClassAgendaController extends Controller
             $subjectName = $subj ? $subj->name : 'Semua Mapel';
         }
 
+        $startDateFormatted = $request->start_date ? Carbon::parse($request->start_date)->translatedFormat('d F Y') : 'Awal';
+        $endDateFormatted = $request->end_date ? Carbon::parse($request->end_date)->translatedFormat('d F Y') : 'Sekarang';
+
         $meta = [
             'school_name' => \App\Models\Setting::get('school_name', 'SALIRA ACADEMY'),
             'class_name' => $request->academic_class_id ? \App\Models\AcademicClass::find($request->academic_class_id)->name : 'Semua Kelas',
             'subject_name' => $subjectName,
-            'range' => ($request->start_date ?? 'Awal') . ' - ' . ($request->end_date ?? 'Sekarang'),
+            'range' => $startDateFormatted . ' - ' . $endDateFormatted,
             'teacher_name' => Auth::user()->name
         ];
 
@@ -342,10 +347,20 @@ class ClassAgendaController extends Controller
 
     public function exportPdf(Request $request)
     {
+        Carbon::setLocale('id');
         $data = $this->getExportData($request);
+        
         $className = $request->academic_class_id ? AcademicClass::find($request->academic_class_id)->name : 'Semua Kelas';
-        $subjectName = $request->subject_id ? Subject::find($request->subject_id)->name : 'Semua Mapel';
-        $range = ($request->start_date ?? 'Awal') . ' - ' . ($request->end_date ?? 'Sekarang');
+        
+        $subjectName = 'Semua Mapel';
+        if ($request->subject_id) {
+            $subj = Subject::find($request->subject_id);
+            $subjectName = $subj ? $subj->name : 'Semua Mapel';
+        }
+
+        $startDateFormatted = $request->start_date ? Carbon::parse($request->start_date)->translatedFormat('d F Y') : 'Awal';
+        $endDateFormatted = $request->end_date ? Carbon::parse($request->end_date)->translatedFormat('d F Y') : 'Sekarang';
+        $range = $startDateFormatted . ' - ' . $endDateFormatted;
         
         $logo = \App\Models\Setting::get('school_logo');
         $logoPath = null;
@@ -460,6 +475,8 @@ class ClassAgendaController extends Controller
             'end_date' => 'required|date|after_or_equal:start_date',
         ]);
 
+        Carbon::setLocale('id');
+        
         $classId = $request->academic_class_id;
         $start = Carbon::parse($request->start_date)->startOfDay();
         $end = Carbon::parse($request->end_date)->endOfDay();
@@ -501,11 +518,11 @@ class ClassAgendaController extends Controller
                 'name' => $student->name,
                 'daily' => $daily,
                 'summary' => [
-                    'hadir' => $studentAtts->where('status', 'hadir')->count(),
-                    'sakit' => $studentAtts->where('status', 'sakit')->count(),
-                    'izin' => $studentAtts->where('status', 'izin')->count(),
-                    'alpha' => $studentAtts->where('status', 'alpha')->count(),
-                    'terlambat' => $studentAtts->where('status', 'terlambat')->count(),
+                    'hadir' => $studentAtts->where('status', AttendanceStatus::hadir)->count(),
+                    'sakit' => $studentAtts->where('status', AttendanceStatus::sakit)->count(),
+                    'izin' => $studentAtts->where('status', AttendanceStatus::izin)->count(),
+                    'alpha' => $studentAtts->where('status', AttendanceStatus::alpha)->count(),
+                    'terlambat' => $studentAtts->where('status', AttendanceStatus::terlambat)->count(),
                 ]
             ];
         }
