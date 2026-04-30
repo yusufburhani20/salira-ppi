@@ -17,12 +17,28 @@ use App\Notifications\PortalNotification;
 
 class ConsultationController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $consultations = StudentConsultation::with(['student', 'academicClass'])
-            ->where('teacher_id', Auth::id())
-            ->latest()
-            ->paginate(15);
+        $query = StudentConsultation::with(['student', 'academicClass'])
+            ->where('teacher_id', Auth::id());
+
+        // Filters
+        if ($request->academic_class_id) {
+            $query->where('class_id', $request->academic_class_id);
+        }
+        if ($request->category) {
+            $query->where('category', $request->category);
+        }
+        if ($request->start_date) {
+            $query->whereDate('consultation_date', '>=', $request->start_date);
+        }
+        if ($request->end_date) {
+            $query->whereDate('consultation_date', '<=', $request->end_date);
+        }
+
+        $consultations = $query->latest()
+            ->paginate(15)
+            ->withQueryString();
 
         $classes = AcademicClass::all();
         
@@ -41,6 +57,7 @@ class ConsultationController extends Controller
             'classes' => $classes,
             'categories' => $categories,
             'statuses' => $statuses,
+            'filters' => $request->only(['academic_class_id', 'category', 'start_date', 'end_date'])
         ]);
     }
 
@@ -122,6 +139,55 @@ class ConsultationController extends Controller
         $consultation->delete();
 
         return back()->with('success', 'Catatan bimbingan berhasil dihapus.');
+    }
+
+    public function exportExcel(Request $request)
+    {
+        $data = $this->getExportData($request);
+        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\ConsultationRecapExport($data), 'rekap_bimbingan.xlsx');
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $data = $this->getExportData($request);
+        $className = $request->academic_class_id ? AcademicClass::find($request->academic_class_id)->name : 'Semua Kelas';
+        $range = ($request->start_date ?? 'Awal') . ' - ' . ($request->end_date ?? 'Sekarang');
+        
+        $settings = [
+            'title' => 'Rekap Bimbingan Siswa (Konseling)',
+            'school_name' => \App\Models\Setting::get('school_name', 'SALIRA ACADEMY'),
+            'logo' => \App\Models\Setting::get('school_logo'),
+            'class_name' => $className,
+            'range' => $range,
+            'teacher_name' => Auth::user()->name
+        ];
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('reports.consultation_pdf', array_merge($settings, [
+            'data' => $data
+        ]))->setPaper('a4', 'landscape');
+
+        return $pdf->stream('rekap_bimbingan.pdf');
+    }
+
+    private function getExportData(Request $request)
+    {
+        $query = StudentConsultation::where('teacher_id', Auth::id())
+            ->with(['student', 'academicClass']);
+
+        if ($request->academic_class_id) {
+            $query->where('class_id', $request->academic_class_id);
+        }
+        if ($request->category) {
+            $query->where('category', $request->category);
+        }
+        if ($request->start_date) {
+            $query->whereDate('consultation_date', '>=', $request->start_date);
+        }
+        if ($request->end_date) {
+            $query->whereDate('consultation_date', '<=', $request->end_date);
+        }
+
+        return $query->latest('consultation_date')->get()->toArray();
     }
 
     public function getStudents($classId)

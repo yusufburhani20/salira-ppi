@@ -32,10 +32,33 @@ interface Agenda {
     attendances?: any[];
 }
 
-export default function AgendaIndex({ auth, agendas }: PageProps<{ agendas: Agenda[] }>) {
+export default function AgendaIndex({ auth, agendas, classes, filters }: PageProps<{ agendas: Agenda[], classes: any[], filters: any }>) {
     const [selectedAgenda, setSelectedAgenda] = useState<Agenda | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [loading, setLoading] = useState(false);
+
+    const handleExport = (type: 'excel' | 'pdf') => {
+        const params = new URLSearchParams(filters);
+        window.open(route(`teacher.agendas.export.${type}`) + '?' + params.toString(), '_blank');
+    };
+
+    const updateFilter = (key: string, value: string) => {
+        router.get(route('teacher.agendas.index'), {
+            ...filters,
+            [key]: value
+        }, {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true
+        });
+    };
+
+    const resetFilters = () => {
+        router.get(route('teacher.agendas.index'), {}, {
+            preserveState: true,
+            preserveScroll: true
+        });
+    };
 
     const openDetail = async (id: number) => {
         setLoading(true);
@@ -73,18 +96,83 @@ export default function AgendaIndex({ auth, agendas }: PageProps<{ agendas: Agen
             <div className="py-12">
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
                     {/* Header Action */}
-                    <div className="flex justify-between items-center">
+                    <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4">
                         <div>
                             <h3 className="text-lg font-bold text-gray-900 dark:text-white">Riwayat Jurnal</h3>
                             <p className="text-sm text-gray-500 dark:text-gray-400">Daftar aktivitas mengajar dan absensi yang telah Anda catat.</p>
                         </div>
-                        <Link
-                            href={route('teacher.agendas.create')}
-                            className="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-xl font-bold text-sm text-white hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-900 transition ease-in-out duration-150 shadow-lg shadow-indigo-500/30"
-                        >
-                            <PlusIcon className="w-5 h-5 mr-1.5" />
-                            Buat Jurnal Baru
-                        </Link>
+                        <div className="flex flex-wrap gap-2">
+                            <button
+                                onClick={() => handleExport('excel')}
+                                className="inline-flex items-center px-4 py-2 bg-emerald-600 border border-transparent rounded-xl font-bold text-sm text-white hover:bg-emerald-700 transition ease-in-out duration-150 shadow-lg shadow-emerald-500/30"
+                            >
+                                <svg className="w-5 h-5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                Excel
+                            </button>
+                            <button
+                                onClick={() => handleExport('pdf')}
+                                className="inline-flex items-center px-4 py-2 bg-rose-600 border border-transparent rounded-xl font-bold text-sm text-white hover:bg-rose-700 transition ease-in-out duration-150 shadow-lg shadow-rose-500/30"
+                            >
+                                <svg className="w-5 h-5 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                PDF
+                            </button>
+                            <Link
+                                href={route('teacher.agendas.create')}
+                                className="inline-flex items-center px-4 py-2 bg-indigo-600 border border-transparent rounded-xl font-bold text-sm text-white hover:bg-indigo-700 focus:bg-indigo-700 active:bg-indigo-900 transition ease-in-out duration-150 shadow-lg shadow-indigo-500/30"
+                            >
+                                <PlusIcon className="w-5 h-5 mr-1.5" />
+                                Buat Jurnal Baru
+                            </Link>
+                        </div>
+                    </div>
+
+                    {/* Filter Bar */}
+                    <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Pilih Kelas</label>
+                                <select 
+                                    value={filters.academic_class_id || ''}
+                                    onChange={(e) => updateFilter('academic_class_id', e.target.value)}
+                                    className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 text-sm focus:ring-indigo-500"
+                                >
+                                    <option value="">Semua Kelas</option>
+                                    {classes.map((c: any) => (
+                                        <option key={c.id} value={c.id}>{c.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Mulai Tanggal</label>
+                                <input 
+                                    type="date"
+                                    value={filters.start_date || ''}
+                                    onChange={(e) => updateFilter('start_date', e.target.value)}
+                                    className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 text-sm focus:ring-indigo-500"
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Sampai Tanggal</label>
+                                <input 
+                                    type="date"
+                                    value={filters.end_date || ''}
+                                    onChange={(e) => updateFilter('end_date', e.target.value)}
+                                    className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 text-sm focus:ring-indigo-500"
+                                />
+                            </div>
+                            <div className="flex gap-2">
+                                <button 
+                                    onClick={resetFilters}
+                                    className="flex-1 px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl font-bold text-sm hover:bg-slate-200 transition-all"
+                                >
+                                    Reset
+                                </button>
+                            </div>
+                        </div>
                     </div>
 
                     {/* Agenda Table */}

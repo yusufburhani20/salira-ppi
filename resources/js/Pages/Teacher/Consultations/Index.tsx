@@ -1,8 +1,8 @@
 import { PageProps } from '@/types';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, router, Link } from '@inertiajs/react';
 import React, { useState, useEffect } from 'react';
-import { UserPlusIcon, PencilSquareIcon, TrashIcon, UserGroupIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { UserPlusIcon, PencilSquareIcon, TrashIcon, UserGroupIcon, MagnifyingGlassIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import axios from 'axios';
 
 interface AcademicClass {
@@ -39,11 +39,12 @@ interface PaginatedData<T> {
     links: PaginationLinks[];
 }
 
-export default function ConsultationIndex({ auth, consultations, classes, categories, statuses }: PageProps<{ 
+export default function ConsultationIndex({ auth, consultations, classes, categories, statuses, filters }: PageProps<{ 
     consultations: PaginatedData<StudentConsultation>,
     classes: AcademicClass[],
     categories: { value: string, label: string }[],
-    statuses: { value: string, label: string }[]
+    statuses: { value: string, label: string }[],
+    filters: any
 }>) {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isEdit, setIsEdit] = useState(false);
@@ -75,6 +76,29 @@ export default function ConsultationIndex({ auth, consultations, classes, catego
             setStudents([]);
         }
     }, [data.class_id]);
+
+    const handleExport = (type: 'excel' | 'pdf') => {
+        const params = new URLSearchParams(filters);
+        window.open(route(`teacher.consultations.export.${type}`) + '?' + params.toString(), '_blank');
+    };
+
+    const updateFilter = (key: string, value: string) => {
+        router.get(route('teacher.consultations.index'), {
+            ...filters,
+            [key]: value
+        }, {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true
+        });
+    };
+
+    const resetFilters = () => {
+        router.get(route('teacher.consultations.index'), {}, {
+            preserveState: true,
+            preserveScroll: true
+        });
+    };
 
     const openCreateModal = () => {
         setIsEdit(false);
@@ -133,18 +157,90 @@ export default function ConsultationIndex({ auth, consultations, classes, catego
 
             <div className="py-12">
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
-                    <div className="flex justify-between items-center bg-indigo-600 p-6 rounded-2xl text-white shadow-lg">
+                    <div className="flex flex-col md:flex-row md:justify-between md:items-center bg-indigo-600 p-6 rounded-2xl text-white shadow-lg gap-4">
                         <div>
                             <h3 className="text-xl font-bold mb-1">Manajemen Bimbingan & Konseling</h3>
                             <p className="opacity-80 text-sm">Catat setiap bimbingan problematika atau prestasi siswa secara berkala.</p>
                         </div>
-                        <button 
-                            onClick={openCreateModal}
-                            className="bg-white text-indigo-600 hover:bg-indigo-50 px-6 py-2.5 rounded-xl font-bold flex items-center space-x-2 transition-all shadow-md"
-                        >
-                            <UserPlusIcon className="w-5 h-5" />
-                            <span>Input Bimbingan</span>
-                        </button>
+                        <div className="flex flex-wrap gap-2">
+                            <button
+                                onClick={() => handleExport('excel')}
+                                className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-xl font-bold flex items-center space-x-2 transition-all shadow-md"
+                            >
+                                <ArrowDownTrayIcon className="w-5 h-5" />
+                                <span>Excel</span>
+                            </button>
+                            <button
+                                onClick={() => handleExport('pdf')}
+                                className="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-xl font-bold flex items-center space-x-2 transition-all shadow-md"
+                            >
+                                <ArrowDownTrayIcon className="w-5 h-5" />
+                                <span>PDF</span>
+                            </button>
+                            <button 
+                                onClick={openCreateModal}
+                                className="bg-white text-indigo-600 hover:bg-indigo-50 px-6 py-2.5 rounded-xl font-bold flex items-center space-x-2 transition-all shadow-md"
+                            >
+                                <UserPlusIcon className="w-5 h-5" />
+                                <span>Input Bimbingan</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Filter Bar */}
+                    <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+                        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Kelas</label>
+                                <select 
+                                    value={filters.academic_class_id || ''}
+                                    onChange={(e) => updateFilter('academic_class_id', e.target.value)}
+                                    className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 text-sm focus:ring-indigo-500"
+                                >
+                                    <option value="">Semua Kelas</option>
+                                    {classes.map((c) => (
+                                        <option key={c.id} value={c.id}>{c.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Kategori</label>
+                                <select 
+                                    value={filters.category || ''}
+                                    onChange={(e) => updateFilter('category', e.target.value)}
+                                    className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 text-sm focus:ring-indigo-500"
+                                >
+                                    <option value="">Semua Kategori</option>
+                                    {categories.map((c) => (
+                                        <option key={c.value} value={c.value}>{c.label}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Mulai</label>
+                                <input 
+                                    type="date"
+                                    value={filters.start_date || ''}
+                                    onChange={(e) => updateFilter('start_date', e.target.value)}
+                                    className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 text-sm focus:ring-indigo-500"
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Sampai</label>
+                                <input 
+                                    type="date"
+                                    value={filters.end_date || ''}
+                                    onChange={(e) => updateFilter('end_date', e.target.value)}
+                                    className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 text-sm focus:ring-indigo-500"
+                                />
+                            </div>
+                            <button 
+                                onClick={resetFilters}
+                                className="px-4 py-2 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-xl font-bold text-sm hover:bg-slate-200 transition-all"
+                            >
+                                Reset
+                            </button>
+                        </div>
                     </div>
 
                     <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-xl border border-gray-200 dark:border-gray-700">
@@ -158,17 +254,17 @@ export default function ConsultationIndex({ auth, consultations, classes, catego
                                 <table className="w-full text-left border-collapse">
                                     <thead>
                                         <tr className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
-                                            <th className="px-6 py-4 font-medium text-gray-900 dark:text-white">Tanggal</th>
-                                            <th className="px-6 py-4 font-medium text-gray-900 dark:text-white">Siswa / Kelas</th>
-                                            <th className="px-6 py-4 font-medium text-gray-900 dark:text-white">Kategori</th>
-                                            <th className="px-6 py-4 font-medium text-gray-900 dark:text-white">Kasus / Masalah</th>
-                                            <th className="px-6 py-4 font-medium text-gray-900 dark:text-white">Status</th>
-                                            <th className="px-6 py-4 font-medium text-gray-900 dark:text-white text-right">Aksi</th>
+                                            <th className="px-6 py-4 font-medium text-gray-900 dark:text-white text-xs uppercase tracking-wider">Tanggal</th>
+                                            <th className="px-6 py-4 font-medium text-gray-900 dark:text-white text-xs uppercase tracking-wider">Siswa / Kelas</th>
+                                            <th className="px-6 py-4 font-medium text-gray-900 dark:text-white text-xs uppercase tracking-wider">Kategori</th>
+                                            <th className="px-6 py-4 font-medium text-gray-900 dark:text-white text-xs uppercase tracking-wider">Kasus / Masalah</th>
+                                            <th className="px-6 py-4 font-medium text-gray-900 dark:text-white text-xs uppercase tracking-wider">Status</th>
+                                            <th className="px-6 py-4 font-medium text-gray-900 dark:text-white text-xs uppercase tracking-wider text-right">Aksi</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                                         {consultations.data.map((item) => (
-                                            <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20">
+                                            <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                                     {item.consultation_date.split('T')[0]}
                                                 </td>
@@ -193,8 +289,8 @@ export default function ConsultationIndex({ auth, consultations, classes, catego
                                                     </span>
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-right space-x-1">
-                                                    <button onClick={() => openEditModal(item)} className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg"><PencilSquareIcon className="w-5 h-5" /></button>
-                                                    <button onClick={() => handleDelete(item.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg"><TrashIcon className="w-5 h-5" /></button>
+                                                    <button onClick={() => openEditModal(item)} className="p-2 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors"><PencilSquareIcon className="w-5 h-5" /></button>
+                                                    <button onClick={() => handleDelete(item.id)} className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors"><TrashIcon className="w-5 h-5" /></button>
                                                 </td>
                                             </tr>
                                         ))}
@@ -203,6 +299,24 @@ export default function ConsultationIndex({ auth, consultations, classes, catego
                             </div>
                         )}
                     </div>
+
+                    {/* Pagination */}
+                    {consultations.links.length > 3 && (
+                        <div className="flex justify-center mt-6 space-x-1">
+                            {consultations.links.map((link, i) => (
+                                <Link
+                                    key={i}
+                                    href={link.url || '#'}
+                                    className={`px-4 py-2 rounded-xl text-sm font-medium transition-all ${
+                                        link.active 
+                                            ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20' 
+                                            : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'
+                                    } ${!link.url && 'opacity-50 cursor-not-allowed'}`}
+                                    dangerouslySetInnerHTML={{ __html: link.label }}
+                                />
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -282,7 +396,7 @@ export default function ConsultationIndex({ auth, consultations, classes, catego
                                 </div>
 
                                 <div className="p-6 bg-gray-50 dark:bg-gray-700/50 flex flex-row-reverse space-x-reverse space-x-3">
-                                    <button type="submit" disabled={processing} className="bg-primary hover:bg-primary-hover text-white px-8 py-2.5 rounded-xl font-bold shadow-sm transition-all">
+                                    <button type="submit" disabled={processing} className="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-2.5 rounded-xl font-bold shadow-sm transition-all">
                                         {processing ? 'Menyimpan...' : 'Simpan Catatan'}
                                     </button>
                                     <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-2.5 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-100 transition-colors">

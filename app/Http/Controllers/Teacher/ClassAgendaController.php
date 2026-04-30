@@ -17,16 +17,30 @@ use App\Models\Student;
 
 class ClassAgendaController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $agendas = ClassAgenda::with('academicClass')
-            ->where('teacher_id', Auth::id())
-            ->latest('date')
+        $query = ClassAgenda::with('academicClass')
+            ->where('teacher_id', Auth::id());
+
+        // Filters
+        if ($request->academic_class_id) {
+            $query->where('academic_class_id', $request->academic_class_id);
+        }
+        if ($request->start_date) {
+            $query->whereDate('date', '>=', $request->start_date);
+        }
+        if ($request->end_date) {
+            $query->whereDate('date', '<=', $request->end_date);
+        }
+
+        $agendas = $query->latest('date')
             ->latest('id')
             ->get();
 
         return Inertia::render('Teacher/Agendas/Index', [
-            'agendas' => $agendas
+            'agendas' => $agendas,
+            'classes' => AcademicClass::all(),
+            'filters' => $request->only(['academic_class_id', 'start_date', 'end_date'])
         ]);
     }
 
@@ -291,5 +305,51 @@ class ClassAgendaController extends Controller
 
         return redirect()->route('teacher.agendas.index')
             ->with('success', 'Jurnal mengajar berhasil dihapus.');
+    }
+
+    public function exportExcel(Request $request)
+    {
+        $data = $this->getExportData($request);
+        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\AgendaRecapExport($data), 'jurnal_mengajar.xlsx');
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $data = $this->getExportData($request);
+        $className = $request->academic_class_id ? AcademicClass::find($request->academic_class_id)->name : 'Semua Kelas';
+        $range = ($request->start_date ?? 'Awal') . ' - ' . ($request->end_date ?? 'Sekarang');
+        
+        $settings = [
+            'title' => 'Jurnal Mengajar Guru',
+            'school_name' => \App\Models\Setting::get('school_name', 'SALIRA ACADEMY'),
+            'logo' => \App\Models\Setting::get('school_logo'),
+            'class_name' => $className,
+            'range' => $range,
+            'teacher_name' => Auth::user()->name
+        ];
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('reports.agenda_pdf', array_merge($settings, [
+            'data' => $data
+        ]))->setPaper('a4', 'landscape');
+
+        return $pdf->stream('jurnal_mengajar.pdf');
+    }
+
+    private function getExportData(Request $request)
+    {
+        $query = ClassAgenda::with(['teacher', 'subject', 'academicClass'])
+            ->where('teacher_id', Auth::id());
+
+        if ($request->academic_class_id) {
+            $query->where('academic_class_id', $request->academic_class_id);
+        }
+        if ($request->start_date) {
+            $query->whereDate('date', '>=', $request->start_date);
+        }
+        if ($request->end_date) {
+            $query->whereDate('date', '<=', $request->end_date);
+        }
+
+        return $query->latest('date')->get()->toArray();
     }
 }

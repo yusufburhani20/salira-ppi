@@ -15,20 +15,37 @@ use App\Notifications\PortalNotification;
 
 class DailyAssessmentController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $assessments = DailyAssessment::with(['academicClass'])
-            ->where('teacher_id', Auth::id())
-            ->latest()
-            ->paginate(15);
+        $query = DailyAssessment::with(['academicClass'])
+            ->where('teacher_id', Auth::id());
+
+        // Filters
+        if ($request->academic_class_id) {
+            $query->where('academic_class_id', $request->academic_class_id);
+        }
+        if ($request->subject_id) {
+            $query->where('subject_id', $request->subject_id);
+        }
+        if ($request->start_date) {
+            $query->whereDate('date', '>=', $request->start_date);
+        }
+        if ($request->end_date) {
+            $query->whereDate('date', '<=', $request->end_date);
+        }
+
+        $assessments = $query->latest()
+            ->paginate(15)
+            ->withQueryString();
 
         $classes = AcademicClass::all();
-        $subjects = Subject::with('academicClasses:id')->orderBy('name')->get();
+        $subjects = Subject::orderBy('name')->get();
 
         return Inertia::render('Teacher/Assessments/Index', [
             'assessments' => $assessments,
             'classes' => $classes,
             'subjects' => $subjects,
+            'filters' => $request->only(['academic_class_id', 'subject_id', 'start_date', 'end_date'])
         ]);
     }
 
@@ -204,5 +221,68 @@ class DailyAssessmentController extends Controller
         $assessment->delete();
 
         return back()->with('success', 'Penilaian harian berhasil dihapus.');
+    }
+
+    public function exportExcel(Request $request)
+    {
+        $data = $this->getExportData($request);
+        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\AssessmentRecapExport($data), 'rekap_penilaian.xlsx');
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $data = $this->getExportData($request);
+        $className = $request->academic_class_id ? AcademicClass::find($request->academic_class_id)->name : 'Semua Kelas';
+        $subjectName = $request->subject_id ? Subject::find($request->subject_id)->name : 'Semua Mapel';
+        
+        $settings = [
+            'title' => 'Rekap Penilaian Harian',
+            'school_name' => \App\Models\Setting::get('school_name', 'SALIRA ACADEMY'),
+            'logo' => \App\Models\Setting::get('school_logo'),
+            'class_name' => $className,
+            'subject_name' => $subjectName,
+            'range' => $data['range'],
+            'teacher_name' => Auth::user()->name
+        ];
+
+        // Collect students for table rows
+        $students = collect($data['assessments'])->flatMap(function($a) {
+            return collect($a['scores'])->pluck('student.name');
+        })->unique()->sort()->values();
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('reports.assessment_pdf', array_merge($settings, [
+            'assessments' => $data['assessments'],
+            'students' => $students
+        ]))->setPaper('a4', 'landscape');
+
+        return $pdf->stream('rekap_penilaian.pdf');
+    }
+
+    private function getExportData(Request $request)
+    {
+        $query = DailyAssessment::where('teacher_id', Auth::id())
+            ->with(['scores.student', 'academicClass', 'subject']);
+
+        if ($request->academic_class_id) {
+            $query->where('academic_class_id', $request->academic_class_id);
+        }
+        if ($request->subject_id) {
+            $query->where('subject_id', $request->subject_id);
+        }
+        if ($request->start_date) {
+            $query->whereDate('date', '>=', $request->start_date);
+        }
+        if ($request->end_date) {
+            $query->whereDate('date', '<=', $request->end_date);
+        }
+
+        $assessments = $query->orderBy('date')->get()->toArray();
+        $start = $request->start_date ?? 'Awal';
+        $end = $request->end_date ?? 'Sekarang';
+
+        return [
+            'assessments' => $assessments,
+            'range' => "$start - $end"
+        ];
     }
 }

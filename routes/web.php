@@ -217,10 +217,14 @@ Route::middleware('auth')->group(function () {
         Route::get('/agendas/{id}', [\App\Http\Controllers\Teacher\ClassAgendaController::class, 'show'])->name('agendas.show');
         Route::get('/agendas/{id}/edit', [\App\Http\Controllers\Teacher\ClassAgendaController::class, 'edit'])->name('agendas.edit');
         Route::post('/agendas', [\App\Http\Controllers\Teacher\ClassAgendaController::class, 'store'])->name('agendas.store');
+        Route::get('/agendas/export/excel', [\App\Http\Controllers\Teacher\ClassAgendaController::class, 'exportExcel'])->name('agendas.export.excel');
+        Route::get('/agendas/export/pdf', [\App\Http\Controllers\Teacher\ClassAgendaController::class, 'exportPdf'])->name('agendas.export.pdf');
         Route::put('/agendas/{id}', [\App\Http\Controllers\Teacher\ClassAgendaController::class, 'update'])->name('agendas.update');
         Route::delete('/agendas/{id}', [\App\Http\Controllers\Teacher\ClassAgendaController::class, 'destroy'])->name('agendas.destroy');
 
         // Daily Assessments (Scores)
+        Route::get('/assessments/export/excel', [\App\Http\Controllers\Teacher\DailyAssessmentController::class, 'exportExcel'])->name('assessments.export.excel');
+        Route::get('/assessments/export/pdf', [\App\Http\Controllers\Teacher\DailyAssessmentController::class, 'exportPdf'])->name('assessments.export.pdf');
         Route::resource('assessments', \App\Http\Controllers\Teacher\DailyAssessmentController::class);
         
         // Student Guidance (Guru Wali / Guru BK / Wali Kelas / Guru)
@@ -229,6 +233,8 @@ Route::middleware('auth')->group(function () {
         Route::post('/consultations', [\App\Http\Controllers\Teacher\ConsultationController::class, 'store'])->name('consultations.store');
         Route::put('/consultations/{consultation}', [\App\Http\Controllers\Teacher\ConsultationController::class, 'update'])->name('consultations.update');
         Route::delete('/consultations/{consultation}', [\App\Http\Controllers\Teacher\ConsultationController::class, 'destroy'])->name('consultations.destroy');
+        Route::get('/consultations/export/excel', [\App\Http\Controllers\Teacher\ConsultationController::class, 'exportExcel'])->name('consultations.export.excel');
+        Route::get('/consultations/export/pdf', [\App\Http\Controllers\Teacher\ConsultationController::class, 'exportPdf'])->name('consultations.export.pdf');
         Route::get('/consultations/students/{classId}', [\App\Http\Controllers\Teacher\ConsultationController::class, 'getStudents'])->name('consultations.students');
     });
 
