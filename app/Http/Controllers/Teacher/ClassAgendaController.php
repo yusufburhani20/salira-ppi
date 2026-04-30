@@ -323,7 +323,7 @@ class ClassAgendaController extends Controller
         $range = ($request->start_date ?? 'Awal') . ' - ' . ($request->end_date ?? 'Sekarang');
         
         $settings = [
-            'title' => 'Jurnal Mengajar Guru',
+            'title' => 'Rekap Jurnal & Presensi Terpadu',
             'school_name' => \App\Models\Setting::get('school_name', 'SALIRA ACADEMY'),
             'logo' => \App\Models\Setting::get('school_logo'),
             'class_name' => $className,
@@ -331,8 +331,15 @@ class ClassAgendaController extends Controller
             'teacher_name' => Auth::user()->name
         ];
 
+        // Get Matrix Data if class is selected
+        $matrix = null;
+        if ($request->academic_class_id && $request->start_date && $request->end_date) {
+            $matrix = $this->prepareDetailedAttendanceReport($request);
+        }
+
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('reports.agenda_pdf', array_merge($settings, [
-            'data' => $data
+            'data' => $data,
+            'matrix' => $matrix
         ]))->setPaper('a4', 'landscape');
 
         return $pdf->stream('jurnal_mengajar.pdf');
@@ -358,13 +365,13 @@ class ClassAgendaController extends Controller
 
     public function exportAttendanceExcel(Request $request)
     {
-        $data = $this->getDetailedAttendanceData($request);
+        $data = $this->prepareDetailedAttendanceReport($request);
         return Excel::download(new \App\Exports\AttendanceDetailedRecapExport($data), 'rekap_absensi_detail.xlsx');
     }
 
     public function exportAttendancePdf(Request $request)
     {
-        $data = $this->getDetailedAttendanceData($request);
+        $data = $this->prepareDetailedAttendanceReport($request);
         $settings = [
             'title' => 'Rekap Absensi Detail',
             'school_name' => \App\Models\Setting::get('school_name', 'SALIRA ACADEMY'),
@@ -383,7 +390,13 @@ class ClassAgendaController extends Controller
         return $pdf->stream('rekap_absensi_detail.pdf');
     }
 
-    private function getDetailedAttendanceData(Request $request)
+    public function getDetailedAttendanceData(Request $request)
+    {
+        $data = $this->prepareDetailedAttendanceReport($request);
+        return response()->json($data);
+    }
+
+    private function prepareDetailedAttendanceReport(Request $request)
     {
         $request->validate([
             'academic_class_id' => 'required|exists:academic_classes,id',

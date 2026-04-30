@@ -1,110 +1,96 @@
 @extends('reports.pdf_layout')
 
 @section('content')
-<style>
-    .agenda-entry { 
-        page-break-inside: avoid; 
-        margin-bottom: 40px; 
-        border: 1px solid #cbd5e1;
-    }
-    .agenda-header {
-        background: #f1f5f9;
-        padding: 12px;
-        border-bottom: 1px solid #cbd5e1;
-    }
-    .agenda-info {
-        width: 100%;
-        border-collapse: collapse;
-    }
-    .agenda-info td {
-        padding: 4px 8px;
-        font-size: 10px;
-        vertical-align: top;
-        border: none !important;
-    }
-    .agenda-info .label {
-        font-weight: bold;
-        color: #475569;
-        width: 120px;
-    }
-    .attendance-table {
-        margin-top: 0 !important;
-    }
-</style>
+<!-- Bagian I: Jurnal Mengajar (Ringkasan) -->
+<h3 style="font-size: 12px; border-left: 4px solid #4f46e5; padding-left: 10px; margin-bottom: 10px; color: #1e293b;">I. Jurnal Mengajar</h3>
+<table class="data">
+    <thead>
+        <tr>
+            <th width="20" class="text-center">No</th>
+            <th width="90">Hari / Tanggal</th>
+            <th width="40" class="text-center">Jam</th>
+            <th width="80">Mata Pelajaran</th>
+            <th>Topik / Materi Pembelajaran</th>
+            <th>Aktivitas & Tugas Siswa</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach($data as $index => $item)
+        <tr>
+            <td class="text-center">{{ $index + 1 }}</td>
+            <td style="font-size: 9px;">
+                <strong>{{ \Carbon\Carbon::parse($item['date'])->isoFormat('dddd') }}</strong><br>
+                {{ \Carbon\Carbon::parse($item['date'])->format('d/m/Y') }}
+            </td>
+            <td class="text-center" style="font-family: monospace; font-size: 9px;">{{ $item['lesson_period'] }}</td>
+            <td style="font-size: 8px; font-weight: bold; color: #4338ca;">{{ $item['subject']['name'] ?? ($item['subject_name'] ?? ($item['subject'] ?? '-')) }}</td>
+            <td style="font-size: 9px;"><strong>{{ $item['topic'] }}</strong></td>
+            <td style="font-size: 8px;">
+                <div style="margin-bottom: 3px;">{{ $item['activities'] }}</div>
+                @if(!empty($item['student_tasks']))
+                    <div style="font-style: italic; color: #64748b; border-top: 1px dashed #e2e8f0; padding-top: 2px;">
+                        Tugas: {{ $item['student_tasks'] }}
+                    </div>
+                @endif
+            </td>
+        </tr>
+        @endforeach
+        @if(count($data) == 0)
+        <tr>
+            <td colspan="6" class="text-center" style="padding: 30px; color: #94a3b8; font-style: italic;">Tidak ada data jurnal mengajar dalam periode ini.</td>
+        </tr>
+        @endif
+    </tbody>
+</table>
 
-@foreach($data as $item)
-<div class="agenda-entry">
-    <div class="agenda-header">
-        <table class="agenda-info">
-            <tr>
-                <td class="label">Hari / Tanggal</td>
-                <td>: {{ \Carbon\Carbon::parse($item['date'])->isoFormat('dddd, D MMMM Y') }}</td>
-                <td class="label">Mata Pelajaran</td>
-                <td>: <span style="color: #4338ca; font-weight: bold;">{{ $item['subject']['name'] ?? ($item['subject_name'] ?? ($item['subject'] ?? '-')) }}</span></td>
-            </tr>
-            <tr>
-                <td class="label">Jam Pelajaran</td>
-                <td>: <span style="font-family: monospace;">{{ $item['lesson_period'] }}</span></td>
-                <td class="label">Guru Pengajar</td>
-                <td style="text-transform: uppercase;">: {{ $item['teacher']['name'] ?? '-' }}</td>
-            </tr>
-            <tr>
-                <td class="label">Topik / Materi</td>
-                <td colspan="3">: <strong>{{ $item['topic'] }}</strong></td>
-            </tr>
-            @if($item['activities'])
-            <tr>
-                <td class="label">Aktivitas</td>
-                <td colspan="3">: <span style="font-style: italic; color: #64748b;">{{ $item['activities'] }}</span></td>
-            </tr>
-            @endif
-        </table>
-    </div>
-
-    <table class="data attendance-table">
-        <thead>
-            <tr>
-                <th width="30" class="text-center">No</th>
-                <th>Nama Siswa</th>
-                <th width="100">NISN / NIS</th>
-                <th width="80" class="text-center">Status</th>
-                <th>Keterangan Tambahan</th>
-            </tr>
-        </thead>
-        <tbody>
-            @php
-                $attendances = collect($item['attendances'] ?? [])->sortBy('student.name');
-            @endphp
-            @foreach($attendances as $index => $att)
-            <tr>
-                <td class="text-center">{{ $index + 1 }}</td>
-                <td style="font-weight: 500;">{{ $att['student']['name'] ?? '-' }}</td>
-                <td>{{ $att['student']['nisn'] ?? ($att['student']['nis'] ?? '-') }}</td>
-                <td class="text-center">
-                    @php
-                        $status = strtolower($att['status']);
-                        $statusClass = 'status-' . $status;
-                    @endphp
-                    <span class="{{ $statusClass }}">
-                        {{ strtoupper($att['status']) }}
+<!-- Bagian II: Matriks Presensi Siswa (Hanya jika kelas dipilih) -->
+@if(isset($matrix) && $matrix)
+<div style="page-break-before: always;"></div>
+<h3 style="font-size: 12px; border-left: 4px solid #10b981; padding-left: 10px; margin-bottom: 10px; margin-top: 20px; color: #1e293b;">II. Matriks Presensi Siswa</h3>
+<table class="data">
+    <thead>
+        <tr>
+            <th width="20" class="text-center">No</th>
+            <th width="150">Nama Siswa</th>
+            @foreach($matrix['dates'] as $date)
+                <th class="text-center" style="font-size: 7px; width: 18px; padding: 4px 1px;">{{ \Carbon\Carbon::parse($date)->format('d/m') }}</th>
+            @endforeach
+            <th class="text-center" style="background: #ecfdf5; width: 18px; font-size: 8px;">H</th>
+            <th class="text-center" style="background: #fffbeb; width: 18px; font-size: 8px;">S</th>
+            <th class="text-center" style="background: #eff6ff; width: 18px; font-size: 8px;">I</th>
+            <th class="text-center" style="background: #fef2f2; width: 18px; font-size: 8px;">A</th>
+            <th class="text-center" style="background: #fff7ed; width: 18px; font-size: 8px;">T</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach($matrix['report'] as $index => $row)
+        <tr>
+            <td class="text-center" style="font-size: 9px;">{{ $index + 1 }}</td>
+            <td style="font-weight: bold; text-transform: uppercase; font-size: 8px;">{{ $row['name'] }}</td>
+            @foreach($matrix['dates'] as $date)
+                <td class="text-center" style="font-size: 8px; padding: 4px 1px;">
+                    @php $status = strtolower($row['daily'][$date] ?? '-'); @endphp
+                    <span class="status-{{ $status }}">
+                        @if($status == 'hadir') H @elseif($status == 'sakit') S @elseif($status == 'izin') I @elseif($status == 'alpha') A @elseif($status == 'terlambat') T @else - @endif
                     </span>
                 </td>
-                <td style="font-size: 9px;">{{ $att['notes'] ?? '-' }}</td>
-            </tr>
             @endforeach
-            @if($attendances->isEmpty())
-            <tr>
-                <td colspan="5" class="text-center" style="padding: 20px; color: #94a3b8;">Data absensi tidak ditemukan untuk jurnal ini.</td>
-            </tr>
-            @endif
-        </tbody>
-    </table>
-</div>
-@endforeach
+            <td class="text-center" style="font-weight: bold; background: #f0fdf4; font-size: 9px;">{{ $row['summary']['hadir'] }}</td>
+            <td class="text-center" style="font-size: 9px;">{{ $row['summary']['sakit'] }}</td>
+            <td class="text-center" style="font-size: 9px;">{{ $row['summary']['izin'] }}</td>
+            <td class="text-center" style="font-weight: bold; color: #ef4444; background: #fef2f2; font-size: 9px;">{{ $row['summary']['alpha'] }}</td>
+            <td class="text-center" style="font-size: 9px;">{{ $row['summary']['terlambat'] }}</td>
+        </tr>
+        @endforeach
+    </tbody>
+</table>
 
-@if(count($data) == 0)
-<div style="text-align: center; padding: 50px; border: 2px dashed #e2e8f0; color: #94a3b8; font-style: italic;">
-    Tidak ada data jurnal mengajar dalam periode yang dipilih.
+<div style="margin-top: 15px; font-size: 8px; color: #64748b;">
+    <strong>Keterangan Matriks:</strong> H (Hadir), S (Sakit), I (Izin), A (Alpha/Tanpa Keterangan), T (Terlambat)
+</div>
+@else
+<div style="margin-top: 20px; padding: 15px; background: #fffbeb; border: 1px solid #fef3c7; color: #92400e; font-size: 10px; border-radius: 4px;">
+    <strong>Catatan:</strong> Matriks presensi siswa akan muncul otomatis jika Anda melakukan filter **Kelas** dan **Rentang Tanggal** sebelum melakukan ekspor.
 </div>
 @endif
 @endsection
