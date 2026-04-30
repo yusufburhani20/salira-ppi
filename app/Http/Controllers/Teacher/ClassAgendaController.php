@@ -337,7 +337,7 @@ class ClassAgendaController extends Controller
 
     private function getExportData(Request $request)
     {
-        $query = ClassAgenda::with(['teacher', 'subject', 'academicClass'])
+        $query = ClassAgenda::with(['teacher', 'subject', 'academicClass', 'attendances.student'])
             ->where('teacher_id', Auth::id());
 
         if ($request->academic_class_id) {
