@@ -1,3 +1,5 @@
+<html>
+<body>
 <table>
     <thead>
     <tr>
@@ -6,7 +8,9 @@
     <tr>
         <th colspan="9" style="font-weight: bold; font-size: 14px; text-align: center; color: #000;">{{ $meta['school_name'] }}</th>
     </tr>
-    <tr></tr>
+    <tr>
+        <th colspan="9"></th>
+    </tr>
     <tr>
         <th colspan="2" style="font-weight: bold; background-color: #eee; border: 1px solid #000;">Kelas:</th>
         <th colspan="7" style="border: 1px solid #000;">{{ $meta['class_name'] }}</th>
@@ -19,7 +23,9 @@
         <th colspan="2" style="font-weight: bold; background-color: #eee; border: 1px solid #000;">Guru Wali/BK:</th>
         <th colspan="7" style="border: 1px solid #000;">{{ $meta['teacher_name'] }}</th>
     </tr>
-    <tr></tr>
+    <tr>
+        <th colspan="9"></th>
+    </tr>
     <tr>
         <th style="font-weight: bold; background-color: #000; color: #ffffff; border: 2px solid #000000; text-align: center;">No</th>
         <th style="font-weight: bold; background-color: #000; color: #ffffff; border: 2px solid #000000; width: 120px;">Tanggal</th>
@@ -53,3 +59,5 @@
     @endif
     </tbody>
 </table>
+</body>
+</html>

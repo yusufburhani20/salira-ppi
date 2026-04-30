@@ -1,12 +1,16 @@
+<html>
+<body>
 <table>
     <thead>
     <tr>
-        <th colspan="6" style="font-weight: bold; font-size: 16px; text-align: center;">REKAP JURNAL & PRESENSI TERPADU</th>
+        <th colspan="6" style="font-weight: bold; font-size: 16px; text-align: center;">REKAP JURNAL &amp; PRESENSI TERPADU</th>
     </tr>
     <tr>
         <th colspan="6" style="font-weight: bold; font-size: 14px; text-align: center; color: #000;">{{ $meta['school_name'] }}</th>
     </tr>
-    <tr></tr>
+    <tr>
+        <th colspan="6"></th>
+    </tr>
     <tr>
         <th colspan="2" style="font-weight: bold; background-color: #eee; border: 1px solid #000;">Kelas:</th>
         <th colspan="4" style="border: 1px solid #000;">{{ $meta['class_name'] }}</th>
@@ -25,7 +29,9 @@
         <th colspan="2" style="font-weight: bold; background-color: #eee; border: 1px solid #000;">Guru Pengajar:</th>
         <th colspan="4" style="border: 1px solid #000;">{{ $meta['teacher_name'] }}</th>
     </tr>
-    <tr></tr>
+    <tr>
+        <th colspan="6"></th>
+    </tr>
 
     <!-- I. Jurnal Mengajar -->
     <tr>
@@ -37,7 +43,7 @@
         <th style="font-weight: bold; background-color: #eee; border: 2px solid #000000; text-align: center;">Jam</th>
         <th style="font-weight: bold; background-color: #eee; border: 2px solid #000000; width: 120px;">Mata Pelajaran</th>
         <th style="font-weight: bold; background-color: #eee; border: 2px solid #000000; width: 300px;">Topik / Materi Pembelajaran</th>
-        <th style="font-weight: bold; background-color: #eee; border: 2px solid #000000; width: 350px;">Aktivitas & Tugas Siswa</th>
+        <th style="font-weight: bold; background-color: #eee; border: 2px solid #000000; width: 350px;">Aktivitas &amp; Tugas Siswa</th>
     </tr>
     </thead>
     <tbody>
@@ -64,9 +70,13 @@
 
 @if($matrix)
 <table>
-    <tr></tr>
-    <tr></tr>
     <thead>
+    <tr>
+        <th colspan="12"></th>
+    </tr>
+    <tr>
+        <th colspan="12"></th>
+    </tr>
     <tr>
         <th colspan="{{ count($matrix['dates']) + 7 }}" style="font-weight: bold; background-color: #000; color: #ffffff; text-align: center; height: 30px;">II. MATRIKS PRESENSI SISWA</th>
     </tr>
@@ -104,3 +114,6 @@
     </tbody>
 </table>
 @endif
+
+</body>
+</html>

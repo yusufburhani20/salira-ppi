@@ -1,3 +1,5 @@
+<html>
+<body>
 <table>
     <thead>
     <tr>
@@ -6,7 +8,9 @@
     <tr>
         <th colspan="{{ count($assessments) + 2 }}" style="font-weight: bold; font-size: 14px; text-align: center; color: #000;">{{ $meta['school_name'] }}</th>
     </tr>
-    <tr></tr>
+    <tr>
+        <th colspan="{{ count($assessments) + 2 }}"></th>
+    </tr>
     <tr>
         <th style="font-weight: bold; background-color: #eee; border: 1px solid #000;">Kelas:</th>
         <th colspan="{{ count($assessments) + 1 }}" style="border: 1px solid #000;">{{ $meta['class_name'] }}</th>
@@ -23,7 +27,9 @@
         <th style="font-weight: bold; background-color: #eee; border: 1px solid #000;">Guru:</th>
         <th colspan="{{ count($assessments) + 1 }}" style="border: 1px solid #000;">{{ $meta['teacher_name'] }}</th>
     </tr>
-    <tr></tr>
+    <tr>
+        <th colspan="{{ count($assessments) + 2 }}"></th>
+    </tr>
     <tr>
         <th style="font-weight: bold; background-color: #000; color: #ffffff; border: 2px solid #000000; text-align: center; width: 200px;">Nama Siswa</th>
         @foreach($assessments as $a)
@@ -62,3 +68,5 @@
     @endforeach
     </tbody>
 </table>
+</body>
+</html>
