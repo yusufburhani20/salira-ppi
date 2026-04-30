@@ -15,6 +15,9 @@ use Illuminate\Support\Facades\DB;
 use App\Notifications\PortalNotification;
 use App\Models\Student;
 
+use Barryvdh\DomPDF\Facade\Pdf;
+use Maatwebsite\Excel\Facades\Excel;
+
 class ClassAgendaController extends Controller
 {
     public function index(Request $request)
@@ -351,5 +354,101 @@ class ClassAgendaController extends Controller
         }
 
         return $query->latest('date')->get()->toArray();
+    }
+
+    public function exportAttendanceExcel(Request $request)
+    {
+        $data = $this->getDetailedAttendanceData($request);
+        return Excel::download(new \App\Exports\AttendanceDetailedRecapExport($data), 'rekap_absensi_detail.xlsx');
+    }
+
+    public function exportAttendancePdf(Request $request)
+    {
+        $data = $this->getDetailedAttendanceData($request);
+        $settings = [
+            'title' => 'Rekap Absensi Detail',
+            'school_name' => \App\Models\Setting::get('school_name', 'SALIRA ACADEMY'),
+            'logo' => \App\Models\Setting::get('school_logo'),
+            'class_name' => $data['class'],
+            'range' => $data['range'],
+            'subject' => $data['subject']
+        ];
+        
+        $pdf = Pdf::loadView('reports.attendance_subject_pdf', array_merge($settings, [
+            'dates' => $data['dates'],
+            'report' => $data['report'],
+            'subject' => $data['subject']
+        ]))->setPaper('a4', 'landscape');
+
+        return $pdf->stream('rekap_absensi_detail.pdf');
+    }
+
+    private function getDetailedAttendanceData(Request $request)
+    {
+        $request->validate([
+            'academic_class_id' => 'required|exists:academic_classes,id',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+        ]);
+
+        $classId = $request->academic_class_id;
+        $start = Carbon::parse($request->start_date)->startOfDay();
+        $end = Carbon::parse($request->end_date)->endOfDay();
+
+        // Get agendas for this teacher in this class
+        $query = ClassAgenda::where('teacher_id', Auth::id())
+            ->where('academic_class_id', $classId)
+            ->whereBetween('date', [$start, $end]);
+
+        if ($request->subject_id) {
+            $query->where('subject_id', $request->subject_id);
+        }
+
+        $agendas = $query->pluck('id');
+        $attendances = StudentAttendance::whereIn('class_agenda_id', $agendas)->get();
+
+        $dates = $attendances->pluck('date')->map(function($d) {
+            return Carbon::parse($d)->format('Y-m-d');
+        })->unique()->sort()->values()->toArray();
+
+        $students = Student::whereHas('academicClasses', function($q) use ($classId) {
+            $q->where('academic_classes.id', $classId);
+        })->orderBy('name')->get();
+
+        $report = [];
+        foreach ($students as $student) {
+            $studentAtts = $attendances->where('student_id', $student->id);
+            
+            $daily = [];
+            foreach ($dates as $date) {
+                $att = $studentAtts->filter(function($item) use ($date) {
+                    return Carbon::parse($item->date)->format('Y-m-d') === $date;
+                })->first();
+                $daily[$date] = $att ? ($att->status->value ?? $att->status) : '-';
+            }
+
+            $report[] = [
+                'id' => $student->id,
+                'name' => $student->name,
+                'daily' => $daily,
+                'summary' => [
+                    'hadir' => $studentAtts->where('status', 'hadir')->count(),
+                    'sakit' => $studentAtts->where('status', 'sakit')->count(),
+                    'izin' => $studentAtts->where('status', 'izin')->count(),
+                    'alpha' => $studentAtts->where('status', 'alpha')->count(),
+                    'terlambat' => $studentAtts->where('status', 'terlambat')->count(),
+                ]
+            ];
+        }
+
+        $subjectName = $request->subject_id ? Subject::find($request->subject_id)->name : 'Semua Mapel';
+
+        return [
+            'dates' => $dates,
+            'report' => $report,
+            'class' => AcademicClass::find($classId)->name,
+            'subject' => $subjectName,
+            'range' => $start->format('d M Y') . ' - ' . $end->format('d M Y')
+        ];
     }
 }
