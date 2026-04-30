@@ -16,6 +16,11 @@ return Application::configure(basePath: dirname(__DIR__))
             : route('dashboard')
         );
 
+        $middleware->redirectGuestsTo(fn () => request()->is('portal/*') || request()->is('portal')
+            ? route('portal.login')
+            : route('login')
+        );
+
         $middleware->web(append: [
             \App\Http\Middleware\HandleInertiaRequests::class,
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
