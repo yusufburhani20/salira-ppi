@@ -2,42 +2,32 @@
 
 namespace App\Exports;
 
-use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\WithHeadings;
+use Illuminate\Contracts\View\View;
+use Maatwebsite\Excel\Concerns\FromView;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use Maatwebsite\Excel\Concerns\WithTitle;
 
-class ConsultationRecapExport implements FromCollection, WithHeadings, ShouldAutoSize
+class ConsultationRecapExport implements FromView, ShouldAutoSize, WithTitle
 {
     protected $data;
+    protected $meta;
 
-    public function __construct($data)
+    public function __construct($data, $meta = [])
     {
         $this->data = $data;
+        $this->meta = $meta;
     }
 
-    public function collection()
+    public function view(): View
     {
-        return collect($this->data)->map(function($item) {
-            return [
-                'Tanggal' => $item['consultation_date'],
-                'Siswa' => $item['student']['name'] ?? '-',
-                'Kelas' => $item['academic_class']['name'] ?? '-',
-                'Guru Wali' => $item['teacher']['name'] ?? '-',
-                'Kategori' => $item['category'],
-                'Perihal' => $item['subject'],
-                'Masalah' => $item['problem_description'],
-                'Saran' => $item['advice_given'],
-                'Status' => $item['follow_up_status'],
-            ];
-        });
+        return view('exports.consultation_excel', [
+            'data' => $this->data,
+            'meta' => $this->meta
+        ]);
     }
 
-    public function headings(): array
+    public function title(): string
     {
-        return [
-            ['Rekap Bimbingan Siswa'],
-            [],
-            ['Tanggal', 'Nama Siswa', 'Kelas', 'Guru Wali', 'Kategori', 'Perihal/Subjek', 'Deskripsi Masalah', 'Saran Diberikan', 'Status']
-        ];
+        return 'Rekap Bimbingan';
     }
 }

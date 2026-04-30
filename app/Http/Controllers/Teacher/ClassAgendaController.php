@@ -314,14 +314,12 @@ class ClassAgendaController extends Controller
     {
         $data = $this->getExportData($request);
         
-        $matrix = null;
-        if ($request->academic_class_id && $request->start_date && $request->end_date) {
-            $matrix = $this->prepareDetailedAttendanceReport($request);
-        }
+        $subjectName = $request->subject_id ? \App\Models\Subject::find($request->subject_id)->name : 'Semua Mapel';
 
         $meta = [
             'school_name' => \App\Models\Setting::get('school_name', 'SALIRA ACADEMY'),
             'class_name' => $request->academic_class_id ? \App\Models\AcademicClass::find($request->academic_class_id)->name : 'Semua Kelas',
+            'subject_name' => $subjectName,
             'range' => ($request->start_date ?? 'Awal') . ' - ' . ($request->end_date ?? 'Sekarang'),
             'teacher_name' => Auth::user()->name
         ];
@@ -333,6 +331,7 @@ class ClassAgendaController extends Controller
     {
         $data = $this->getExportData($request);
         $className = $request->academic_class_id ? AcademicClass::find($request->academic_class_id)->name : 'Semua Kelas';
+        $subjectName = $request->subject_id ? Subject::find($request->subject_id)->name : 'Semua Mapel';
         $range = ($request->start_date ?? 'Awal') . ' - ' . ($request->end_date ?? 'Sekarang');
         
         $logo = \App\Models\Setting::get('school_logo');
@@ -353,6 +352,7 @@ class ClassAgendaController extends Controller
             'school_address' => \App\Models\Setting::get('school_address'),
             'logo' => $logoPath,
             'class_name' => $className,
+            'subject_name' => $subjectName,
             'range' => $range,
             'teacher_name' => Auth::user()->name
         ];
@@ -378,6 +378,9 @@ class ClassAgendaController extends Controller
 
         if ($request->academic_class_id) {
             $query->where('academic_class_id', $request->academic_class_id);
+        }
+        if ($request->subject_id) {
+            $query->where('subject_id', $request->subject_id);
         }
         if ($request->start_date) {
             $query->whereDate('date', '>=', $request->start_date);

@@ -2,59 +2,37 @@
 
 namespace App\Exports;
 
-use Maatwebsite\Excel\Concerns\FromCollection;
-use Maatwebsite\Excel\Concerns\WithHeadings;
+use Illuminate\Contracts\View\View;
+use Maatwebsite\Excel\Concerns\FromView;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
-use Carbon\Carbon;
+use Maatwebsite\Excel\Concerns\WithTitle;
 
-class AssessmentRecapExport implements FromCollection, WithHeadings, ShouldAutoSize
+class AssessmentRecapExport implements FromView, ShouldAutoSize, WithTitle
 {
     protected $data;
+    protected $meta;
 
-    public function __construct($data)
+    public function __construct($data, $meta = [])
     {
         $this->data = $data;
+        $this->meta = $meta;
     }
 
-    public function collection()
+    public function view(): View
     {
         $assessments = $this->data['assessments'];
         $students = $this->collectStudents($assessments);
-        
-        $collection = [];
-        foreach ($students as $studentName) {
-            $row = [$studentName];
-            $total = 0;
-            $count = 0;
-            foreach ($assessments as $a) {
-                $score = collect($a['scores'])->firstWhere('student.name', $studentName);
-                if ($score && isset($score['score'])) {
-                    $row[] = $score['score'];
-                    $total += $score['score'];
-                    $count++;
-                } else {
-                    $row[] = '-';
-                }
-            }
-            $row[] = $count > 0 ? number_format($total / $count, 2) : '-';
-            $collection[] = $row;
-        }
 
-        return collect($collection);
+        return view('exports.assessment_excel', [
+            'assessments' => $assessments,
+            'students' => $students,
+            'meta' => $this->meta
+        ]);
     }
 
-    public function headings(): array
+    public function title(): string
     {
-        $dates = collect($this->data['assessments'])->map(function($a) {
-            return Carbon\Carbon::parse($a['date'])->format('d/m') . ' (' . $a['title'] . ')';
-        })->toArray();
-
-        return [
-            ['Rekap Penilaian Harian'],
-            ['Rentang: ' . $this->data['range']],
-            [],
-            array_merge(['Nama Siswa'], $dates, ['Rata-rata'])
-        ];
+        return 'Rekap Penilaian';
     }
 
     protected function collectStudents($assessments)
