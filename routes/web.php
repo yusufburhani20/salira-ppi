@@ -176,7 +176,12 @@ Route::middleware('auth')->group(function () {
         Route::resource('/announcements', \App\Http\Controllers\Admin\AnnouncementController::class)->names('announcements');
         
         // Users (Super Admin Only)
-        Route::middleware(['role:Super Admin'])->resource('users', \App\Http\Controllers\Admin\UserController::class)->except(['show']);
+        Route::middleware(['role:Super Admin'])->group(function () {
+            Route::get('users/export', [\App\Http\Controllers\Admin\UserController::class, 'export'])->name('users.export');
+            Route::post('users/import', [\App\Http\Controllers\Admin\UserController::class, 'import'])->name('users.import');
+            Route::get('users/template', [\App\Http\Controllers\Admin\UserController::class, 'template'])->name('users.template');
+            Route::resource('users', \App\Http\Controllers\Admin\UserController::class)->except(['show']);
+        });
     });
 
     // Staff / User Routes

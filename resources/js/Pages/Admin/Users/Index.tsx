@@ -2,7 +2,7 @@ import { PageProps } from '@/types';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm, router } from '@inertiajs/react';
 import React, { useState } from 'react';
-import { PlusIcon, PencilIcon, TrashIcon, UserCircleIcon, KeyIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, PencilIcon, TrashIcon, UserCircleIcon, KeyIcon, ArrowDownTrayIcon, ArrowUpTrayIcon } from '@heroicons/react/24/outline';
 
 interface Role {
     name: string;
@@ -29,6 +29,11 @@ export default function UserIndex({ auth, users, roles, statuses }: PageProps<{ 
         roles: [] as string[],
         reset_password_default: false,
         reset_password_email: false,
+    });
+
+    const [isImportOpen, setIsImportOpen] = useState(false);
+    const { data: importData, setData: setImportData, post: postImport, processing: importProcessing, errors: importErrors, reset: resetImport } = useForm({
+        file: null as File | null,
     });
 
     const openDialog = (user?: User) => {
@@ -100,13 +105,29 @@ export default function UserIndex({ auth, users, roles, statuses }: PageProps<{ 
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
                     <div className="flex justify-between items-center">
                         <p className="text-gray-600 dark:text-gray-400">Manage all staff, teachers, and admins</p>
-                        <button
-                            onClick={() => openDialog()}
-                            className="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors shadow-sm"
-                        >
-                            <PlusIcon className="w-5 h-5" />
-                            <span>Add User</span>
-                        </button>
+                        <div className="flex items-center space-x-2">
+                            <a
+                                href={route('admin.users.export')}
+                                className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm"
+                            >
+                                <ArrowDownTrayIcon className="w-5 h-5" />
+                                <span>Export</span>
+                            </a>
+                            <button
+                                onClick={() => setIsImportOpen(true)}
+                                className="bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg flex items-center space-x-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors shadow-sm"
+                            >
+                                <ArrowUpTrayIcon className="w-5 h-5" />
+                                <span>Import</span>
+                            </button>
+                            <button
+                                onClick={() => openDialog()}
+                                className="bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors shadow-sm"
+                            >
+                                <PlusIcon className="w-5 h-5" />
+                                <span>Add User</span>
+                            </button>
+                        </div>
                     </div>
 
                     <div className="bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700 rounded-xl overflow-hidden">
@@ -273,6 +294,65 @@ export default function UserIndex({ auth, users, roles, statuses }: PageProps<{ 
                                         {processing ? 'Saving...' : 'Save User Info'}
                                     </button>
                                     <button type="button" onClick={closeDialog} className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700">
+                                        Cancel
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Import Dialog */}
+            {isImportOpen && (
+                <div className="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+                    <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={() => setIsImportOpen(false)}></div>
+                        <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+                        <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md w-full">
+                            <form onSubmit={(e) => {
+                                e.preventDefault();
+                                postImport(route('admin.users.import'), {
+                                    onSuccess: () => {
+                                        setIsImportOpen(false);
+                                        resetImport();
+                                    }
+                                });
+                            }}>
+                                <div className="bg-white dark:bg-gray-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4 border-b dark:border-gray-700">
+                                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Import Users</h3>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                                        Upload Excel or CSV file to bulk add/update users. 
+                                        <a href={route('admin.users.template')} className="text-primary hover:underline ml-1">Download Template</a>
+                                    </p>
+                                    
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">File (xlsx, xls, csv)</label>
+                                            <input 
+                                                type="file" 
+                                                onChange={e => setImportData('file', e.target.files ? e.target.files[0] : null)} 
+                                                className="mt-1 block w-full text-sm text-gray-500 dark:text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+                                                accept=".xlsx,.xls,.csv"
+                                                required
+                                            />
+                                            {importErrors.file && <p className="text-red-500 text-xs mt-1">{importErrors.file}</p>}
+                                        </div>
+
+                                        <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-800/50">
+                                            <ul className="text-xs text-blue-700 dark:text-blue-400 list-disc list-inside space-y-1">
+                                                <li>Email digunakan sebagai identitas unik.</li>
+                                                <li>Jika email sudah ada, data user akan diperbarui.</li>
+                                                <li>User baru akan mendapatkan password default: <strong>password</strong></li>
+                                                <li>Pisahkan multiple roles dengan koma (contoh: Guru, Wali Kelas).</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="bg-gray-50 dark:bg-gray-700 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse border-t border-gray-200 dark:border-gray-600">
+                                    <button type="submit" disabled={importProcessing} className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary text-base font-medium text-white hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50">
+                                        {importProcessing ? 'Importing...' : 'Start Import'}
+                                    </button>
+                                    <button type="button" onClick={() => setIsImportOpen(false)} className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm dark:bg-gray-800 dark:text-gray-300 dark:border-gray-600 dark:hover:bg-gray-700">
                                         Cancel
                                     </button>
                                 </div>

@@ -9,7 +9,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use App\Enums\UserStatus;
 use Inertia\Inertia;
-use Illuminate\Validation\Rule;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\UsersExport;
+use App\Imports\UsersImport;
 
 class UserController extends Controller
 {
@@ -99,5 +101,40 @@ class UserController extends Controller
 
         $user->delete();
         return back()->with('success', 'User deleted successfully.');
+    }
+
+    public function export()
+    {
+        return Excel::download(new UsersExport(), 'data-user-' . now()->format('Ymd') . '.xlsx');
+    }
+
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|extensions:xlsx,xls,csv|max:5120',
+        ]);
+
+        Excel::import(new UsersImport(), $request->file('file'));
+
+        return redirect()->back()->with('success', 'Import data user berhasil.');
+    }
+
+    public function template()
+    {
+        $columns = [
+            'Nama Lengkap', 'Email', 'NIP', 'Roles (Pisahkan dengan koma)', 'Status (active/inactive/suspended)'
+        ];
+
+        $callback = function () use ($columns) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, $columns);
+            // Example row
+            fputcsv($file, ['Ahmad Fauzi', 'ahmad@example.com', '198801012015011001', 'Guru/Dosen, Wali Kelas', 'active']);
+            fclose($file);
+        };
+
+        return response()->streamDownload($callback, 'template-user.csv', [
+            'Content-Type' => 'text/csv',
+        ]);
     }
 }
