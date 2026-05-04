@@ -29,6 +29,8 @@ class UsersImport implements ToCollection, WithHeadingRow
             $userData = [
                 'name' => trim($row['nama_lengkap']),
                 'nip' => !empty($row['nip']) ? trim((string)$row['nip']) : null,
+                'phone' => !empty($row['whatsapp']) ? trim((string)$row['whatsapp']) : null,
+                'telegram_id' => !empty($row['telegram_id']) ? trim((string)$row['telegram_id']) : null,
                 'status' => $status,
             ];
 

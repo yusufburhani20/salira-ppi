@@ -21,6 +21,8 @@ class UsersExport implements FromCollection, WithHeadings, WithMapping, ShouldAu
             'Nama Lengkap',
             'Email',
             'NIP',
+            'WhatsApp/Phone',
+            'Telegram ID',
             'Roles (Pisahkan dengan koma)',
             'Status (active/inactive/suspended)',
         ];
@@ -32,6 +34,8 @@ class UsersExport implements FromCollection, WithHeadings, WithMapping, ShouldAu
             $user->name,
             $user->email,
             $user->nip,
+            $user->phone,
+            $user->telegram_id,
             $user->roles->pluck('name')->implode(', '),
             $user->status?->value ?? $user->status,
         ];

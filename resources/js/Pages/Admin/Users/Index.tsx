@@ -13,6 +13,8 @@ interface User {
     name: string;
     email: string;
     nip: string | null;
+    phone: string | null;
+    telegram_id: string | null;
     status: string;
     roles: Role[];
 }
@@ -25,6 +27,8 @@ export default function UserIndex({ auth, users, roles, statuses }: PageProps<{ 
         name: '',
         email: '',
         nip: '',
+        phone: '',
+        telegram_id: '',
         status: statuses[0]?.value || 'active',
         roles: [] as string[],
         reset_password_default: false,
@@ -43,6 +47,8 @@ export default function UserIndex({ auth, users, roles, statuses }: PageProps<{ 
                 name: user.name,
                 email: user.email,
                 nip: user.nip || '',
+                phone: user.phone || '',
+                telegram_id: user.telegram_id || '',
                 status: user.status,
                 roles: user.roles.map(r => r.name),
                 reset_password_default: false,
@@ -54,6 +60,8 @@ export default function UserIndex({ auth, users, roles, statuses }: PageProps<{ 
                 name: '',
                 email: '',
                 nip: '',
+                phone: '',
+                telegram_id: '',
                 status: 'active',
                 roles: [],
                 reset_password_default: false,
@@ -136,7 +144,7 @@ export default function UserIndex({ auth, users, roles, statuses }: PageProps<{ 
                                 <thead>
                                     <tr className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
                                         <th className="px-6 py-4 font-medium text-gray-900 dark:text-white">Name / Email</th>
-                                        <th className="px-6 py-4 font-medium text-gray-900 dark:text-white">NIP</th>
+                                        <th className="px-6 py-4 font-medium text-gray-900 dark:text-white">Contact Info</th>
                                         <th className="px-6 py-4 font-medium text-gray-900 dark:text-white">Roles</th>
                                         <th className="px-6 py-4 font-medium text-gray-900 dark:text-white">Status</th>
                                         <th className="px-6 py-4 font-medium text-gray-900 dark:text-white text-right">Actions</th>
@@ -154,7 +162,13 @@ export default function UserIndex({ auth, users, roles, statuses }: PageProps<{ 
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 text-gray-600 dark:text-gray-300">{userRecord.nip || '-'}</td>
+                                            <td className="px-6 py-4">
+                                                <div className="text-sm">
+                                                    <p className="text-gray-900 dark:text-white font-medium">{userRecord.nip || '-'}</p>
+                                                    <p className="text-gray-500 dark:text-gray-400">{userRecord.phone || '-'}</p>
+                                                    <p className="text-xs text-blue-500">{userRecord.telegram_id || '-'}</p>
+                                                </div>
+                                            </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex flex-wrap gap-1">
                                                     {userRecord.roles.map(r => (
@@ -222,6 +236,19 @@ export default function UserIndex({ auth, users, roles, statuses }: PageProps<{ 
                                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Email (Login)</label>
                                             <input type="email" value={data.email} onChange={e => setData('email', e.target.value)} required className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50 dark:bg-gray-900 dark:border-gray-700 dark:text-white" />
                                             {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
+                                        </div>
+
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">WhatsApp / Phone</label>
+                                                <input type="text" value={data.phone} onChange={e => setData('phone', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50 dark:bg-gray-900 dark:border-gray-700 dark:text-white" placeholder="e.g. 0812..." />
+                                                {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
+                                            </div>
+                                            <div>
+                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Telegram ID</label>
+                                                <input type="text" value={data.telegram_id} onChange={e => setData('telegram_id', e.target.value)} className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring focus:ring-primary focus:ring-opacity-50 dark:bg-gray-900 dark:border-gray-700 dark:text-white" placeholder="@username or ID" />
+                                                {errors.telegram_id && <p className="text-red-500 text-xs mt-1">{errors.telegram_id}</p>}
+                                            </div>
                                         </div>
 
                                         <div>

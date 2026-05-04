@@ -38,6 +38,8 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'nip' => 'nullable|string|max:50',
+            'phone' => 'nullable|string|max:20',
+            'telegram_id' => 'nullable|string|max:100',
             'status' => ['required', Rule::enum(UserStatus::class)],
             'roles' => 'nullable|array',
         ]);
@@ -46,6 +48,8 @@ class UserController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'nip' => $request->nip,
+            'phone' => $request->phone,
+            'telegram_id' => $request->telegram_id,
             'password' => Hash::make('password'),
             'status' => $request->status,
         ]);
@@ -63,6 +67,8 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
             'nip' => 'nullable|string|max:50',
+            'phone' => 'nullable|string|max:20',
+            'telegram_id' => 'nullable|string|max:100',
             'status' => ['required', Rule::enum(UserStatus::class)],
             'roles' => 'nullable|array',
         ]);
@@ -71,6 +77,8 @@ class UserController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'nip' => $request->nip,
+            'phone' => $request->phone,
+            'telegram_id' => $request->telegram_id,
             'status' => $request->status,
         ]);
 
@@ -122,14 +130,14 @@ class UserController extends Controller
     public function template()
     {
         $columns = [
-            'Nama Lengkap', 'Email', 'NIP', 'Roles (Pisahkan dengan koma)', 'Status (active/inactive/suspended)'
+            'Nama Lengkap', 'Email', 'NIP', 'WhatsApp', 'Telegram ID', 'Roles (Pisahkan dengan koma)', 'Status (active/inactive/suspended)'
         ];
 
         $callback = function () use ($columns) {
             $file = fopen('php://output', 'w');
             fputcsv($file, $columns);
             // Example row
-            fputcsv($file, ['Ahmad Fauzi', 'ahmad@example.com', '198801012015011001', 'Guru/Dosen, Wali Kelas', 'active']);
+            fputcsv($file, ['Ahmad Fauzi', 'ahmad@example.com', '198801012015011001', '08123456789', '@ahmad_fauzi', 'Guru/Dosen, Wali Kelas', 'active']);
             fclose($file);
         };
 
