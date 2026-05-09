@@ -20,24 +20,30 @@ class PresenceScannerController extends Controller
     public function scan(Request $request)
     {
         $token = $request->qr_token;
-        if (!$token) {
-            return response()->json(['success' => false, 'message' => 'Token QR tidak ditemukan.'], 400);
+        $manualNis = $request->nis;
+        
+        if (!$token && !$manualNis) {
+            return response()->json(['success' => false, 'message' => 'Token QR atau NIS tidak ditemukan.'], 400);
         }
 
         try {
-            $decoded = base64_decode($token);
-            $parts = explode(':', $decoded);
+            if ($token) {
+                $decoded = base64_decode($token);
+                $parts = explode(':', $decoded);
 
-            if (count($parts) !== 3) {
-                return response()->json(['success' => false, 'message' => 'Format QR tidak valid.'], 400);
-            }
+                if (count($parts) !== 3) {
+                    return response()->json(['success' => false, 'message' => 'Format QR tidak valid.'], 400);
+                }
 
-            list($nis, $timestamp, $signature) = $parts;
+                list($nis, $timestamp, $signature) = $parts;
 
-            // Validasi Signature
-            $expectedSignature = hash_hmac('sha256', "{$nis}:{$timestamp}", config('app.key'));
-            if ($signature !== $expectedSignature) {
-                return response()->json(['success' => false, 'message' => 'Token keamanan tidak valid.'], 403);
+                // Validasi Signature
+                $expectedSignature = hash_hmac('sha256', "{$nis}:{$timestamp}", config('app.key'));
+                if ($signature !== $expectedSignature) {
+                    return response()->json(['success' => false, 'message' => 'Token keamanan tidak valid.'], 403);
+                }
+            } else {
+                $nis = $manualNis;
             }
 
             // Cari Siswa
