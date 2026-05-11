@@ -190,7 +190,7 @@ export default function Scanner() {
 
                     {/* Scanner Area */}
                     <div className="relative flex-1 bg-slate-900 flex items-center justify-center overflow-hidden min-h-[400px]">
-                        <div id="reader" className="w-full h-full scale-110"></div>
+                        <div id="reader" className="w-full h-full"></div>
                         
                         {/* Status Overlays */}
                         {isProcessing && !lastResult && !error && (
