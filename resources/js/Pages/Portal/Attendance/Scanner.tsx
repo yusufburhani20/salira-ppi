@@ -291,7 +291,7 @@ export default function Scanner() {
                             <button
                                 type="submit"
                                 disabled={!manualNis || isProcessing}
-                                className="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-xl font-bold transition-colors text-sm"
+                                className="shrink-0 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-xl font-bold transition-colors text-sm whitespace-nowrap"
                             >
                                 Proses
                             </button>
