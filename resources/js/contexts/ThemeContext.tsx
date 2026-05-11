@@ -17,12 +17,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
             if (savedTheme) {
                 return savedTheme;
             }
-            // If nothing in localStorage, check OS preference
-            if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                return 'dark';
-            }
+            // Secara default selalu jadikan light mode jika belum ada di localStorage
+            return 'light';
         }
-        return 'light'; // Default to light
+        return 'light';
     });
 
     useEffect(() => {
