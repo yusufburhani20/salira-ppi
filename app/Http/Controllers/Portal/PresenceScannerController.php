@@ -59,6 +59,23 @@ class PresenceScannerController extends Controller
 
             $now = Carbon::now();
 
+            // Cek Double-Tap (Debounce) - 1 menit (60 detik)
+            $recentAttendance = StudentAttendance::where('student_id', $student->id)
+                ->whereDate('date', $now->toDateString())
+                ->whereNull('schedule_id')
+                ->whereNull('class_agenda_id')
+                ->orderBy('updated_at', 'desc')
+                ->first();
+
+            if ($recentAttendance && $recentAttendance->updated_at) {
+                if ($now->diffInSeconds($recentAttendance->updated_at) < 60) {
+                    return response()->json([
+                        'success' => false, 
+                        'message' => 'Anda baru saja melakukan presensi. Silakan tunggu 1 menit sebelum mencoba lagi.'
+                    ], 429);
+                }
+            }
+
             // Simpan/perbarui record master harian (tanpa schedule_id & class_agenda_id).
             // Record ini berfungsi sebagai penanda bahwa siswa sudah tiba di sekolah hari ini.
             // Modul Jurnal Mengajar guru akan membaca record ini sebagai data awal kehadiran.

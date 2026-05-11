@@ -32,7 +32,6 @@ export default function Scanner() {
     const [recentScans, setRecentScans] = useState<ScanResult[]>([]);
     const [error, setError] = useState<string | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
-    const [isManualMode, setIsManualMode] = useState(false);
     const [manualNis, setManualNis] = useState('');
     const scannerRef = useRef<Html5QrcodeScanner | null>(null);
     const processingRef = useRef(false); // To use inside event listener
@@ -100,21 +99,18 @@ export default function Scanner() {
     }, [processManualNis]);
 
     useEffect(() => {
-        // Only initialize scanner if not in manual mode
-        if (!isManualMode) {
-            scannerRef.current = new Html5QrcodeScanner(
-                "reader", 
-                { 
-                    fps: 10, 
-                    qrbox: { width: 250, height: 250 },
-                    aspectRatio: 1.0,
-                    formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ]
-                }, 
-                /* verbose= */ false
-            );
+        scannerRef.current = new Html5QrcodeScanner(
+            "reader", 
+            { 
+                fps: 10, 
+                qrbox: { width: 250, height: 250 },
+                aspectRatio: 1.0,
+                formatsToSupport: [ Html5QrcodeSupportedFormats.QR_CODE ]
+            }, 
+            /* verbose= */ false
+        );
 
-            scannerRef.current.render(onScanSuccess, onScanFailure);
-        }
+        scannerRef.current.render(onScanSuccess, onScanFailure);
 
         return () => {
             if (scannerRef.current) {
@@ -123,7 +119,7 @@ export default function Scanner() {
                 });
             }
         };
-    }, [isManualMode]);
+    }, []);
 
     const onScanSuccess = (decodedText: string) => {
         if (processingRef.current) return;
@@ -192,54 +188,9 @@ export default function Scanner() {
                         )}
                     </div>
 
-                    {/* Mode Toggle Tabs */}
-                    <div className="flex border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
-                        <button 
-                            onClick={() => setIsManualMode(false)}
-                            className={`flex-1 py-3 text-sm font-bold transition-colors ${!isManualMode ? 'bg-slate-50 dark:bg-slate-900/50 text-blue-600 dark:text-blue-400 border-b-2 border-blue-600' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
-                        >
-                            Kamera QR
-                        </button>
-                        <button 
-                            onClick={() => setIsManualMode(true)}
-                            className={`flex-1 py-3 text-sm font-bold transition-colors ${isManualMode ? 'bg-slate-50 dark:bg-slate-900/50 text-blue-600 dark:text-blue-400 border-b-2 border-blue-600' : 'text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800'}`}
-                        >
-                            Input Manual NIS
-                        </button>
-                    </div>
-
                     {/* Scanner Area */}
                     <div className="relative flex-1 bg-slate-900 flex items-center justify-center overflow-hidden min-h-[400px]">
-                        {!isManualMode ? (
-                            <div id="reader" className="w-full h-full scale-110"></div>
-                        ) : (
-                            <div className="w-full p-8 flex flex-col items-center justify-center animate-in fade-in duration-300">
-                                <div className="max-w-xs w-full space-y-4 text-center">
-                                    <div className="p-4 bg-slate-800 rounded-full inline-block mb-2">
-                                        <ComputerDesktopIcon className="w-12 h-12 text-slate-400" />
-                                    </div>
-                                    <h3 className="text-white font-bold text-lg">Input Manual / Scanner Fisik</h3>
-                                    <p className="text-slate-400 text-sm">Gunakan fitur ini jika kartu rusak, atau tembakkan langsung mesin barcode scanner Anda ke form di bawah.</p>
-                                    <form onSubmit={(e) => { e.preventDefault(); processManualNis(manualNis); }} className="mt-4">
-                                        <input
-                                            type="text"
-                                            value={manualNis}
-                                            onChange={(e) => setManualNis(e.target.value)}
-                                            placeholder="Masukkan NIS..."
-                                            className="w-full px-4 py-3 rounded-xl bg-slate-800 border border-slate-600 text-white placeholder-slate-500 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center font-bold tracking-wider"
-                                            autoFocus
-                                        />
-                                        <button
-                                            type="submit"
-                                            disabled={!manualNis || isProcessing}
-                                            className="w-full mt-3 py-3 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-xl font-bold transition-colors flex justify-center"
-                                        >
-                                            Proses Presensi
-                                        </button>
-                                    </form>
-                                </div>
-                            </div>
-                        )}
+                        <div id="reader" className="w-full h-full scale-110"></div>
                         
                         {/* Status Overlays */}
                         {isProcessing && !lastResult && !error && (
@@ -312,16 +263,41 @@ export default function Scanner() {
                                 <h5 className="text-sm font-bold text-slate-800 dark:text-slate-200">Petunjuk Penggunaan:</h5>
                                 <ul className="text-xs text-slate-500 dark:text-slate-400 space-y-1.5 list-disc list-inside">
                                     <li>Kamera: Pastikan pencahayaan cukup terang</li>
-                                    <li>Mesin Scanner: Tembakkan langsung kapan saja, mesin akan otomatis terdeteksi</li>
-                                    <li>Manual: Gunakan tab Input Manual NIS jika kartu rusak</li>
+                                    <li>Mesin Scanner: Tembakkan langsung kapan saja, mesin otomatis terdeteksi</li>
+                                    <li>Manual: Ketik NIS pada kolom di sebelah kanan jika kartu rusak</li>
                                 </ul>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Right Side: History */}
+                {/* Right Side: Manual Input & History */}
                 <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-xl border border-slate-100 dark:border-slate-700 overflow-hidden flex flex-col min-h-[400px]">
+                    {/* Manual Input Section */}
+                    <div className="p-6 border-b border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
+                        <h3 className="text-sm font-bold text-slate-800 dark:text-white flex items-center gap-2 mb-3">
+                            <ComputerDesktopIcon className="w-4 h-4 text-blue-500" />
+                            Input Manual / Scanner Fisik
+                        </h3>
+                        <form onSubmit={(e) => { e.preventDefault(); processManualNis(manualNis); }} className="flex gap-2">
+                            <input
+                                type="text"
+                                value={manualNis}
+                                onChange={(e) => setManualNis(e.target.value)}
+                                placeholder="Masukkan NIS..."
+                                className="flex-1 px-4 py-2.5 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-white placeholder-slate-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm font-bold tracking-wider"
+                                autoFocus
+                            />
+                            <button
+                                type="submit"
+                                disabled={!manualNis || isProcessing}
+                                className="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white rounded-xl font-bold transition-colors text-sm"
+                            >
+                                Proses
+                            </button>
+                        </form>
+                    </div>
+
                     <div className="p-6 border-b border-slate-100 dark:border-slate-700">
                         <h3 className="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">
                             <ClockIcon className="w-5 h-5 text-blue-500" />
