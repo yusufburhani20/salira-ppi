@@ -185,7 +185,7 @@ class AttendanceSubjectRecapExport implements FromCollection, WithHeadings, Shou
         
         $categories = [
             new DataSeriesValues(
-                DataSeriesValues::DATATYPE_STRING, 
+                DataSeriesValues::DATASERIES_TYPE_STRING, 
                 '\'Rekap Presensi Mapel\'!$C$7:$' . $endColLetter . '$7', 
                 null, 
                 $D
@@ -194,7 +194,7 @@ class AttendanceSubjectRecapExport implements FromCollection, WithHeadings, Shou
         
         $values = [
             new DataSeriesValues(
-                DataSeriesValues::DATATYPE_NUMBER, 
+                DataSeriesValues::DATASERIES_TYPE_NUMBER, 
                 '\'Rekap Presensi Mapel\'!$C$' . $pctRow . ':$' . $endColLetter . '$' . $pctRow, 
                 null, 
                 $D

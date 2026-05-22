@@ -25,52 +25,35 @@
 @endphp
 
 @if(count($chartData) > 0)
-<div style="margin-bottom: 20px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 12px;">
-    <h3 style="margin: 0 0 8px 0; font-size: 10px; color: #1e293b; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Grafik Persentase Kehadiran Harian (%)</h3>
-    <svg width="100%" height="110" viewBox="0 0 750 110" style="display: block;">
-        <!-- Grid Lines -->
-        <line x1="40" y1="10" x2="730" y2="10" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="3,3" />
-        <line x1="40" y1="45" x2="730" y2="45" stroke="#e2e8f0" stroke-width="1" stroke-dasharray="3,3" />
-        <line x1="40" y1="80" x2="730" y2="80" stroke="#cbd5e1" stroke-width="1" />
-        
-        <!-- Y-Axis Labels -->
-        <text x="32" y="13" font-size="8" fill="#64748b" text-anchor="end">100%</text>
-        <text x="32" y="48" font-size="8" fill="#64748b" text-anchor="end">50%</text>
-        <text x="32" y="83" font-size="8" fill="#64748b" text-anchor="end">0%</text>
-        
-        @php
-            $N = count($chartData);
-            $width = 680;
-            $height = 70;
-            $points = [];
-            $colWidth = $N > 1 ? $width / ($N - 1) : $width;
-        @endphp
-        
-        @foreach($chartData as $i => $c)
-            @php
-                $x = 45 + ($N > 1 ? $i * $colWidth : $width / 2);
-                $y = 80 - ($c['percent'] / 100) * $height;
-                $points[] = "$x,$y";
-            @endphp
-            
-            <!-- Column/Bar representation in background -->
-            <rect x="{{ $x - 8 }}" y="{{ $y }}" width="16" height="{{ 80 - $y }}" fill="#e0e7ff" rx="2" style="opacity: 0.6;" />
-            
-            <!-- Value text -->
-            <text x="{{ $x }}" y="{{ $y - 4 }}" font-size="7" font-weight="bold" fill="#4f46e5" text-anchor="middle">{{ $c['percent'] }}%</text>
-            
-            <!-- Date label -->
-            <text x="{{ $x }}" y="95" font-size="7" fill="#475569" text-anchor="middle">{{ $c['date'] }}</text>
-            
-            <!-- Dot -->
-            <circle cx="{{ $x }}" cy="{{ $y }}" r="2.5" fill="#4f46e5" stroke="#ffffff" stroke-width="1" />
-        @endforeach
-        
-        <!-- Line connecting points -->
-        @if($N > 1)
-            <polyline points="{{ implode(' ', $points) }}" fill="none" stroke="#4f46e5" stroke-width="1.5" />
-        @endif
-    </svg>
+<div style="margin-bottom: 15px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 12px;">
+    <h3 style="margin: 0 0 10px 0; font-size: 9px; color: #1e293b; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px;">Grafik Persentase Kehadiran Harian (%)</h3>
+    
+    <table style="width: 100%; border-collapse: collapse;">
+        <tr style="vertical-align: bottom;">
+            <td style="width: 30px; text-align: right; padding-right: 5px; font-size: 7px; color: #64748b; padding-bottom: 15px; border-right: 1px solid #cbd5e1;">
+                <div style="height: 35px; line-height: 1;">100%</div>
+                <div style="height: 35px; line-height: 1;">50%</div>
+                <div style="height: 5px; line-height: 1;">0%</div>
+            </td>
+            @foreach($chartData as $c)
+            <td style="text-align: center; padding: 0 4px; border-bottom: 1px solid #cbd5e1; padding-bottom: 4px;">
+                <!-- Value label -->
+                <div style="font-size: 7px; font-weight: bold; color: #4f46e5; margin-bottom: 3px;">{{ $c['percent'] }}%</div>
+                
+                <!-- Robust Bar -->
+                <div style="width: 22px; margin: 0 auto; background-color: #4f46e5; border-radius: 3px 3px 0 0; height: {{ max(2, round($c['percent'] * 0.7)) }}px;"></div>
+            </td>
+            @endforeach
+        </tr>
+        <tr>
+            <td style="border-right: 1px solid #cbd5e1;"></td>
+            @foreach($chartData as $c)
+            <td style="text-align: center; padding-top: 5px; font-size: 7px; color: #475569; font-weight: bold;">
+                {{ $c['date'] }}
+            </td>
+            @endforeach
+        </tr>
+    </table>
 </div>
 @endif
 

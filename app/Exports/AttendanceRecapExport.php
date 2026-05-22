@@ -184,7 +184,7 @@ class AttendanceRecapExport implements FromCollection, WithHeadings, ShouldAutoS
         
         $categories = [
             new DataSeriesValues(
-                DataSeriesValues::DATATYPE_STRING, 
+                DataSeriesValues::DATASERIES_TYPE_STRING, 
                 '\'Rekap Presensi\'!$C$6:$' . $endColLetter . '$6', 
                 null, 
                 $D
@@ -193,7 +193,7 @@ class AttendanceRecapExport implements FromCollection, WithHeadings, ShouldAutoS
         
         $values = [
             new DataSeriesValues(
-                DataSeriesValues::DATATYPE_NUMBER, 
+                DataSeriesValues::DATASERIES_TYPE_NUMBER, 
                 '\'Rekap Presensi\'!$C$' . $pctRow . ':$' . $endColLetter . '$' . $pctRow, 
                 null, 
                 $D
