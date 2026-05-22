@@ -96,7 +96,7 @@ export default function Dashboard({
                     </div>
                 </div>
                 {/* ── SECTION 1: Welcome Banner with Quick Actions ── */}
-                <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-indigo-700 via-indigo-600 to-violet-700 text-white shadow-2xl shadow-indigo-500/20 isolate">
+                <div className="relative overflow-hidden rounded-2xl bg-indigo-600 text-white shadow-2xl shadow-indigo-500/20 isolate">
                     {/* Decorative blobs */}
                     <div className="absolute -top-24 -right-24 w-72 h-72 bg-white/5 rounded-full blur-3xl pointer-events-none" />
                     <div className="absolute -bottom-20 -left-16 w-64 h-64 bg-violet-500/10 rounded-full blur-3xl pointer-events-none" />
