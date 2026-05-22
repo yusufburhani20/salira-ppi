@@ -6,7 +6,7 @@
     <style>
         body { font-family: 'Helvetica', sans-serif; font-size: 11px; color: #000; margin: 0; padding: 0; }
         .header-table { width: 100%; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 15px; }
-        .school-logo { width: 70px; height: 70px; object-fit: contain; filter: grayscale(100%); }
+        .school-logo { width: 70px; height: 70px; object-fit: contain; }
         .school-name { font-size: 20px; font-weight: bold; margin: 0; color: #000; text-transform: uppercase; }
         .report-title { font-size: 14px; margin: 5px 0 0; color: #000; font-weight: bold; letter-spacing: 1px; }
         .school-address { font-size: 9px; color: #333; margin-top: 5px; }
@@ -30,7 +30,11 @@
         <tr>
             @if(isset($logo) && $logo)
             <td width="80">
-                <img src="{{ $logo }}" class="school-logo">
+                @if(file_exists(public_path('storage/' . $logo)))
+                    <img src="{{ public_path('storage/' . $logo) }}" class="school-logo">
+                @else
+                    <img src="{{ $logo }}" class="school-logo">
+                @endif
             </td>
             @endif
             <td style="vertical-align: middle;">

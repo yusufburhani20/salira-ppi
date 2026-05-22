@@ -6,8 +6,10 @@ use Illuminate\Contracts\View\View;
 use Maatwebsite\Excel\Concerns\FromView;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
 use Maatwebsite\Excel\Concerns\WithTitle;
+use Maatwebsite\Excel\Concerns\WithDrawings;
+use PhpOffice\PhpSpreadsheet\Worksheet\Drawing;
 
-class AssessmentRecapExport implements FromView, ShouldAutoSize, WithTitle
+class AssessmentRecapExport implements FromView, ShouldAutoSize, WithTitle, WithDrawings
 {
     protected $data;
     protected $meta;
@@ -33,6 +35,23 @@ class AssessmentRecapExport implements FromView, ShouldAutoSize, WithTitle
     public function title(): string
     {
         return 'Rekap Penilaian';
+    }
+
+    public function drawings()
+    {
+        $logo = \App\Models\Setting::get('school_logo');
+        if ($logo && file_exists(public_path('storage/' . $logo))) {
+            $drawing = new Drawing();
+            $drawing->setName('Logo Sekolah');
+            $drawing->setDescription('Logo');
+            $drawing->setPath(public_path('storage/' . $logo));
+            $drawing->setHeight(50);
+            $drawing->setCoordinates('A1');
+            $drawing->setOffsetX(15);
+            $drawing->setOffsetY(10);
+            return $drawing;
+        }
+        return [];
     }
 
     protected function collectStudents($assessments)

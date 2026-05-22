@@ -251,19 +251,59 @@ class RecapController extends Controller
     public function assessmentExport(Request $request)
     {
         $data = $this->assessmentData($request)->getData(true);
-        return Excel::download(new \App\Exports\AssessmentRecapExport($data), 'rekap_penilaian.xlsx');
+        
+        $subject = \App\Models\Subject::find($request->subject_id);
+        $class = \App\Models\AcademicClass::find($request->academic_class_id);
+        $teacherName = auth()->user() ? auth()->user()->name : 'Guru';
+        
+        $meta = [
+            'school_name' => Setting::get('school_name', 'SALIRA ACADEMY'),
+            'class_name' => $class ? $class->name : 'Semua Kelas',
+            'subject_name' => $subject ? $subject->name : 'Semua Mapel',
+            'range' => $data['range'],
+            'teacher_name' => $teacherName
+        ];
+        
+        return Excel::download(new \App\Exports\AssessmentRecapExport($data, $meta), 'rekap_penilaian.xlsx');
     }
 
     public function agendaExport(Request $request)
     {
         $agendas = $this->agendaData($request)->getData(true);
-        return Excel::download(new \App\Exports\AgendaRecapExport($agendas), 'rekap_jurnal_mengajar.xlsx');
+        
+        $matrix = null;
+        if ($request->academic_class_id && $request->start_date && $request->end_date) {
+            $matrix = $this->attendanceData($request)->getData(true);
+        }
+        
+        $class = \App\Models\AcademicClass::find($request->academic_class_id);
+        $teacherName = auth()->user() ? auth()->user()->name : 'Guru';
+        
+        $meta = [
+            'school_name' => Setting::get('school_name', 'SALIRA ACADEMY'),
+            'class_name' => $class ? $class->name : 'Semua Kelas',
+            'range' => Carbon::parse($request->start_date)->format('d/m/Y') . ' - ' . Carbon::parse($request->end_date)->format('d/m/Y'),
+            'teacher_name' => $teacherName
+        ];
+        
+        return Excel::download(new \App\Exports\AgendaRecapExport($agendas, $matrix, $meta), 'rekap_jurnal_mengajar.xlsx');
     }
 
     public function consultationExport(Request $request)
     {
         $consultations = $this->consultationData($request)->getData(true);
-        return Excel::download(new \App\Exports\ConsultationRecapExport($consultations), 'rekap_bimbingan_siswa.xlsx');
+        
+        $class = $request->academic_class_id ? \App\Models\AcademicClass::find($request->academic_class_id) : null;
+        $teacherName = auth()->user() ? auth()->user()->name : 'Guru Wali/BK';
+        
+        $meta = [
+            'school_name' => Setting::get('school_name', 'SALIRA ACADEMY'),
+            'class_name' => $class ? $class->name : 'Semua Kelas',
+            'range' => Carbon::parse($request->start_date)->format('d/m/Y') . ' - ' . Carbon::parse($request->end_date)->format('d/m/Y'),
+            'teacher_name' => $teacherName
+        ];
+        
+        return Excel::download(new \App\Exports\ConsultationRecapExport($consultations, $meta), 'rekap_bimbingan_siswa.xlsx');
     }
 
     // --- PDF Exports ---
@@ -328,13 +368,20 @@ class RecapController extends Controller
     public function agendaPdf(Request $request)
     {
         $data = $this->agendaData($request)->getData(true);
+        
+        $matrix = null;
+        if ($request->academic_class_id && $request->start_date && $request->end_date) {
+            $matrix = $this->attendanceData($request)->getData(true);
+        }
+        
         $className = \App\Models\AcademicClass::find($request->academic_class_id)->name;
         $start = Carbon::parse($request->start_date)->format('d/m/Y');
         $end = Carbon::parse($request->end_date)->format('d/m/Y');
         $settings = $this->getPdfSettings('Rekap Jurnal / Agenda Mengajar', $className, "$start - $end");
 
         $pdf = Pdf::loadView('reports.agenda_pdf', array_merge($settings, [
-            'data' => $data
+            'data' => $data,
+            'matrix' => $matrix
         ]))->setPaper('a4', 'landscape');
 
         return $pdf->stream('rekap_jurnal.pdf');

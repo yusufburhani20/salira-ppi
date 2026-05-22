@@ -3,29 +3,39 @@
 <table>
     <thead>
     <tr>
-        <th colspan="{{ count($assessments) + 2 }}" style="font-weight: bold; font-size: 16px; text-align: center;">REKAP PENILAIAN HARIAN</th>
+        <th></th>
+        <th></th>
+        <th colspan="{{ count($assessments) }}" style="font-weight: bold; font-size: 14px; color: #4F46E5;">REKAP PENILAIAN HARIAN</th>
     </tr>
     <tr>
-        <th colspan="{{ count($assessments) + 2 }}" style="font-weight: bold; font-size: 14px; text-align: center; color: #000;">{{ $meta['school_name'] }}</th>
+        <th></th>
+        <th></th>
+        <th colspan="{{ count($assessments) }}" style="font-weight: bold; font-size: 11px;">{{ $meta['school_name'] ?? 'SALIRA ACADEMY' }}</th>
+    </tr>
+    <tr>
+        <th></th>
+        <th></th>
+        <th colspan="{{ count($assessments) }}" style="font-style: italic; font-size: 9px; color: #64748b;">Periode: {{ $meta['range'] ?? '-' }}</th>
+    </tr>
+    <tr>
+        <th></th>
+        <th></th>
+        <th colspan="{{ count($assessments) }}" style="font-size: 9px; color: #64748b;">Dicetak pada: {{ date('d/m/Y H:i:s') }}</th>
     </tr>
     <tr>
         <th colspan="{{ count($assessments) + 2 }}"></th>
     </tr>
     <tr>
         <th style="font-weight: bold; background-color: #eee; border: 1px solid #000;">Kelas:</th>
-        <th colspan="{{ count($assessments) + 1 }}" style="border: 1px solid #000;">{{ $meta['class_name'] }}</th>
+        <th colspan="{{ count($assessments) + 1 }}" style="border: 1px solid #000; font-weight: bold;">{{ $meta['class_name'] ?? '-' }}</th>
     </tr>
     <tr>
         <th style="font-weight: bold; background-color: #eee; border: 1px solid #000;">Mata Pelajaran:</th>
-        <th colspan="{{ count($assessments) + 1 }}" style="border: 1px solid #000;">{{ $meta['subject_name'] }}</th>
-    </tr>
-    <tr>
-        <th style="font-weight: bold; background-color: #eee; border: 1px solid #000;">Periode:</th>
-        <th colspan="{{ count($assessments) + 1 }}" style="border: 1px solid #000;">{{ $meta['range'] }}</th>
+        <th colspan="{{ count($assessments) + 1 }}" style="border: 1px solid #000; font-weight: bold;">{{ $meta['subject_name'] ?? '-' }}</th>
     </tr>
     <tr>
         <th style="font-weight: bold; background-color: #eee; border: 1px solid #000;">Guru:</th>
-        <th colspan="{{ count($assessments) + 1 }}" style="border: 1px solid #000;">{{ $meta['teacher_name'] }}</th>
+        <th colspan="{{ count($assessments) + 1 }}" style="border: 1px solid #000;">{{ $meta['teacher_name'] ?? '-' }}</th>
     </tr>
     <tr>
         <th colspan="{{ count($assessments) + 2 }}"></th>
