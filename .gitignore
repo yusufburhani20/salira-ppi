@@ -28,3 +28,4 @@ node_modules/
 whatsapp-gateway/node_modules/
 whatsapp-gateway/sessions/
 whatsapp-gateway/.env
+/hris/
