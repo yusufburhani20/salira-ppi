@@ -18,7 +18,7 @@ use PhpOffice\PhpSpreadsheet\Chart\Legend;
 use PhpOffice\PhpSpreadsheet\Chart\PlotArea;
 use PhpOffice\PhpSpreadsheet\Chart\Title as ChartTitle;
 
-class AttendanceRecapExport implements FromCollection, WithHeadings, ShouldAutoSize, WithDrawings, WithCharts, WithStyles, WithTitle
+class AttendanceRecapExport implements FromCollection, WithHeadings, ShouldAutoSize, WithDrawings, WithCharts, WithStyles, WithTitle, \Maatwebsite\Excel\Concerns\WithCustomStartCell
 {
     protected $data;
 
@@ -130,22 +130,18 @@ class AttendanceRecapExport implements FromCollection, WithHeadings, ShouldAutoS
         return $collection;
     }
 
+    public function startCell(): string
+    {
+        return 'A6';
+    }
+
     public function headings(): array
     {
         $headers = ['No', 'Nama Siswa'];
         foreach ($this->data['dates'] as $date) {
             $headers[] = \Carbon\Carbon::parse($date)->format('d/m');
         }
-        $headers = array_merge($headers, ['H', 'S', 'I', 'A', 'T']);
-
-        return [
-            ['', '', 'REKAPITULASI ABSENSI SISWA'],
-            ['', '', \App\Models\Setting::get('school_name', 'SALIRA ACADEMY')],
-            ['', '', 'Periode: ' . $this->data['range']],
-            ['', '', 'Dicetak pada: ' . date('d/m/Y H:i:s')],
-            [],
-            $headers
-        ];
+        return array_merge($headers, ['H', 'S', 'I', 'A', 'T']);
     }
 
     public function title(): string
@@ -235,6 +231,12 @@ class AttendanceRecapExport implements FromCollection, WithHeadings, ShouldAutoS
 
     public function styles(Worksheet $sheet)
     {
+        // Write the title block manually starting at Column C
+        $sheet->setCellValue('C1', 'REKAPITULASI ABSENSI SISWA');
+        $sheet->setCellValue('C2', \App\Models\Setting::get('school_name', 'SALIRA ACADEMY'));
+        $sheet->setCellValue('C3', 'Periode: ' . $this->data['range']);
+        $sheet->setCellValue('C4', 'Dicetak pada: ' . date('d/m/Y H:i:s'));
+
         $D = count($this->data['dates']);
         $S = count($this->data['report']);
         $endRow = 6 + $S + 6;

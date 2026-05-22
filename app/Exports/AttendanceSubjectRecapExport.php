@@ -18,7 +18,7 @@ use PhpOffice\PhpSpreadsheet\Chart\Legend;
 use PhpOffice\PhpSpreadsheet\Chart\PlotArea;
 use PhpOffice\PhpSpreadsheet\Chart\Title as ChartTitle;
 
-class AttendanceSubjectRecapExport implements FromCollection, WithHeadings, ShouldAutoSize, WithDrawings, WithCharts, WithStyles, WithTitle
+class AttendanceSubjectRecapExport implements FromCollection, WithHeadings, ShouldAutoSize, WithDrawings, WithCharts, WithStyles, WithTitle, \Maatwebsite\Excel\Concerns\WithCustomStartCell
 {
     protected $data;
 
@@ -130,23 +130,18 @@ class AttendanceSubjectRecapExport implements FromCollection, WithHeadings, Shou
         return $collection;
     }
 
+    public function startCell(): string
+    {
+        return 'A7';
+    }
+
     public function headings(): array
     {
         $headers = ['No', 'Nama Siswa'];
         foreach ($this->data['dates'] as $date) {
             $headers[] = \Carbon\Carbon::parse($date)->format('d/m');
         }
-        $headers = array_merge($headers, ['H', 'S', 'I', 'A', 'T']);
-
-        return [
-            ['', '', 'REKAPITULASI ABSENSI MATA PELAJARAN'],
-            ['', '', \App\Models\Setting::get('school_name', 'SALIRA ACADEMY')],
-            ['', '', 'Mata Pelajaran: ' . $this->data['subject']],
-            ['', '', 'Periode: ' . $this->data['range']],
-            ['', '', 'Dicetak pada: ' . date('d/m/Y H:i:s')],
-            [],
-            $headers
-        ];
+        return array_merge($headers, ['H', 'S', 'I', 'A', 'T']);
     }
 
     public function title(): string
@@ -236,6 +231,13 @@ class AttendanceSubjectRecapExport implements FromCollection, WithHeadings, Shou
 
     public function styles(Worksheet $sheet)
     {
+        // Write the title block manually starting at Column C
+        $sheet->setCellValue('C1', 'REKAPITULASI ABSENSI MATA PELAJARAN');
+        $sheet->setCellValue('C2', \App\Models\Setting::get('school_name', 'SALIRA ACADEMY'));
+        $sheet->setCellValue('C3', 'Mata Pelajaran: ' . $this->data['subject']);
+        $sheet->setCellValue('C4', 'Periode: ' . $this->data['range']);
+        $sheet->setCellValue('C5', 'Dicetak pada: ' . date('d/m/Y H:i:s'));
+
         $D = count($this->data['dates']);
         $S = count($this->data['report']);
         $endRow = 7 + $S + 6;
