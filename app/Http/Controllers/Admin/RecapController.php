@@ -264,7 +264,7 @@ class RecapController extends Controller
             'teacher_name' => $teacherName
         ];
         
-        return Excel::download(new \App\Exports\AssessmentRecapExport($data, $meta), 'rekap_penilaian.xlsx');
+        return Excel::download(new \App\Exports\AssessmentRecapExport($data, $meta), 'rekap_asesmen.xlsx');
     }
 
     public function agendaExport(Request $request)
@@ -350,7 +350,7 @@ class RecapController extends Controller
     {
         $data = $this->assessmentData($request)->getData(true);
         $subject = \App\Models\Subject::find($request->subject_id)->name;
-        $settings = $this->getPdfSettings('Rekap Penilaian Harian', \App\Models\AcademicClass::find($request->academic_class_id)->name, $data['range'], $subject);
+        $settings = $this->getPdfSettings('Rekap Asesmen Harian', \App\Models\AcademicClass::find($request->academic_class_id)->name, $data['range'], $subject);
         
         // Collect students
         $students = collect($data['assessments'])->flatMap(function($a) {
@@ -362,7 +362,7 @@ class RecapController extends Controller
             'students' => $students
         ]))->setPaper('a4', 'landscape');
 
-        return $pdf->stream('rekap_penilaian.pdf');
+        return $pdf->stream('rekap_asesmen.pdf');
     }
 
     public function agendaPdf(Request $request)

@@ -43,7 +43,7 @@ export default function AssessmentIndex({ auth, assessments, classes, subjects, 
     const { delete: destroy } = useForm();
 
     const handleDelete = (id: number) => {
-        if (confirm('Apakah Anda yakin ingin menghapus data penilaian ini?')) {
+        if (confirm('Apakah Anda yakin ingin menghapus data asesmen ini?')) {
             destroy(route('teacher.assessments.destroy', id));
         }
     };
@@ -72,8 +72,8 @@ export default function AssessmentIndex({ auth, assessments, classes, subjects, 
     };
 
     return (
-        <AuthenticatedLayout header={<h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Penilaian Harian</h2>}>
-            <Head title="Penilaian Harian" />
+        <AuthenticatedLayout header={<h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Asesmen Harian</h2>}>
+            <Head title="Asesmen Harian" />
 
             <div className="py-12">
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
@@ -99,7 +99,7 @@ export default function AssessmentIndex({ auth, assessments, classes, subjects, 
                                 className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-xl font-bold text-sm hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/20"
                             >
                                 <PlusIcon className="w-5 h-5 mr-1.5" />
-                                <span>Tambah Penilaian</span>
+                                <span>Tambah Asesmen</span>
                             </Link>
                         </div>
                     </div>
@@ -177,7 +177,7 @@ export default function AssessmentIndex({ auth, assessments, classes, subjects, 
                                         <tr>
                                             <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
                                                 <ClipboardDocumentCheckIcon className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                                                <p>Belum ada data penilaian.</p>
+                                                <p>Belum ada data asesmen.</p>
                                             </td>
                                         </tr>
                                     ) : (

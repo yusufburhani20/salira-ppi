@@ -168,30 +168,17 @@ export default function AgendaEdit({ agenda, classes, subjects = [] }: { agenda:
                                 {errors.topic && <p className="text-red-500 text-xs mt-1">{errors.topic}</p>}
                             </div>
 
-                            {/* Model Pembelajaran */}
+                            {/* Model & Media Pembelajaran */}
                             <div className="md:col-span-2 space-y-1">
-                                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest px-1">Model Pembelajaran</label>
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest px-1">Model &amp; Media Pembelajaran</label>
                                 <textarea 
                                     rows={3}
-                                    placeholder="Tuliskan model pembelajaran yang digunakan (misal: Problem Based Learning, Cooperative Learning, dll)..."
+                                    placeholder="Tuliskan model dan media pembelajaran yang digunakan..."
                                     className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-indigo-500 focus:border-indigo-500"
                                     value={data.learning_model}
                                     onChange={e => setData('learning_model', e.target.value)}
                                 />
                                 {errors.learning_model && <p className="text-red-500 text-xs mt-1">{errors.learning_model}</p>}
-                            </div>
-
-                            {/* Media Pembelajaran */}
-                            <div className="md:col-span-2 space-y-1">
-                                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest px-1">Media Pembelajaran</label>
-                                <textarea 
-                                    rows={3}
-                                    placeholder="Tuliskan media atau alat pembelajaran yang digunakan (misal: LCD, Slide Presentasi, Papan Tulis, dll)..."
-                                    className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-indigo-500 focus:border-indigo-500"
-                                    value={data.learning_media}
-                                    onChange={e => setData('learning_media', e.target.value)}
-                                />
-                                {errors.learning_media && <p className="text-red-500 text-xs mt-1">{errors.learning_media}</p>}
                             </div>
 
                             {/* Activities */}

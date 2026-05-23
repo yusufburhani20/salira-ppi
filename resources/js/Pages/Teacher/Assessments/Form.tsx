@@ -98,18 +98,18 @@ export default function AssessmentForm({ auth, classes, students: initialStudent
                     <ChevronLeftIcon className="w-5 h-5" />
                 </Link>
                 <h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                    {isEdit ? 'Edit Penilaian' : 'Tambah Penilaian Baru'}
+                    {isEdit ? 'Edit Asesmen' : 'Tambah Asesmen Baru'}
                 </h2>
             </div>
         }>
-            <Head title={isEdit ? 'Edit Penilaian' : 'Tambah Penilaian'} />
+            <Head title={isEdit ? 'Edit Asesmen' : 'Tambah Asesmen'} />
 
             <div className="py-12">
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
                     <form onSubmit={submit} className="space-y-6">
                         <div className="bg-white dark:bg-gray-800 shadow-sm rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
                             <div className="p-6 border-b border-gray-200 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-700/30">
-                                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Informasi Penilaian</h3>
+                                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Informasi Asesmen</h3>
                             </div>
                             <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                                 <div>
@@ -144,7 +144,7 @@ export default function AssessmentForm({ auth, classes, students: initialStudent
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Judul / Topik Penilaian</label>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Judul / Topik Asesmen</label>
                                     <input 
                                         type="text" 
                                         value={data.title} 
@@ -246,7 +246,7 @@ export default function AssessmentForm({ auth, classes, students: initialStudent
                                 disabled={processing || data.scores.length === 0}
                                 className="bg-primary hover:bg-primary-hover text-white px-8 py-2 rounded-lg font-bold shadow-sm transition-all disabled:opacity-50"
                             >
-                                {processing ? 'Menyimpan...' : 'Simpan Penilaian'}
+                                {processing ? 'Menyimpan...' : 'Simpan Asesmen'}
                             </button>
                         </div>
                     </form>

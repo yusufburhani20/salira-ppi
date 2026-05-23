@@ -93,7 +93,7 @@ export default function ReportIndex({ auth, classes, subjects }: PageProps<{ cla
                         {[
                             { id: 'attendance', label: 'Rekap Absensi (Umum)', icon: UserGroupIcon },
                             { id: 'attendance_subject', label: 'Rekap Absensi (Mapel)', icon: AcademicCapIcon },
-                            { id: 'assessment', label: 'Rekap Penilaian', icon: AcademicCapIcon },
+                            { id: 'assessment', label: 'Rekap Asesmen', icon: AcademicCapIcon },
                             { id: 'agenda', label: 'Jurnal Mengajar', icon: BookOpenIcon },
                             { id: 'consultation', label: 'Bimbingan Siswa', icon: DocumentChartBarIcon },
                         ].map((tab) => (

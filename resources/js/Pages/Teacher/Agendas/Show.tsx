@@ -97,19 +97,11 @@ export default function AgendaShow({ agenda }: { agenda: any }) {
                                         </p>
                                     </div>
 
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-100 dark:border-slate-800">
-                                        <div>
-                                            <h4 className="text-[10px] uppercase font-black text-slate-400 tracking-widest mb-2">Model Pembelajaran</h4>
-                                            <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
-                                                {agenda.learning_model || '-'}
-                                            </p>
-                                        </div>
-                                        <div>
-                                            <h4 className="text-[10px] uppercase font-black text-slate-400 tracking-widest mb-2">Media Pembelajaran</h4>
-                                            <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
-                                                {agenda.learning_media || '-'}
-                                            </p>
-                                        </div>
+                                    <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+                                        <h4 className="text-[10px] uppercase font-black text-slate-400 tracking-widest mb-2">Model &amp; Media Pembelajaran</h4>
+                                        <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
+                                            {agenda.learning_model || '-'}
+                                        </p>
                                     </div>
                                     
                                     <div className="pt-4 border-t border-slate-100 dark:border-slate-800">

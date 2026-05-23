@@ -120,7 +120,7 @@ class DailyAssessmentController extends Controller
             }
         });
 
-        return redirect()->route('teacher.assessments.index')->with('success', 'Penilaian harian berhasil disimpan.');
+        return redirect()->route('teacher.assessments.index')->with('success', 'Asesmen harian berhasil disimpan.');
     }
 
     public function edit($id)
@@ -207,7 +207,7 @@ class DailyAssessmentController extends Controller
             }
         });
 
-        return redirect()->route('teacher.assessments.index')->with('success', 'Penilaian harian berhasil diperbarui.');
+        return redirect()->route('teacher.assessments.index')->with('success', 'Asesmen harian berhasil diperbarui.');
     }
 
     public function destroy($id)
@@ -220,7 +220,7 @@ class DailyAssessmentController extends Controller
 
         $assessment->delete();
 
-        return back()->with('success', 'Penilaian harian berhasil dihapus.');
+        return back()->with('success', 'Asesmen harian berhasil dihapus.');
     }
 
     public function exportExcel(Request $request)
@@ -237,7 +237,7 @@ class DailyAssessmentController extends Controller
             'teacher_name' => Auth::user()->name
         ];
 
-        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\AssessmentRecapExport($data, $meta), 'rekap_penilaian.xlsx');
+        return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\AssessmentRecapExport($data, $meta), 'rekap_asesmen.xlsx');
     }
 
     public function exportPdf(Request $request)
@@ -259,7 +259,7 @@ class DailyAssessmentController extends Controller
         }
 
         $settings = [
-            'title' => 'Rekap Penilaian Harian',
+            'title' => 'Rekap Asesmen Harian',
             'school_name' => \App\Models\Setting::get('school_name', 'SALIRA ACADEMY'),
             'school_address' => \App\Models\Setting::get('school_address'),
             'logo' => $logoPath,
@@ -279,7 +279,7 @@ class DailyAssessmentController extends Controller
             'students' => $students
         ]))->setPaper('a4', 'landscape');
 
-        return $pdf->stream('rekap_penilaian.pdf');
+        return $pdf->stream('rekap_asesmen.pdf');
     }
 
     private function getExportData(Request $request)

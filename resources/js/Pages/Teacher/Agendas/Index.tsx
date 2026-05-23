@@ -325,18 +325,10 @@ export default function AgendaIndex({ auth, agendas, classes, subjects = [], fil
                                                 {selectedAgenda.topic}
                                             </div>
                                         </div>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div className="space-y-1">
-                                                <h4 className="text-[10px] uppercase font-black text-slate-400 tracking-widest px-1">Model Pembelajaran</h4>
-                                                <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl text-gray-700 dark:text-gray-300 border border-slate-100 dark:border-slate-800 min-h-[60px] whitespace-pre-wrap">
-                                                    {selectedAgenda.learning_model || '-'}
-                                                </div>
-                                            </div>
-                                            <div className="space-y-1">
-                                                <h4 className="text-[10px] uppercase font-black text-slate-400 tracking-widest px-1">Media Pembelajaran</h4>
-                                                <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl text-gray-700 dark:text-gray-300 border border-slate-100 dark:border-slate-800 min-h-[60px] whitespace-pre-wrap">
-                                                    {selectedAgenda.learning_media || '-'}
-                                                </div>
+                                        <div className="space-y-1">
+                                            <h4 className="text-[10px] uppercase font-black text-slate-400 tracking-widest px-1">Model &amp; Media Pembelajaran</h4>
+                                            <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl text-gray-700 dark:text-gray-300 border border-slate-100 dark:border-slate-800 min-h-[60px] whitespace-pre-wrap">
+                                                {selectedAgenda.learning_model || '-'}
                                             </div>
                                         </div>
                                         <div className="space-y-1">

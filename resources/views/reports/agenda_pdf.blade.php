@@ -28,12 +28,7 @@
                 <strong>{{ $item['topic'] }}</strong>
                 @if(!empty($item['learning_model']))
                     <div style="font-size: 8px; color: #444; margin-top: 5px;">
-                        <strong>Model:</strong> {{ $item['learning_model'] }}
-                    </div>
-                @endif
-                @if(!empty($item['learning_media']))
-                    <div style="font-size: 8px; color: #444; margin-top: 2px;">
-                        <strong>Media:</strong> {{ $item['learning_media'] }}
+                        <strong>Model &amp; Media:</strong> {{ $item['learning_model'] }}
                     </div>
                 @endif
             </td>
