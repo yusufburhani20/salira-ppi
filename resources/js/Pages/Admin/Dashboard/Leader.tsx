@@ -16,14 +16,16 @@ import {
 } from '@heroicons/react/24/outline';
 import SystemClock from '@/Components/SystemClock';
 
-export default function LeaderDashboard({ stats, activeUsers, lastLogins, inventoryStats, filters }: any) {
+export default function LeaderDashboard({ stats, activeUsers, lastLogins, inventoryStats, filters, classes }: any) {
     const [startDate, setStartDate] = useState(filters?.start_date || '');
     const [endDate, setEndDate] = useState(filters?.end_date || '');
+    const [classId, setClassId] = useState(filters?.academic_class_id || '');
 
-    const handleFilterChange = (start: string, end: string) => {
+    const handleFilterChange = (start: string, end: string, cid: string) => {
         setStartDate(start);
         setEndDate(end);
-        router.get(route('admin.dashboard.leader'), { start_date: start, end_date: end }, { 
+        setClassId(cid);
+        router.get(route('admin.dashboard.leader'), { start_date: start, end_date: end, academic_class_id: cid }, { 
             preserveState: true,
             preserveScroll: true,
             only: ['stats', 'filters']
@@ -142,18 +144,28 @@ export default function LeaderDashboard({ stats, activeUsers, lastLogins, invent
                                 </h3>
                                 <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Grafik kehadiran berdasarkan rentang waktu yang dipilih</p>
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex flex-wrap items-center gap-2">
+                                <select 
+                                    value={classId} 
+                                    onChange={(e) => handleFilterChange(startDate, endDate, e.target.value)}
+                                    className="text-xs rounded-md border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-1"
+                                >
+                                    <option value="">Semua Kelas</option>
+                                    {classes?.map((c: any) => (
+                                        <option key={c.id} value={String(c.id)}>{c.name}</option>
+                                    ))}
+                                </select>
                                 <input 
                                     type="date" 
                                     value={startDate} 
-                                    onChange={(e) => handleFilterChange(e.target.value, endDate)}
+                                    onChange={(e) => handleFilterChange(e.target.value, endDate, classId)}
                                     className="text-xs rounded-md border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-1"
                                 />
                                 <span className="text-slate-400 text-xs">-</span>
                                 <input 
                                     type="date" 
                                     value={endDate} 
-                                    onChange={(e) => handleFilterChange(startDate, e.target.value)}
+                                    onChange={(e) => handleFilterChange(startDate, e.target.value, classId)}
                                     className="text-xs rounded-md border-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500 py-1"
                                 />
                             </div>

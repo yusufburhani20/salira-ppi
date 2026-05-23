@@ -18,9 +18,20 @@ class LeaderDashboardController extends Controller
     {
         $today = Carbon::today()->toDateString();
         
+        $classId = $request->academic_class_id;
+        
         // 1. Statistik Kehadiran Siswa Hari Ini
-        $totalStudents = Student::count();
-        $studentPresence = StudentAttendance::whereDate('date', $today)
+        $totalStudentsQuery = Student::query();
+        if ($classId) {
+            $totalStudentsQuery->whereHas('academicClasses', fn($q) => $q->where('academic_classes.id', $classId)->where('class_members.is_active', true));
+        }
+        $totalStudents = $totalStudentsQuery->count();
+
+        $studentPresenceQuery = StudentAttendance::whereDate('date', $today);
+        if ($classId) {
+            $studentPresenceQuery->where('academic_class_id', $classId);
+        }
+        $studentPresence = $studentPresenceQuery
             ->select('status', DB::raw('count(*) as total'))
             ->groupBy('status')
             ->get()
@@ -59,9 +70,12 @@ class LeaderDashboardController extends Controller
         $weeklyTrend = [];
         for ($i = $diffInDays; $i >= 0; $i--) {
             $date = (clone $endDate)->subDays($i);
-            $count = StudentAttendance::whereDate('date', $date->toDateString())
-                ->whereIn('status', ['hadir', 'tap'])
-                ->count();
+            $countQuery = StudentAttendance::whereDate('date', $date->toDateString())
+                ->whereIn('status', ['hadir', 'tap']);
+            if ($classId) {
+                $countQuery->where('academic_class_id', $classId);
+            }
+            $count = $countQuery->count();
             
             $weeklyTrend[] = [
                 'date' => $date->format('d/m'),
@@ -115,9 +129,11 @@ class LeaderDashboardController extends Controller
             'lastLogins' => $lastLogins,
             'inventoryStats' => $inventoryStats,
             'filters' => [
+                'academic_class_id' => $classId,
                 'start_date' => $startDate->format('Y-m-d'),
                 'end_date' => $endDate->format('Y-m-d'),
-            ]
+            ],
+            'classes' => \App\Models\AcademicClass::orderBy('name')->get(['id', 'name']),
         ]);
     }
 }
