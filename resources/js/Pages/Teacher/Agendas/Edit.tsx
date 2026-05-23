@@ -32,6 +32,8 @@ export default function AgendaEdit({ agenda, classes, subjects = [] }: { agenda:
             return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         })() : '',
         activities: agenda.activities || '',
+        learning_model: agenda.learning_model || '',
+        learning_media: agenda.learning_media || '',
         student_tasks: agenda.student_tasks || '',
         attendance: agenda.attendances.map((a: any) => ({
             student_id: a.student_id,
@@ -154,10 +156,10 @@ export default function AgendaEdit({ agenda, classes, subjects = [] }: { agenda:
 
                             {/* Topic */}
                             <div className="space-y-1">
-                                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest px-1">Topik Pembelajaran</label>
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest px-1">Tujuan Pembelajaran</label>
                                 <input 
                                     type="text" 
-                                    placeholder="Apa yang dipelajari?"
+                                    placeholder="Apa tujuan pembelajaran hari ini?"
                                     className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-indigo-500 focus:border-indigo-500"
                                     value={data.topic}
                                     onChange={e => setData('topic', e.target.value)}
@@ -166,12 +168,38 @@ export default function AgendaEdit({ agenda, classes, subjects = [] }: { agenda:
                                 {errors.topic && <p className="text-red-500 text-xs mt-1">{errors.topic}</p>}
                             </div>
 
+                            {/* Model Pembelajaran */}
+                            <div className="md:col-span-2 space-y-1">
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest px-1">Model Pembelajaran</label>
+                                <textarea 
+                                    rows={3}
+                                    placeholder="Tuliskan model pembelajaran yang digunakan (misal: Problem Based Learning, Cooperative Learning, dll)..."
+                                    className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-indigo-500 focus:border-indigo-500"
+                                    value={data.learning_model}
+                                    onChange={e => setData('learning_model', e.target.value)}
+                                />
+                                {errors.learning_model && <p className="text-red-500 text-xs mt-1">{errors.learning_model}</p>}
+                            </div>
+
+                            {/* Media Pembelajaran */}
+                            <div className="md:col-span-2 space-y-1">
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest px-1">Media Pembelajaran</label>
+                                <textarea 
+                                    rows={3}
+                                    placeholder="Tuliskan media atau alat pembelajaran yang digunakan (misal: LCD, Slide Presentasi, Papan Tulis, dll)..."
+                                    className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-indigo-500 focus:border-indigo-500"
+                                    value={data.learning_media}
+                                    onChange={e => setData('learning_media', e.target.value)}
+                                />
+                                {errors.learning_media && <p className="text-red-500 text-xs mt-1">{errors.learning_media}</p>}
+                            </div>
+
                             {/* Activities */}
                             <div className="md:col-span-2 space-y-1">
-                                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest px-1">Ringkasan Aktivitas Kelas</label>
+                                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest px-1">Laporan Perkembangan Siswa</label>
                                 <textarea 
                                     rows={4}
-                                    placeholder="Tuliskan apa saja yang dilakukan di dalam kelas..."
+                                    placeholder="Tuliskan laporan perkembangan siswa..."
                                     className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-indigo-500 focus:border-indigo-500"
                                     value={data.activities}
                                     onChange={e => setData('activities', e.target.value)}

@@ -10,8 +10,8 @@
             <th width="100">Hari / Tanggal</th>
             <th width="40" class="text-center">Jam</th>
             <th width="100">Mata Pelajaran</th>
-            <th>Topik / Materi Pembelajaran</th>
-            <th>Aktivitas & Tugas Siswa</th>
+            <th>Tujuan Pembelajaran</th>
+            <th>Laporan Perkembangan Siswa</th>
         </tr>
     </thead>
     <tbody>
@@ -24,7 +24,19 @@
             </td>
             <td class="text-center" style="font-family: monospace; font-size: 9px; background: #eee;">{{ $item['lesson_period'] }}</td>
             <td style="font-size: 8px; font-weight: bold; text-transform: uppercase;">{{ $item['subject']['name'] ?? ($item['subject_name'] ?? ($item['subject'] ?? '-')) }}</td>
-            <td style="font-size: 9px; line-height: 1.3;"><strong>{{ $item['topic'] }}</strong></td>
+            <td style="font-size: 9px; line-height: 1.3;">
+                <strong>{{ $item['topic'] }}</strong>
+                @if(!empty($item['learning_model']))
+                    <div style="font-size: 8px; color: #444; margin-top: 5px;">
+                        <strong>Model:</strong> {{ $item['learning_model'] }}
+                    </div>
+                @endif
+                @if(!empty($item['learning_media']))
+                    <div style="font-size: 8px; color: #444; margin-top: 2px;">
+                        <strong>Media:</strong> {{ $item['learning_media'] }}
+                    </div>
+                @endif
+            </td>
             <td style="font-size: 8px; line-height: 1.3;">
                 <div style="margin-bottom: 4px;">{{ $item['activities'] }}</div>
                 @if(!empty($item['student_tasks']))

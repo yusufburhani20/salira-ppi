@@ -23,6 +23,8 @@ interface Agenda {
     subject: string;
     lesson_period: string;
     topic: string;
+    learning_model?: string;
+    learning_media?: string;
     activities?: string;
     student_tasks?: string;
     date: string;
@@ -198,7 +200,7 @@ export default function AgendaIndex({ auth, agendas, classes, subjects = [], fil
                                         <th className="px-6 py-4">Kelas</th>
                                         <th className="px-6 py-4">Mata Pelajaran</th>
                                         <th className="px-6 py-4">Jam Ke</th>
-                                        <th className="px-6 py-4">Topik</th>
+                                        <th className="px-6 py-4">Tujuan Pembelajaran</th>
                                         <th className="px-6 py-4 text-right">Aksi</th>
                                     </tr>
                                 </thead>
@@ -318,13 +320,27 @@ export default function AgendaIndex({ auth, agendas, classes, subjects = [], fil
                                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                                     <div className="lg:col-span-2 space-y-6">
                                         <div className="space-y-1">
-                                            <h4 className="text-[10px] uppercase font-black text-slate-400 tracking-widest px-1">Topik Pembelajaran</h4>
+                                            <h4 className="text-[10px] uppercase font-black text-slate-400 tracking-widest px-1">Tujuan Pembelajaran</h4>
                                             <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl font-bold text-gray-800 dark:text-white border border-slate-100 dark:border-slate-800">
                                                 {selectedAgenda.topic}
                                             </div>
                                         </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="space-y-1">
+                                                <h4 className="text-[10px] uppercase font-black text-slate-400 tracking-widest px-1">Model Pembelajaran</h4>
+                                                <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl text-gray-700 dark:text-gray-300 border border-slate-100 dark:border-slate-800 min-h-[60px] whitespace-pre-wrap">
+                                                    {selectedAgenda.learning_model || '-'}
+                                                </div>
+                                            </div>
+                                            <div className="space-y-1">
+                                                <h4 className="text-[10px] uppercase font-black text-slate-400 tracking-widest px-1">Media Pembelajaran</h4>
+                                                <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl text-gray-700 dark:text-gray-300 border border-slate-100 dark:border-slate-800 min-h-[60px] whitespace-pre-wrap">
+                                                    {selectedAgenda.learning_media || '-'}
+                                                </div>
+                                            </div>
+                                        </div>
                                         <div className="space-y-1">
-                                            <h4 className="text-[10px] uppercase font-black text-slate-400 tracking-widest px-1">Aktivitas Kelas</h4>
+                                            <h4 className="text-[10px] uppercase font-black text-slate-400 tracking-widest px-1">Laporan Perkembangan Siswa</h4>
                                             <div className="p-6 bg-slate-50 dark:bg-slate-900 rounded-2xl text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap border border-slate-100 dark:border-slate-800">
                                                 {selectedAgenda.activities}
                                             </div>

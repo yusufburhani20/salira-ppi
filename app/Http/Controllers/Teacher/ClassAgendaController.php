@@ -143,6 +143,8 @@ class ClassAgendaController extends Controller
             'topic' => 'required|string|max:255',
             'activities' => 'required|string',
             'student_tasks' => 'nullable|string',
+            'learning_model' => 'nullable|string',
+            'learning_media' => 'nullable|string',
             'attendance' => 'required|array', // Structure: [{student_id: 1, status: 'hadir'}]
         ]);
 
@@ -158,6 +160,8 @@ class ClassAgendaController extends Controller
                 'date' => $request->date,
                 'topic' => $request->topic,
                 'activities' => $request->activities,
+                'learning_model' => $request->learning_model,
+                'learning_media' => $request->learning_media,
                 'student_tasks' => $request->student_tasks,
                 'status' => 'published',
             ]);
@@ -263,6 +267,8 @@ class ClassAgendaController extends Controller
             'topic' => 'required|string|max:255',
             'activities' => 'required|string',
             'student_tasks' => 'nullable|string',
+            'learning_model' => 'nullable|string',
+            'learning_media' => 'nullable|string',
             'attendance' => 'required|array',
         ]);
 
@@ -277,6 +283,8 @@ class ClassAgendaController extends Controller
                 'date' => $request->date,
                 'topic' => $request->topic,
                 'activities' => $request->activities,
+                'learning_model' => $request->learning_model,
+                'learning_media' => $request->learning_media,
                 'student_tasks' => $request->student_tasks,
             ]);
 
