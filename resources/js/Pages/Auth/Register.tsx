@@ -13,7 +13,7 @@ export default function Register() {
         nip: '',
         phone: '',
         telegram_id: '',
-        role: 'Guru/Dosen',
+        role: 'Guru',
         password: '',
         password_confirmation: '',
     });
@@ -92,7 +92,7 @@ export default function Register() {
                         className="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm"
                         required
                     >
-                        <option value="Guru/Dosen">Guru / Dosen</option>
+                        <option value="Guru">Guru</option>
                         <option value="Staff/TU">Staff / Tata Usaha</option>
                     </select>
                     <InputError message={errors.role} className="mt-2" />

@@ -19,7 +19,7 @@ class ScheduleController extends Controller
             ->get();
 
         $classes = AcademicClass::orderBy('name')->get(['id', 'name']);
-        $teachers = User::whereHas('roles', fn($q) => $q->whereIn('name', ['Guru/Dosen', 'Admin', 'Super Admin']))
+        $teachers = User::whereHas('roles', fn($q) => $q->whereIn('name', ['Guru', 'Super Admin']))
             ->orderBy('name')
             ->get(['id', 'name']);
 
@@ -41,7 +41,7 @@ class ScheduleController extends Controller
             'end_time'   => 'required|date_format:H:i|after:start_time',
         ], [
             'class_id.required'   => 'Kelas wajib dipilih.',
-            'teacher_id.required' => 'Guru/Dosen wajib dipilih.',
+            'teacher_id.required' => 'Guru wajib dipilih.',
             'subject.required'    => 'Nama mata pelajaran wajib diisi.',
             'day.required'        => 'Hari wajib dipilih.',
             'start_time.required' => 'Jam mulai wajib diisi.',

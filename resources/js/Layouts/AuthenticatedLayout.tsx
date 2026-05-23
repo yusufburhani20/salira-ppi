@@ -47,9 +47,9 @@ export default function Authenticated({
     // Helpers to check current user roles
     const userRoles = user.roles || [];
     const isSuperAdmin = userRoles.includes('Super Admin');
-    const isAdmin = userRoles.includes('Admin') || isSuperAdmin;
-    const isPimpinan = userRoles.includes('Pimpinan');
-    const isGuru = userRoles.includes('Guru/Dosen');
+    const isAdmin = isSuperAdmin;
+    const isPimpinan = userRoles.includes('Kepala Sekolah');
+    const isGuru = userRoles.includes('Guru');
     const isWaliKelas = userRoles.includes('Wali Kelas');
     const isStaff = userRoles.includes('Staff/TU');
     const isBendahara = userRoles.includes('Bendahara');

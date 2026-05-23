@@ -36,7 +36,7 @@ class StudentController extends Controller
             'students'   => $students,
             'filters'    => $request->only(['search', 'status']),
             'classes'    => AcademicClass::orderBy('name')->get(['id', 'name']),
-            'canManage'  => auth()->user()->hasAnyRole(['Super Admin', 'Admin', 'Staff/TU']),
+            'canManage'  => auth()->user()->hasAnyRole(['Super Admin', 'Staff/TU']),
         ]);
     }
 

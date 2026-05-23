@@ -19,9 +19,8 @@ class RoleSeeder extends Seeder
         // Array roles
         $roles = [
             'Super Admin',
-            'Pimpinan',
-            'Admin',
-            'Guru/Dosen',
+            'Kepala Sekolah',
+            'Guru',
             'Wali Kelas',
             'Staff/TU',
             'Bendahara'
@@ -59,8 +58,8 @@ class RoleSeeder extends Seeder
 
         // Create Users
         $createUser('admin@salira.com', ['name' => 'System Administrator', 'nip' => '000000'], 'Super Admin');
-        $createUser('pimpinan@salira.com', ['name' => 'Bapak Pimpinan', 'nip' => '111111'], 'Pimpinan');
-        $createUser('guru@salira.com', ['name' => 'Bapak Guru', 'nip' => '222222'], 'Guru/Dosen');
+        $createUser('pimpinan@salira.com', ['name' => 'Bapak Pimpinan', 'nip' => '111111'], 'Kepala Sekolah');
+        $createUser('guru@salira.com', ['name' => 'Bapak Guru', 'nip' => '222222'], 'Guru');
         $createUser('walikelas@salira.com', ['name' => 'Ibu Wali Kelas', 'nip' => '333333'], 'Wali Kelas');
         $createUser('bendahara@salira.com', ['name' => 'Bendahara Sekolah', 'nip' => '444444'], 'Bendahara');
     }

@@ -249,7 +249,7 @@ export default function ScheduleIndex({
                                             <th className="px-5 py-4 font-bold text-gray-900 dark:text-white">Hari</th>
                                             <th className="px-5 py-4 font-bold text-gray-900 dark:text-white">Kelas</th>
                                             <th className="px-5 py-4 font-bold text-gray-900 dark:text-white">Mata Pelajaran</th>
-                                            <th className="px-5 py-4 font-bold text-gray-900 dark:text-white">Guru/Dosen</th>
+                                            <th className="px-5 py-4 font-bold text-gray-900 dark:text-white">Guru</th>
                                             <th className="px-5 py-4 font-bold text-gray-900 dark:text-white">Jam</th>
                                             <th className="px-5 py-4 font-bold text-gray-900 dark:text-white text-right">Aksi</th>
                                         </tr>
@@ -379,7 +379,7 @@ export default function ScheduleIndex({
                                     {/* Guru */}
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                            Guru/Dosen <span className="text-red-500">*</span>
+                                            Guru <span className="text-red-500">*</span>
                                         </label>
                                         <select
                                             value={data.teacher_id}
@@ -387,7 +387,7 @@ export default function ScheduleIndex({
                                             required
                                             className="w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:border-primary focus:ring-primary shadow-sm"
                                         >
-                                            <option value="">-- Pilih Guru/Dosen --</option>
+                                            <option value="">-- Pilih Guru --</option>
                                             {teachers.map(t => <option key={t.id} value={String(t.id)}>{t.name}</option>)}
                                         </select>
                                         {errors.teacher_id && <p className="text-red-500 text-xs mt-1">{errors.teacher_id}</p>}

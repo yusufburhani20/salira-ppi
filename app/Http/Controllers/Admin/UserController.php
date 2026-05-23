@@ -138,7 +138,7 @@ class UserController extends Controller
             $file = fopen('php://output', 'w');
             fputcsv($file, $columns);
             // Example row
-            fputcsv($file, ['Ahmad Fauzi', 'ahmad@example.com', '198801012015011001', '08123456789', '@ahmad_fauzi', 'Guru/Dosen, Wali Kelas', 'active']);
+            fputcsv($file, ['Ahmad Fauzi', 'ahmad@example.com', '198801012015011001', '08123456789', '@ahmad_fauzi', 'Guru, Wali Kelas', 'active']);
             fclose($file);
         };
 

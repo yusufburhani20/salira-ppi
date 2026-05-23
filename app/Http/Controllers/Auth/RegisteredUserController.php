@@ -37,7 +37,7 @@ class RegisteredUserController extends Controller
             'nip' => 'required|string|max:50|unique:'.User::class,
             'phone' => 'required|string|max:20|unique:'.User::class,
             'telegram_id' => 'nullable|string|max:100',
-            'role' => 'required|string|in:Guru/Dosen,Staff/TU',
+            'role' => 'required|string|in:Guru,Staff/TU',
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ], [
             'required' => ':attribute wajib diisi.',

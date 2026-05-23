@@ -20,7 +20,7 @@ Route::middleware('auth')->group(function () {
 
     // Admin Group A: Super Admin, Admin, Pimpinan, Staff/TU
     // Data Siswa (GET read-only untuk Pimpinan, dibatasi di controller)
-    Route::middleware(['role:Super Admin|Admin|Pimpinan|Staff/TU'])->prefix('admin')->name('admin.')->group(function () {
+    Route::middleware(['role:Super Admin|Kepala Sekolah|Staff/TU'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('/students', [\App\Http\Controllers\Admin\StudentController::class, 'index'])->name('students.index');
         Route::get('/students/export', [\App\Http\Controllers\Admin\StudentController::class, 'export'])->name('students.export');
         Route::get('/students/template', [\App\Http\Controllers\Admin\StudentController::class, 'template'])->name('students.template');
@@ -31,7 +31,7 @@ Route::middleware('auth')->group(function () {
 
     // Admin Group B: Super Admin, Admin, Staff/TU
     // Manajemen Data Operasional
-    Route::middleware(['role:Super Admin|Admin|Staff/TU'])->prefix('admin')->name('admin.')->group(function () {
+    Route::middleware(['role:Super Admin|Staff/TU'])->prefix('admin')->name('admin.')->group(function () {
         // Students CRUD
         Route::post('/students', [\App\Http\Controllers\Admin\StudentController::class, 'store'])->name('students.store');
         Route::put('/students/{student}', [\App\Http\Controllers\Admin\StudentController::class, 'update'])->name('students.update');
@@ -85,7 +85,7 @@ Route::middleware('auth')->group(function () {
 
     // Admin Group C: Super Admin, Admin, Pimpinan, Bendahara
     // Laporan, Approval, Tagihan, Keuangan, Absensi
-    Route::middleware(['role:Super Admin|Admin|Pimpinan|Bendahara'])->prefix('admin')->name('admin.')->group(function () {
+    Route::middleware(['role:Super Admin|Kepala Sekolah|Bendahara'])->prefix('admin')->name('admin.')->group(function () {
         Route::get('/leader-dashboard', [\App\Http\Controllers\Admin\LeaderDashboardController::class, 'index'])->name('leader-dashboard');
         
         // Approvals (Pimpinan & Admin)
@@ -152,7 +152,7 @@ Route::middleware('auth')->group(function () {
 
     // Admin Group D: Super Admin, Admin
     // Konfigurasi Sistem
-    Route::middleware(['role:Super Admin|Admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::middleware(['role:Super Admin'])->prefix('admin')->name('admin.')->group(function () {
         // Settings
         Route::get('/settings', [\App\Http\Controllers\Admin\SettingController::class, 'index'])->name('settings.index');
         Route::post('/settings', [\App\Http\Controllers\Admin\SettingController::class, 'update'])->name('settings.update');
@@ -214,7 +214,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.markAllAsRead');
 
     // Teacher Routes
-    Route::middleware(['auth', 'role:Super Admin|Admin|Guru/Dosen|Wali Kelas'])->prefix('teacher')->name('teacher.')->group(function () {
+    Route::middleware(['auth', 'role:Super Admin|Guru|Wali Kelas'])->prefix('teacher')->name('teacher.')->group(function () {
         // Class Agendas
         Route::get('/agendas', [\App\Http\Controllers\Teacher\ClassAgendaController::class, 'index'])->name('agendas.index');
         Route::get('/agendas/create', [\App\Http\Controllers\Teacher\ClassAgendaController::class, 'create'])->name('agendas.create');
@@ -244,7 +244,7 @@ Route::middleware('auth')->group(function () {
     });
 
     // Wali Kelas Specific Routes (Resume & Kirim Laporan)
-    Route::middleware(['auth', 'role:Super Admin|Admin|Wali Kelas'])->prefix('teacher')->name('teacher.')->group(function () {
+    Route::middleware(['auth', 'role:Super Admin|Wali Kelas'])->prefix('teacher')->name('teacher.')->group(function () {
         Route::get('/my-students', [\App\Http\Controllers\Teacher\StudentResumeController::class, 'index'])->name('my-students.index');
         Route::get('/my-students/{student}/resume', [\App\Http\Controllers\Teacher\StudentResumeController::class, 'show'])->name('my-students.resume');
         Route::get('/my-students/{student}/resume-data', [\App\Http\Controllers\Teacher\StudentResumeController::class, 'data'])->name('my-students.resume-data');

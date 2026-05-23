@@ -52,7 +52,7 @@ class StudentPermissionController extends Controller
 
         // Send Notification to Admins and Pimpinan
         try {
-            $admins = \App\Models\User::role(['Super Admin', 'Admin', 'Pimpinan'])->get();
+            $admins = \App\Models\User::role(['Super Admin', 'Kepala Sekolah'])->get();
             \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\NewPermissionRequest($permission));
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Gagal mengirim notif izin siswa: ' . $e->getMessage());

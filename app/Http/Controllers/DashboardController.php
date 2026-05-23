@@ -16,7 +16,7 @@ class DashboardController extends Controller
 {
     public function index(Request $request)
     {
-        if ($request->user()->hasRole('Pimpinan')) {
+        if ($request->user()->hasRole('Kepala Sekolah')) {
             return redirect()->route('admin.leader-dashboard');
         }
 
