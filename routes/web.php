@@ -231,6 +231,12 @@ Route::middleware('auth')->group(function () {
         Route::get('/assessments/export/excel', [\App\Http\Controllers\Teacher\DailyAssessmentController::class, 'exportExcel'])->name('assessments.export.excel');
         Route::get('/assessments/export/pdf', [\App\Http\Controllers\Teacher\DailyAssessmentController::class, 'exportPdf'])->name('assessments.export.pdf');
         Route::resource('assessments', \App\Http\Controllers\Teacher\DailyAssessmentController::class);
+
+        // Final Assessments — ASAS & ASAT
+        Route::get('/final-assessments/export/excel', [\App\Http\Controllers\Teacher\FinalAssessmentController::class, 'exportExcel'])->name('final-assessments.export.excel');
+        Route::get('/final-assessments/export/pdf', [\App\Http\Controllers\Teacher\FinalAssessmentController::class, 'exportPdf'])->name('final-assessments.export.pdf');
+        Route::get('/final-assessments/students/{classId}', [\App\Http\Controllers\Teacher\FinalAssessmentController::class, 'getStudents'])->name('final-assessments.students');
+        Route::resource('final-assessments', \App\Http\Controllers\Teacher\FinalAssessmentController::class);
         
         // Student Guidance (Guru Wali / Guru BK / Wali Kelas / Guru)
         // Note: as per implementation plan, Guru/Dosen and Wali Kelas both have access to bimbingan
