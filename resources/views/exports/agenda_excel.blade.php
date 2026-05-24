@@ -146,6 +146,26 @@
             <td style="border: 1px solid #000; text-align: center;">{{ $row['summary']['terlambat'] }}</td>
         </tr>
     @endforeach
+    <tr>
+        <td colspan="2" style="border: 1px solid #000; text-align: right; font-weight: bold; background-color: #f1f5f9;">% Kehadiran Harian</td>
+        @foreach($matrix['dates'] as $date)
+            @php
+                $presentCount = 0;
+                $totalStudents = count($matrix['report']);
+                foreach($matrix['report'] as $row) {
+                    $status = strtolower($row['daily'][$date] ?? '-');
+                    if (in_array($status, ['hadir', 'terlambat'])) {
+                        $presentCount++;
+                    }
+                }
+                $percentage = $totalStudents > 0 ? round(($presentCount / $totalStudents) * 100) : 0;
+            @endphp
+            <td style="border: 1px solid #000; text-align: center; font-weight: bold; background-color: #f1f5f9;">
+                {{ $percentage }}%
+            </td>
+        @endforeach
+        <td colspan="5" style="border: 1px solid #000; background-color: #f1f5f9;"></td>
+    </tr>
     </tbody>
 </table>
 @endif

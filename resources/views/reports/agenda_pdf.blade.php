@@ -78,6 +78,25 @@
 
 <!-- Bagian II: Matriks Presensi Siswa -->
 @if(isset($matrix) && $matrix)
+@php
+    $dailyPercentages = [];
+    $totalStudents = count($matrix['report']);
+    foreach($matrix['dates'] as $date) {
+        $presentCount = 0;
+        foreach($matrix['report'] as $row) {
+            $status = strtolower($row['daily'][$date] ?? '-');
+            if (in_array($status, ['hadir', 'terlambat'])) {
+                $presentCount++;
+            }
+        }
+        $percentage = $totalStudents > 0 ? round(($presentCount / $totalStudents) * 100) : 0;
+        $dailyPercentages[$date] = [
+            'percentage' => $percentage,
+            'present' => $presentCount,
+            'total' => $totalStudents
+        ];
+    }
+@endphp
 <div style="page-break-before: always;"></div>
 <h3 style="font-size: 11px; border-left: 4px solid #000; padding-left: 10px; margin-bottom: 10px; margin-top: 10px; color: #000; text-transform: uppercase; letter-spacing: 0.5px;">II. Matriks Presensi Siswa</h3>
 <table class="data">
@@ -126,7 +145,51 @@
         </tr>
         @endforeach
     </tbody>
+    <tfoot>
+        <tr style="background: #f8fafc; font-weight: bold;">
+            <td colspan="2" class="text-right" style="font-size: 8px; font-weight: bold; padding: 6px; border-top: 2px solid #cbd5e1; border-bottom: 2px solid #cbd5e1;">% Kehadiran Harian</td>
+            @foreach($matrix['dates'] as $date)
+                @php
+                    $pct = $dailyPercentages[$date]['percentage'];
+                    $color = $pct >= 90 ? '#16a34a' : ($pct >= 75 ? '#d97706' : '#dc2626');
+                @endphp
+                <td class="text-center" style="font-size: 8px; font-weight: bold; padding: 4px 1px; color: {{ $color }}; border-top: 2px solid #cbd5e1; border-bottom: 2px solid #cbd5e1;">
+                    {{ $pct }}%
+                </td>
+            @endforeach
+            <td colspan="5" style="background: #f1f5f9; border-top: 2px solid #cbd5e1; border-bottom: 2px solid #cbd5e1;"></td>
+        </tr>
+    </tfoot>
 </table>
+
+<div style="margin-top: 20px; page-break-inside: avoid;">
+    <h4 style="font-size: 10px; border-left: 3px solid #4F46E5; padding-left: 8px; margin-bottom: 10px; text-transform: uppercase; color: #1e293b; letter-spacing: 0.5px;">Grafik Persentase Kehadiran Harian</h4>
+    
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 6px;">
+        <table style="width: 100%; border-collapse: collapse;">
+            <tr style="height: 90px;">
+                @foreach($matrix['dates'] as $date)
+                    @php
+                        $pct = $dailyPercentages[$date]['percentage'];
+                        $height = round(($pct / 100) * 70); // max height 70px
+                        $color = $pct >= 90 ? '#10b981' : ($pct >= 75 ? '#f59e0b' : '#ef4444');
+                    @endphp
+                    <td style="vertical-align: bottom; text-align: center; padding: 0 2px; height: 90px;">
+                        <div style="font-size: 7px; font-weight: bold; margin-bottom: 2px; color: {{ $color }};">{{ $pct }}%</div>
+                        <div style="background-color: {{ $color }}; height: {{ $height }}px; width: 18px; margin: 0 auto; border-radius: 2px 2px 0 0;"></div>
+                    </td>
+                @endforeach
+            </tr>
+            <tr style="height: 18px; background-color: #e2e8f0;">
+                @foreach($matrix['dates'] as $date)
+                    <td style="text-align: center; font-size: 6.5px; color: #334155; font-weight: bold; border-top: 1px solid #cbd5e1; padding: 3px 0;">
+                        {{ \Carbon\Carbon::parse($date)->format('d/m') }}
+                    </td>
+                @endforeach
+            </tr>
+        </table>
+    </div>
+</div>
 
 <div style="margin-top: 15px; font-size: 8px; background: #eee; padding: 8px; border: 1px solid #000;">
     <strong>KETERANGAN MATRIKS:</strong> 
