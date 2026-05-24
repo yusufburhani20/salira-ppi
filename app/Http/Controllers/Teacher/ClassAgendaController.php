@@ -22,17 +22,34 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class ClassAgendaController extends Controller
 {
+    private function resolveSemesterDates(Request $request)
+    {
+        if ($request->filled('semester_id')) {
+            $sem = Semester::find($request->semester_id);
+            if ($sem) {
+                $request->merge([
+                    'start_date' => $sem->start_date,
+                    'end_date' => $sem->end_date,
+                ]);
+            }
+        } elseif (!$request->has('start_date') && !$request->has('end_date')) {
+            $activeSem = Semester::where('is_active', true)->first();
+            if ($activeSem) {
+                $request->merge([
+                    'semester_id' => $activeSem->id,
+                    'start_date' => $activeSem->start_date,
+                    'end_date' => $activeSem->end_date,
+                ]);
+            }
+        }
+    }
+
     public function index(Request $request)
     {
+        $this->resolveSemesterDates($request);
+
         $query = ClassAgenda::with('academicClass')
             ->where('teacher_id', Auth::id());
-
-        // Default to active semester if no date filters and no semester filter specified
-        $semesterId = $request->input('semester_id');
-        if (!$semesterId && !$request->has('start_date') && !$request->has('end_date')) {
-            $activeSemester = Semester::where('is_active', true)->first();
-            $semesterId = $activeSemester?->id;
-        }
 
         // Apply filters
         if ($request->academic_class_id) {
@@ -42,18 +59,11 @@ class ClassAgendaController extends Controller
             $query->where('subject_id', $request->subject_id);
         }
 
-        if ($semesterId) {
-            $selectedSemester = Semester::find($semesterId);
-            if ($selectedSemester) {
-                $query->whereBetween('date', [$selectedSemester->start_date, $selectedSemester->end_date]);
-            }
-        } else {
-            if ($request->start_date) {
-                $query->whereDate('date', '>=', $request->start_date);
-            }
-            if ($request->end_date) {
-                $query->whereDate('date', '<=', $request->end_date);
-            }
+        if ($request->start_date) {
+            $query->whereDate('date', '>=', $request->start_date);
+        }
+        if ($request->end_date) {
+            $query->whereDate('date', '<=', $request->end_date);
         }
 
         $agendas = $query->latest('date')
@@ -73,9 +83,6 @@ class ClassAgendaController extends Controller
             });
 
         $filters = $request->only(['academic_class_id', 'start_date', 'end_date', 'subject_id', 'semester_id']);
-        if (!$request->has('semester_id') && !$request->has('start_date') && !$request->has('end_date')) {
-            $filters['semester_id'] = $semesterId;
-        }
 
         return Inertia::render('Teacher/Agendas/Index', [
             'agendas' => $agendas,
@@ -359,6 +366,7 @@ class ClassAgendaController extends Controller
 
     public function exportExcel(Request $request)
     {
+        $this->resolveSemesterDates($request);
         Carbon::setLocale('id');
         $data = $this->getExportData($request);
         
@@ -389,6 +397,7 @@ class ClassAgendaController extends Controller
 
     public function exportPdf(Request $request)
     {
+        $this->resolveSemesterDates($request);
         Carbon::setLocale('id');
         $data = $this->getExportData($request);
         
@@ -443,6 +452,8 @@ class ClassAgendaController extends Controller
 
     private function getExportData(Request $request)
     {
+        $this->resolveSemesterDates($request);
+
         $query = ClassAgenda::with(['teacher', 'subject', 'academicClass', 'attendances.student'])
             ->where('teacher_id', Auth::id());
 
@@ -453,24 +464,11 @@ class ClassAgendaController extends Controller
             $query->where('subject_id', $request->subject_id);
         }
 
-        $semesterId = $request->input('semester_id');
-        if (!$semesterId && !$request->has('start_date') && !$request->has('end_date')) {
-            $activeSemester = Semester::where('is_active', true)->first();
-            $semesterId = $activeSemester?->id;
+        if ($request->start_date) {
+            $query->whereDate('date', '>=', $request->start_date);
         }
-
-        if ($semesterId) {
-            $selectedSemester = Semester::find($semesterId);
-            if ($selectedSemester) {
-                $query->whereBetween('date', [$selectedSemester->start_date, $selectedSemester->end_date]);
-            }
-        } else {
-            if ($request->start_date) {
-                $query->whereDate('date', '>=', $request->start_date);
-            }
-            if ($request->end_date) {
-                $query->whereDate('date', '<=', $request->end_date);
-            }
+        if ($request->end_date) {
+            $query->whereDate('date', '<=', $request->end_date);
         }
 
         return $query->latest('date')->get()->toArray();
@@ -525,6 +523,8 @@ class ClassAgendaController extends Controller
 
     private function prepareDetailedAttendanceReport(Request $request)
     {
+        $this->resolveSemesterDates($request);
+
         $request->validate([
             'academic_class_id' => 'required|exists:academic_classes,id',
             'semester_id' => 'nullable|exists:semesters,id',
@@ -536,25 +536,8 @@ class ClassAgendaController extends Controller
         
         $classId = $request->academic_class_id;
         
-        $semesterId = $request->input('semester_id');
-        if (!$semesterId && !$request->has('start_date') && !$request->has('end_date')) {
-            $activeSemester = Semester::where('is_active', true)->first();
-            $semesterId = $activeSemester?->id;
-        }
-
-        if ($semesterId) {
-            $selectedSemester = Semester::find($semesterId);
-            if ($selectedSemester) {
-                $start = Carbon::parse($selectedSemester->start_date)->startOfDay();
-                $end = Carbon::parse($selectedSemester->end_date)->endOfDay();
-            } else {
-                $start = Carbon::parse($request->start_date)->startOfDay();
-                $end = Carbon::parse($request->end_date)->endOfDay();
-            }
-        } else {
-            $start = Carbon::parse($request->start_date)->startOfDay();
-            $end = Carbon::parse($request->end_date)->endOfDay();
-        }
+        $start = Carbon::parse($request->start_date)->startOfDay();
+        $end = Carbon::parse($request->end_date)->endOfDay();
 
         // Get agendas for this teacher in this class
         $query = ClassAgenda::where('teacher_id', Auth::id())
