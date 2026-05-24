@@ -16,14 +16,15 @@ import {
 import axios from 'axios';
 import StatCard from '@/Components/StatCard';
 
-export default function MyStudentResume({ student }: any) {
+export default function MyStudentResume({ student, semesters = [], activeSemesterId }: any) {
     const [resumeData, setResumeData] = useState<any>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     const { data, setData, post, processing, errors } = useForm({
-        start_date: firstDayOfMonth(new Date().getFullYear(), 0), // 1 Januari
-        end_date: todayLocal(),
+        semester_id: activeSemesterId ? activeSemesterId.toString() : '',
+        start_date: activeSemesterId ? '' : firstDayOfMonth(new Date().getFullYear(), 0), // 1 Januari
+        end_date: activeSemesterId ? '' : todayLocal(),
     });
 
     const fetchResume = async () => {
@@ -53,6 +54,7 @@ export default function MyStudentResume({ student }: any) {
             const m = parseInt(month) - 1;
             setData(d => ({
                 ...d,
+                semester_id: '',
                 start_date: firstDayOfMonth(year, m),
                 end_date: lastDayOfMonth(year, m),
             }));
@@ -117,8 +119,27 @@ export default function MyStudentResume({ student }: any) {
                 
                 {/* ── FILTER SECTION ── */}
                 <div className="bg-white dark:bg-slate-800 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-700/50">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
                         
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Pilih Semester</label>
+                            <select 
+                                value={data.semester_id}
+                                onChange={e => setData(d => ({
+                                    ...d,
+                                    semester_id: e.target.value,
+                                    start_date: '',
+                                    end_date: '',
+                                }))}
+                                className="w-full h-11 rounded-xl border-slate-200 dark:border-slate-700 dark:bg-slate-900 dark:text-white focus:ring-indigo-500 focus:border-indigo-500 text-sm font-bold"
+                            >
+                                <option value="">-- Custom Tanggal --</option>
+                                {semesters.map((sem: any) => (
+                                    <option key={sem.id} value={sem.id}>{sem.name}</option>
+                                ))}
+                            </select>
+                        </div>
+
                         <div className="space-y-1.5">
                             <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Pilih Bulan</label>
                             <select 
@@ -138,14 +159,14 @@ export default function MyStudentResume({ student }: any) {
                                 <input 
                                     type="date" 
                                     value={data.start_date}
-                                    onChange={e => setData('start_date', e.target.value)}
+                                    onChange={e => setData(d => ({ ...d, start_date: e.target.value, semester_id: '' }))}
                                     className="flex-1 h-full bg-transparent border-none text-[12px] focus:ring-0 dark:text-white p-0"
                                 />
                                 <span className="text-slate-300 font-bold">-</span>
                                 <input 
                                     type="date" 
                                     value={data.end_date}
-                                    onChange={e => setData('end_date', e.target.value)}
+                                    onChange={e => setData(d => ({ ...d, end_date: e.target.value, semester_id: '' }))}
                                     className="flex-1 h-full bg-transparent border-none text-[12px] focus:ring-0 dark:text-white p-0"
                                 />
                             </div>

@@ -24,7 +24,7 @@ interface Subject {
     name: string;
 }
 
-export default function ReportIndex({ auth, classes, subjects }: PageProps<{ classes: AcademicClass[], subjects: Subject[] }>) {
+export default function ReportIndex({ auth, classes, subjects, semesters = [], activeSemesterId }: PageProps<{ classes: AcademicClass[], subjects: Subject[], semesters: any[], activeSemesterId: any }>) {
     const [activeTab, setActiveTab] = useState<'attendance' | 'attendance_subject' | 'assessment' | 'agenda' | 'consultation'>('attendance');
     const [results, setResults] = useState<any>({
         attendance: null,
@@ -38,8 +38,9 @@ export default function ReportIndex({ auth, classes, subjects }: PageProps<{ cla
     const { data, setData, errors } = useForm({
         academic_class_id: '',
         subject_id: '',
-        start_date: firstDayOfMonth(new Date().getFullYear(), new Date().getMonth()), // Awal bulan ini
-        end_date: todayLocal(),
+        semester_id: activeSemesterId ? activeSemesterId.toString() : '',
+        start_date: activeSemesterId ? '' : firstDayOfMonth(new Date().getFullYear(), new Date().getMonth()), // Awal bulan ini
+        end_date: activeSemesterId ? '' : todayLocal(),
         student_id: '',
     });
 
@@ -70,11 +71,12 @@ export default function ReportIndex({ auth, classes, subjects }: PageProps<{ cla
     };
 
     const handleMonthChange = (month: string) => {
-        const year = new Date(data.start_date).getFullYear();
+        const year = new Date().getFullYear();
         if (month) {
             const m = parseInt(month) - 1;
             setData(d => ({
                 ...d,
+                semester_id: '',
                 start_date: firstDayOfMonth(year, m),
                 end_date: lastDayOfMonth(year, m),
             }));
@@ -173,11 +175,28 @@ export default function ReportIndex({ auth, classes, subjects }: PageProps<{ cla
                                     <CalendarIcon className="w-3 h-3" />
                                     Periode Waktu & Aksi
                                 </h4>
-                                <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 items-center">
+                                <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 items-center">
+                                    <div>
+                                        <select
+                                            value={data.semester_id}
+                                            onChange={e => setData(d => ({
+                                                ...d,
+                                                semester_id: e.target.value,
+                                                start_date: '',
+                                                end_date: '',
+                                            }))}
+                                            className="w-full h-12 rounded-xl border-gray-100 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-primary focus:border-primary transition-all font-bold text-sm"
+                                        >
+                                            <option value="">-- Custom Tanggal --</option>
+                                            {semesters.map((sem: any) => (
+                                                <option key={sem.id} value={sem.id}>{sem.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
                                     <div>
                                         <select
                                             onChange={e => handleMonthChange(e.target.value)}
-                                            className="w-full h-12 rounded-xl border-gray-100 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-primary focus:border-primary transition-all"
+                                            className="w-full h-12 rounded-xl border-gray-100 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-primary focus:border-primary transition-all font-bold text-sm"
                                         >
                                             <option value="">-- Berdasarkan Bulan --</option>
                                             {['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'].map((m, i) => (
@@ -189,14 +208,14 @@ export default function ReportIndex({ auth, classes, subjects }: PageProps<{ cla
                                         <input
                                             type="date"
                                             value={data.start_date}
-                                            onChange={e => setData('start_date', e.target.value)}
+                                            onChange={e => setData(d => ({ ...d, start_date: e.target.value, semester_id: '' }))}
                                             className="flex-1 h-full bg-transparent border-none text-[11px] focus:ring-0 dark:text-white"
                                         />
                                         <span className="text-gray-300 text-[10px] font-bold">SAMPAI</span>
                                         <input
                                             type="date"
                                             value={data.end_date}
-                                            onChange={e => setData('end_date', e.target.value)}
+                                            onChange={e => setData(d => ({ ...d, end_date: e.target.value, semester_id: '' }))}
                                             className="flex-1 h-full bg-transparent border-none text-[11px] focus:ring-0 dark:text-white"
                                         />
                                     </div>

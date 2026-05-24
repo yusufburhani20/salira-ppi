@@ -11,6 +11,7 @@ use App\Models\StudentScore;
 use App\Models\ClassAgenda;
 use App\Models\StudentConsultation;
 use App\Models\Subject;
+use App\Models\Semester;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Carbon\Carbon;
@@ -25,16 +26,54 @@ class RecapController extends Controller
     {
         $classes = AcademicClass::with('academicYear')->get();
         $subjects = Subject::with('academicClasses:id')->orderBy('name')->get();
+        $semesters = Semester::with('academicYear')
+            ->get()
+            ->map(function($sem) {
+                return [
+                    'id' => $sem->id,
+                    'name' => 'TA ' . $sem->academicYear->name . ' - ' . $sem->name,
+                    'start_date' => $sem->start_date,
+                    'end_date' => $sem->end_date,
+                    'is_active' => $sem->is_active,
+                ];
+            });
+        $activeSemester = Semester::where('is_active', true)->first();
         
         return Inertia::render('Admin/Reports/Index', [
             'classes' => $classes,
             'subjects' => $subjects,
+            'semesters' => $semesters,
+            'activeSemesterId' => $activeSemester?->id,
         ]);
+    }
+
+    private function resolveSemesterDates(Request $request)
+    {
+        if ($request->filled('semester_id')) {
+            $sem = Semester::find($request->semester_id);
+            if ($sem) {
+                $request->merge([
+                    'start_date' => $sem->start_date,
+                    'end_date' => $sem->end_date,
+                ]);
+            }
+        } elseif (!$request->has('start_date') && !$request->has('end_date')) {
+            $activeSem = Semester::where('is_active', true)->first();
+            if ($activeSem) {
+                $request->merge([
+                    'semester_id' => $activeSem->id,
+                    'start_date' => $activeSem->start_date,
+                    'end_date' => $activeSem->end_date,
+                ]);
+            }
+        }
     }
 
     // --- Attendance Recap ---
     public function attendanceData(Request $request)
     {
+        $this->resolveSemesterDates($request);
+
         $request->validate([
             'academic_class_id' => 'required|exists:academic_classes,id',
             'start_date' => 'required|date',
@@ -96,6 +135,8 @@ class RecapController extends Controller
     // --- Attendance Recap (Per Subject) ---
     public function attendanceSubjectData(Request $request)
     {
+        $this->resolveSemesterDates($request);
+
         $request->validate([
             'academic_class_id' => 'required|exists:academic_classes,id',
             'subject_id' => 'required|exists:subjects,id',
@@ -165,6 +206,8 @@ class RecapController extends Controller
     // --- Assessments Recap (Detailed) ---
     public function assessmentData(Request $request)
     {
+        $this->resolveSemesterDates($request);
+
         $request->validate([
             'academic_class_id' => 'required|exists:academic_classes,id',
             'subject_id' => 'required|exists:subjects,id',
@@ -195,6 +238,8 @@ class RecapController extends Controller
     // --- Agendas Recap ---
     public function agendaData(Request $request)
     {
+        $this->resolveSemesterDates($request);
+
         $request->validate([
             'academic_class_id' => 'required|exists:academic_classes,id',
             'start_date' => 'required|date',
@@ -213,6 +258,8 @@ class RecapController extends Controller
     // --- Consultations Recap ---
     public function consultationData(Request $request)
     {
+        $this->resolveSemesterDates($request);
+
         $request->validate([
             'academic_class_id' => 'nullable|exists:academic_classes,id',
             'student_id' => 'nullable|exists:students,id',
@@ -238,18 +285,21 @@ class RecapController extends Controller
     // --- Export Methods ---
     public function attendanceExport(Request $request)
     {
+        $this->resolveSemesterDates($request);
         $data = $this->attendanceData($request)->getData(true);
         return Excel::download(new \App\Exports\AttendanceRecapExport($data), 'rekap_absensi.xlsx');
     }
 
     public function attendanceSubjectExport(Request $request)
     {
+        $this->resolveSemesterDates($request);
         $data = $this->attendanceSubjectData($request)->getData(true);
         return Excel::download(new \App\Exports\AttendanceSubjectRecapExport($data), 'rekap_absensi_mapel.xlsx');
     }
 
     public function assessmentExport(Request $request)
     {
+        $this->resolveSemesterDates($request);
         $data = $this->assessmentData($request)->getData(true);
         
         $subject = \App\Models\Subject::find($request->subject_id);
@@ -269,6 +319,7 @@ class RecapController extends Controller
 
     public function agendaExport(Request $request)
     {
+        $this->resolveSemesterDates($request);
         $agendas = $this->agendaData($request)->getData(true);
         
         $matrix = null;
@@ -291,6 +342,7 @@ class RecapController extends Controller
 
     public function consultationExport(Request $request)
     {
+        $this->resolveSemesterDates($request);
         $consultations = $this->consultationData($request)->getData(true);
         
         $class = $request->academic_class_id ? \App\Models\AcademicClass::find($request->academic_class_id) : null;
@@ -321,6 +373,7 @@ class RecapController extends Controller
 
     public function attendancePdf(Request $request)
     {
+        $this->resolveSemesterDates($request);
         $data = $this->attendanceData($request)->getData(true);
         $settings = $this->getPdfSettings('Rekap Absensi Siswa', $data['class'], $data['range']);
         
@@ -334,6 +387,7 @@ class RecapController extends Controller
 
     public function attendanceSubjectPdf(Request $request)
     {
+        $this->resolveSemesterDates($request);
         $data = $this->attendanceSubjectData($request)->getData(true);
         $settings = $this->getPdfSettings('Rekap Absensi Mata Pelajaran', $data['class'], $data['range'], $data['subject']);
         
@@ -348,6 +402,7 @@ class RecapController extends Controller
 
     public function assessmentPdf(Request $request)
     {
+        $this->resolveSemesterDates($request);
         $data = $this->assessmentData($request)->getData(true);
         $subject = \App\Models\Subject::find($request->subject_id)->name;
         $settings = $this->getPdfSettings('Rekap Asesmen Harian', \App\Models\AcademicClass::find($request->academic_class_id)->name, $data['range'], $subject);
@@ -367,6 +422,7 @@ class RecapController extends Controller
 
     public function agendaPdf(Request $request)
     {
+        $this->resolveSemesterDates($request);
         $data = $this->agendaData($request)->getData(true);
         
         $matrix = null;
@@ -389,6 +445,7 @@ class RecapController extends Controller
 
     public function consultationPdf(Request $request)
     {
+        $this->resolveSemesterDates($request);
         $data = $this->consultationData($request)->getData(true);
         $className = $request->academic_class_id ? \App\Models\AcademicClass::find($request->academic_class_id)->name : 'Semua Kelas';
         $start = Carbon::parse($request->start_date)->format('d/m/Y');

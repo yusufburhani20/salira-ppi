@@ -10,6 +10,7 @@ use App\Models\StudentScore;
 use App\Models\StudentConsultation;
 use App\Models\Setting;
 use App\Notifications\StudentReportNotification;
+use App\Models\Semester;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Carbon\Carbon;
@@ -66,14 +67,53 @@ class StudentResumeController extends Controller
             $q->wherePivot('is_active', true)->with('academicYear');
         }]);
 
+        $semesters = Semester::with('academicYear')
+            ->get()
+            ->map(function($sem) {
+                return [
+                    'id' => $sem->id,
+                    'name' => 'TA ' . $sem->academicYear->name . ' - ' . $sem->name,
+                    'start_date' => $sem->start_date,
+                    'end_date' => $sem->end_date,
+                    'is_active' => $sem->is_active,
+                ];
+            });
+        $activeSemester = Semester::where('is_active', true)->first();
+
         return Inertia::render('Teacher/MyStudents/Resume', [
             'student' => $student,
+            'semesters' => $semesters,
+            'activeSemesterId' => $activeSemester?->id,
         ]);
+    }
+
+    private function resolveSemesterDates(Request $request)
+    {
+        if ($request->filled('semester_id')) {
+            $sem = Semester::find($request->semester_id);
+            if ($sem) {
+                $request->merge([
+                    'start_date' => $sem->start_date,
+                    'end_date' => $sem->end_date,
+                ]);
+            }
+        } elseif (!$request->has('start_date') && !$request->has('end_date')) {
+            $activeSem = Semester::where('is_active', true)->first();
+            if ($activeSem) {
+                $request->merge([
+                    'semester_id' => $activeSem->id,
+                    'start_date' => $activeSem->start_date,
+                    'end_date' => $activeSem->end_date,
+                ]);
+            }
+        }
     }
 
     public function data(Request $request, Student $student)
     {
         $this->ensureIsMyStudent($student);
+
+        $this->resolveSemesterDates($request);
 
         $request->validate([
             'start_date' => 'required|date',
@@ -158,6 +198,8 @@ class StudentResumeController extends Controller
     {
         $this->ensureIsMyStudent($student);
 
+        $this->resolveSemesterDates($request);
+
         // Fetch data using the data method internally
         $dataResponse = $this->data($request, $student);
         $data = $dataResponse->getData(true);
@@ -182,6 +224,8 @@ class StudentResumeController extends Controller
     public function sendReport(Request $request, Student $student)
     {
         $this->ensureIsMyStudent($student);
+
+        $this->resolveSemesterDates($request);
 
         $request->validate([
             'start_date' => 'required|date',
@@ -208,6 +252,8 @@ class StudentResumeController extends Controller
     }
     public function sendBulkReport(Request $request)
     {
+        $this->resolveSemesterDates($request);
+
         $request->validate([
             'student_ids'   => 'required|array|min:1',
             'student_ids.*' => 'integer|exists:students,id',

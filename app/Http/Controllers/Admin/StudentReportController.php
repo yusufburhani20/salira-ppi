@@ -9,6 +9,7 @@ use App\Models\StudentAttendance;
 use App\Models\StudentScore;
 use App\Models\StudentConsultation;
 use App\Models\Setting;
+use App\Models\Semester;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Carbon\Carbon;
@@ -22,13 +23,52 @@ class StudentReportController extends Controller
             $q->wherePivot('is_active', true)->orderBy('name');
         }])->get();
 
+        $semesters = Semester::with('academicYear')
+            ->get()
+            ->map(function($sem) {
+                return [
+                    'id' => $sem->id,
+                    'name' => 'TA ' . $sem->academicYear->name . ' - ' . $sem->name,
+                    'start_date' => $sem->start_date,
+                    'end_date' => $sem->end_date,
+                    'is_active' => $sem->is_active,
+                ];
+            });
+        $activeSemester = Semester::where('is_active', true)->first();
+
         return Inertia::render('Admin/Reports/StudentResume', [
             'classes' => $classes,
+            'semesters' => $semesters,
+            'activeSemesterId' => $activeSemester?->id,
         ]);
+    }
+
+    private function resolveSemesterDates(Request $request)
+    {
+        if ($request->filled('semester_id')) {
+            $sem = Semester::find($request->semester_id);
+            if ($sem) {
+                $request->merge([
+                    'start_date' => $sem->start_date,
+                    'end_date' => $sem->end_date,
+                ]);
+            }
+        } elseif (!$request->has('start_date') && !$request->has('end_date')) {
+            $activeSem = Semester::where('is_active', true)->first();
+            if ($activeSem) {
+                $request->merge([
+                    'semester_id' => $activeSem->id,
+                    'start_date' => $activeSem->start_date,
+                    'end_date' => $activeSem->end_date,
+                ]);
+            }
+        }
     }
 
     public function resumeData(Request $request)
     {
+        $this->resolveSemesterDates($request);
+
         $request->validate([
             'student_id' => 'required|exists:students,id',
             'start_date' => 'required|date',
@@ -112,6 +152,7 @@ class StudentReportController extends Controller
 
     public function resumePdf(Request $request)
     {
+        $this->resolveSemesterDates($request);
         $data = $this->resumeData($request)->getData(true);
 
         $settings = [
