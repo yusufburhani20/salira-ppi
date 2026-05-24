@@ -5,47 +5,47 @@
     <tr>
         <th></th>
         <th></th>
-        <th colspan="5" style="font-weight: bold; font-size: 14px; color: #4F46E5;">REKAP JURNAL &amp; PRESENSI TERPADU</th>
+        <th colspan="6" style="font-weight: bold; font-size: 14px; color: #4F46E5;">REKAP JURNAL &amp; PRESENSI TERPADU</th>
     </tr>
     <tr>
         <th></th>
         <th></th>
-        <th colspan="5" style="font-weight: bold; font-size: 11px;">{{ $meta['school_name'] ?? 'SALIRA ACADEMY' }}</th>
+        <th colspan="6" style="font-weight: bold; font-size: 11px;">{{ $meta['school_name'] ?? 'SALIRA ACADEMY' }}</th>
     </tr>
     <tr>
         <th></th>
         <th></th>
-        <th colspan="5" style="font-style: italic; font-size: 9px; color: #64748b;">Periode: {{ $meta['range'] ?? '-' }}</th>
+        <th colspan="6" style="font-style: italic; font-size: 9px; color: #64748b;">Periode: {{ $meta['range'] ?? '-' }}</th>
     </tr>
     <tr>
         <th></th>
         <th></th>
-        <th colspan="5" style="font-size: 9px; color: #64748b;">Dicetak pada: {{ date('d/m/Y H:i:s') }}</th>
+        <th colspan="6" style="font-size: 9px; color: #64748b;">Dicetak pada: {{ date('d/m/Y H:i:s') }}</th>
     </tr>
     <tr>
-        <th colspan="7"></th>
+        <th colspan="8"></th>
     </tr>
     <tr>
         <th colspan="2" style="font-weight: bold; background-color: #eee; border: 1px solid #000;">Kelas:</th>
-        <th colspan="5" style="border: 1px solid #000; font-weight: bold;">{{ $meta['class_name'] ?? '-' }}</th>
+        <th colspan="6" style="border: 1px solid #000; font-weight: bold;">{{ $meta['class_name'] ?? '-' }}</th>
     </tr>
     @if(isset($meta['subject_name']))
     <tr>
         <th colspan="2" style="font-weight: bold; background-color: #eee; border: 1px solid #000;">Mata Pelajaran:</th>
-        <th colspan="5" style="border: 1px solid #000; font-weight: bold;">{{ $meta['subject_name'] }}</th>
+        <th colspan="6" style="border: 1px solid #000; font-weight: bold;">{{ $meta['subject_name'] }}</th>
     </tr>
     @endif
     <tr>
         <th colspan="2" style="font-weight: bold; background-color: #eee; border: 1px solid #000;">Guru Pengajar:</th>
-        <th colspan="5" style="border: 1px solid #000;">{{ $meta['teacher_name'] ?? '-' }}</th>
+        <th colspan="6" style="border: 1px solid #000;">{{ $meta['teacher_name'] ?? '-' }}</th>
     </tr>
     <tr>
-        <th colspan="7"></th>
+        <th colspan="8"></th>
     </tr>
-
+ 
     <!-- I. Jurnal Mengajar -->
     <tr>
-        <th colspan="7" style="font-weight: bold; background-color: #000; color: #ffffff; text-align: center; height: 30px;">I. JURNAL MENGAJAR</th>
+        <th colspan="8" style="font-weight: bold; background-color: #000; color: #ffffff; text-align: center; height: 30px;">I. JURNAL MENGAJAR</th>
     </tr>
     <tr>
         <th style="font-weight: bold; background-color: #eee; border: 2px solid #000000; text-align: center;">No</th>
@@ -55,6 +55,7 @@
         <th style="font-weight: bold; background-color: #eee; border: 2px solid #000000; width: 250px;">Tujuan Pembelajaran</th>
         <th style="font-weight: bold; background-color: #eee; border: 2px solid #000000; width: 250px;">Model &amp; Media Pembelajaran</th>
         <th style="font-weight: bold; background-color: #eee; border: 2px solid #000000; width: 300px;">Laporan Perkembangan Siswa</th>
+        <th style="font-weight: bold; background-color: #eee; border: 2px solid #000000; width: 200px;">Kehadiran / Absensi</th>
     </tr>
     </thead>
     <tbody>
@@ -73,6 +74,28 @@
                 {{ $item['activities'] }}
                 @if(!empty($item['student_tasks']))
                     <br><span style="color: #333; font-style: italic;">Tugas: {{ $item['student_tasks'] }}</span>
+                @endif
+            </td>
+            <td style="border: 1px solid #000; vertical-align: top;">
+                @php
+                    $absentList = [];
+                    if (!empty($item['attendances'])) {
+                        foreach ($item['attendances'] as $att) {
+                            $statusVal = strtolower($att['status']['value'] ?? ($att['status'] ?? ''));
+                            if (in_array($statusVal, ['sakit', 'izin', 'alpha', 'terlambat'])) {
+                                $studentName = $att['student']['name'] ?? '-';
+                                $statusLabel = ucfirst($statusVal);
+                                $absentList[$statusLabel][] = $studentName;
+                            }
+                        }
+                    }
+                @endphp
+                @if(empty($absentList))
+                    Hadir Semua
+                @else
+                    @foreach($absentList as $status => $names)
+                        {{ $status }}: {{ implode(', ', $names) }}<br>
+                    @endforeach
                 @endif
             </td>
         </tr>

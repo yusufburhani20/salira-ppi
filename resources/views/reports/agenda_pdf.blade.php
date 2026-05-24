@@ -7,11 +7,12 @@
     <thead>
         <tr>
             <th width="25" class="text-center">No</th>
-            <th width="100">Hari / Tanggal</th>
-            <th width="40" class="text-center">Jam</th>
-            <th width="100">Mata Pelajaran</th>
-            <th>Tujuan Pembelajaran</th>
-            <th>Laporan Perkembangan Siswa</th>
+            <th width="90">Hari / Tanggal</th>
+            <th width="35" class="text-center">Jam</th>
+            <th width="90">Mata Pelajaran</th>
+            <th width="190">Tujuan Pembelajaran</th>
+            <th width="210">Laporan Perkembangan Siswa</th>
+            <th width="120">Kehadiran / Absensi</th>
         </tr>
     </thead>
     <tbody>
@@ -40,11 +41,36 @@
                     </div>
                 @endif
             </td>
+            <td style="font-size: 8px; line-height: 1.3;">
+                @php
+                    $absentList = [];
+                    if (!empty($item['attendances'])) {
+                        foreach ($item['attendances'] as $att) {
+                            $statusVal = strtolower($att['status']['value'] ?? ($att['status'] ?? ''));
+                            if (in_array($statusVal, ['sakit', 'izin', 'alpha', 'terlambat'])) {
+                                $studentName = $att['student']['name'] ?? '-';
+                                $statusLabel = ucfirst($statusVal);
+                                $absentList[$statusLabel][] = $studentName;
+                            }
+                        }
+                    }
+                @endphp
+                @if(empty($absentList))
+                    <span style="color: #16a34a; font-weight: bold;">Hadir Semua</span>
+                @else
+                    @foreach($absentList as $status => $names)
+                        <div style="margin-bottom: 2px;">
+                            <strong style="color: #dc2626;">{{ $status }}:</strong>
+                            <span style="color: #334155;">{{ implode(', ', $names) }}</span>
+                        </div>
+                    @endforeach
+                @endif
+            </td>
         </tr>
         @endforeach
         @if(count($data) == 0)
         <tr>
-            <td colspan="6" class="text-center" style="padding: 40px; font-style: italic; border: 1px dashed #000;">Tidak ada data jurnal mengajar dalam periode ini.</td>
+            <td colspan="7" class="text-center" style="padding: 40px; font-style: italic; border: 1px dashed #000;">Tidak ada data jurnal mengajar dalam periode ini.</td>
         </tr>
         @endif
     </tbody>
