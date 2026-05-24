@@ -65,9 +65,13 @@
         <thead>
             <tr>
                 <th class="text-center" width="25">No</th>
-                <th width="160">Nama Siswa</th>
-                <th class="text-center" width="50">Tipe</th>
-                <th class="text-center" width="55">Nilai</th>
+                <th width="120">Nama Siswa</th>
+                <th class="text-center" width="45">Tipe</th>
+                <th class="text-center" width="40">Nilai</th>
+                <th class="text-center" width="55">Hadir (60%)</th>
+                <th class="text-center" width="45">Sikap (20%)</th>
+                <th class="text-center" width="45">Minat (20%)</th>
+                <th class="text-center" width="55">Nilai Akhlak</th>
                 <th>Catatan</th>
             </tr>
         </thead>
@@ -87,12 +91,16 @@
                         </span>
                     </td>
                     <td class="text-center" style="font-weight: bold; font-size: 11px;">{{ $score['score'] }}</td>
+                    <td class="text-center">{{ $score['attendance_percentage'] ?? '—' }}%</td>
+                    <td class="text-center">{{ $score['attitude_score'] ?? '—' }}</td>
+                    <td class="text-center">{{ $score['interest_score'] ?? '—' }}</td>
+                    <td class="text-center" style="font-weight: bold; font-size: 11px; color: #4f46e5;">{{ $score['character_score'] ?? '—' }}</td>
                     <td style="color: #555;">{{ $score['notes'] ?? '-' }}</td>
                 </tr>
                 @endforeach
             @empty
                 <tr>
-                    <td colspan="5" class="text-center" style="padding: 30px; font-style: italic;">Tidak ada data asesmen akhir untuk filter ini.</td>
+                    <td colspan="9" class="text-center" style="padding: 30px; font-style: italic;">Tidak ada data asesmen akhir untuk filter ini.</td>
                 </tr>
             @endforelse
         </tbody>

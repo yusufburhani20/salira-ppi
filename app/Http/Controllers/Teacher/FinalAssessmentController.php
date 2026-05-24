@@ -10,6 +10,8 @@ use App\Models\AcademicYear;
 use App\Models\Semester;
 use App\Models\Subject;
 use App\Models\Setting;
+use App\Models\ClassAgenda;
+use App\Models\StudentAttendance;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -132,6 +134,8 @@ class FinalAssessmentController extends Controller
             'scores.*.student_id' => 'required|exists:students,id',
             'scores.*.score'    => 'required|numeric|min:0|max:100',
             'scores.*.notes'    => 'nullable|string|max:255',
+            'scores.*.attitude_score' => 'required|numeric|min:0|max:100',
+            'scores.*.interest_score' => 'required|numeric|min:0|max:100',
         ]);
 
         // Check for duplicates
@@ -148,7 +152,35 @@ class FinalAssessmentController extends Controller
             ]);
         }
 
-        DB::transaction(function () use ($request, $activeSemester) {
+        // Fetch real attendance percentage map in backend for secure calculation
+        $attendanceMap = [];
+        $agendas = ClassAgenda::where('academic_class_id', $request->academic_class_id)
+            ->where('subject_id', $request->subject_id)
+            ->whereBetween('date', [$activeSemester->start_date, $activeSemester->end_date])
+            ->pluck('id');
+            
+        $totalAgendas = $agendas->count();
+        if ($totalAgendas > 0) {
+            $attendances = StudentAttendance::whereIn('class_agenda_id', $agendas)
+                ->get()
+                ->groupBy('student_id');
+                
+            foreach ($request->scores as $scoreData) {
+                $studentId = $scoreData['student_id'];
+                $studentAtts = $attendances->get($studentId);
+                if ($studentAtts) {
+                    $present = $studentAtts->filter(function($att) {
+                        $status = strtolower($att->status->value ?? $att->status);
+                        return in_array($status, ['hadir', 'terlambat']);
+                    })->count();
+                    $attendanceMap[$studentId] = round(($present / $totalAgendas) * 100);
+                } else {
+                    $attendanceMap[$studentId] = 100;
+                }
+            }
+        }
+
+        DB::transaction(function () use ($request, $activeSemester, $attendanceMap) {
             $assessment = FinalAssessment::create([
                 'semester_id'       => $activeSemester->id,
                 'academic_class_id' => $request->academic_class_id,
@@ -159,11 +191,21 @@ class FinalAssessmentController extends Controller
             ]);
 
             foreach ($request->scores as $scoreData) {
+                $studentId = $scoreData['student_id'];
+                $attPct = $attendanceMap[$studentId] ?? 100;
+                $attitude = $scoreData['attitude_score'];
+                $interest = $scoreData['interest_score'];
+                $charScore = round(($attPct * 0.60) + ($attitude * 0.20) + ($interest * 0.20));
+
                 FinalAssessmentScore::create([
                     'final_assessment_id' => $assessment->id,
-                    'student_id'          => $scoreData['student_id'],
+                    'student_id'          => $studentId,
                     'score'               => $scoreData['score'],
                     'notes'               => $scoreData['notes'] ?? null,
+                    'attendance_percentage' => $attPct,
+                    'attitude_score'      => $attitude,
+                    'interest_score'      => $interest,
+                    'character_score'     => $charScore,
                 ]);
             }
         });
@@ -214,6 +256,10 @@ class FinalAssessmentController extends Controller
                 return array_merge($s->student->toArray(), [
                     'score' => $s->score,
                     'notes' => $s->notes,
+                    'attendance_percentage' => $s->attendance_percentage ?? 100,
+                    'attitude_score' => $s->attitude_score ?? '',
+                    'interest_score' => $s->interest_score ?? '',
+                    'character_score' => $s->character_score ?? '',
                 ]);
             }),
         ]);
@@ -240,14 +286,51 @@ class FinalAssessmentController extends Controller
             'scores.*.student_id' => 'required|exists:students,id',
             'scores.*.score'      => 'required|numeric|min:0|max:100',
             'scores.*.notes'      => 'nullable|string|max:255',
+            'scores.*.attitude_score' => 'required|numeric|min:0|max:100',
+            'scores.*.interest_score' => 'required|numeric|min:0|max:100',
         ]);
 
-        DB::transaction(function () use ($request, $assessment) {
+        $activeSemester = $assessment->semester;
+        
+        $attendanceMap = [];
+        $agendas = ClassAgenda::where('academic_class_id', $assessment->academic_class_id)
+            ->where('subject_id', $assessment->subject_id)
+            ->whereBetween('date', [$activeSemester->start_date, $activeSemester->end_date])
+            ->pluck('id');
+            
+        $totalAgendas = $agendas->count();
+        if ($totalAgendas > 0) {
+            $attendances = StudentAttendance::whereIn('class_agenda_id', $agendas)
+                ->get()
+                ->groupBy('student_id');
+                
+            foreach ($request->scores as $scoreData) {
+                $studentId = $scoreData['student_id'];
+                $studentAtts = $attendances->get($studentId);
+                if ($studentAtts) {
+                    $present = $studentAtts->filter(function($att) {
+                        $status = strtolower($att->status->value ?? $att->status);
+                        return in_array($status, ['hadir', 'terlambat']);
+                    })->count();
+                    $attendanceMap[$studentId] = round(($present / $totalAgendas) * 100);
+                } else {
+                    $attendanceMap[$studentId] = 100;
+                }
+            }
+        }
+
+        DB::transaction(function () use ($request, $assessment, $attendanceMap) {
             $assessment->update([
                 'description' => $request->description,
             ]);
 
             foreach ($request->scores as $scoreData) {
+                $studentId = $scoreData['student_id'];
+                $attPct = $attendanceMap[$studentId] ?? 100;
+                $attitude = $scoreData['attitude_score'];
+                $interest = $scoreData['interest_score'];
+                $charScore = round(($attPct * 0.60) + ($attitude * 0.20) + ($interest * 0.20));
+
                 FinalAssessmentScore::updateOrCreate(
                     [
                         'final_assessment_id' => $assessment->id,
@@ -256,6 +339,10 @@ class FinalAssessmentController extends Controller
                     [
                         'score' => $scoreData['score'],
                         'notes' => $scoreData['notes'] ?? null,
+                        'attendance_percentage' => $attPct,
+                        'attitude_score'      => $attitude,
+                        'interest_score'      => $interest,
+                        'character_score'     => $charScore,
                     ]
                 );
             }
@@ -288,10 +375,53 @@ class FinalAssessmentController extends Controller
     /**
      * Get students by class for AJAX.
      */
-    public function getStudents($classId)
+    public function getStudents(Request $request, $classId)
     {
-        $class = AcademicClass::with('students')->findOrFail($classId);
-        return response()->json($class->students);
+        $subjectId = $request->query('subject_id');
+        $activeSemester = Semester::where('is_active', true)->first();
+
+        $class = AcademicClass::with(['students' => function($q) {
+            $q->wherePivot('is_active', true)->orderBy('name');
+        }])->findOrFail($classId);
+
+        $attendanceMap = [];
+        $totalAgendas = 0;
+
+        if ($subjectId && $activeSemester) {
+            $agendas = ClassAgenda::where('academic_class_id', $classId)
+                ->where('subject_id', $subjectId)
+                ->whereBetween('date', [$activeSemester->start_date, $activeSemester->end_date])
+                ->pluck('id');
+
+            $totalAgendas = $agendas->count();
+
+            if ($totalAgendas > 0) {
+                $attendances = StudentAttendance::whereIn('class_agenda_id', $agendas)
+                    ->get()
+                    ->groupBy('student_id');
+
+                foreach ($class->students as $student) {
+                    $studentAtts = $attendances->get($student->id);
+                    if ($studentAtts) {
+                        $present = $studentAtts->filter(function($att) {
+                            $status = strtolower($att->status->value ?? $att->status);
+                            return in_array($status, ['hadir', 'terlambat']);
+                        })->count();
+                        $attendanceMap[$student->id] = round(($present / $totalAgendas) * 100);
+                    } else {
+                        $attendanceMap[$student->id] = 100;
+                    }
+                }
+            }
+        }
+
+        $students = $class->students->map(function($student) use ($attendanceMap) {
+            return array_merge($student->toArray(), [
+                'attendance_percentage' => $attendanceMap[$student->id] ?? 100,
+            ]);
+        });
+
+        return response()->json($students);
     }
 
     /**

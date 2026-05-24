@@ -4,40 +4,44 @@
     <thead>
     <tr>
         <th></th>
-        <th colspan="3" style="font-weight: bold; font-size: 14px; color: #4F46E5;">REKAP ASESMEN AKHIR ({{ $type_label ?? 'ASAS & ASAT' }})</th>
+        <th colspan="7" style="font-weight: bold; font-size: 14px; color: #4F46E5;">REKAP ASESMEN AKHIR ({{ $type_label ?? 'ASAS & ASAT' }})</th>
     </tr>
     <tr>
         <th></th>
-        <th colspan="3" style="font-weight: bold; font-size: 11px;">{{ $school_name ?? 'SALIRA ACADEMY' }}</th>
+        <th colspan="7" style="font-weight: bold; font-size: 11px;">{{ $school_name ?? 'SALIRA ACADEMY' }}</th>
     </tr>
     <tr>
         <th></th>
-        <th colspan="3" style="font-style: italic; font-size: 9px; color: #64748b;">Semester: {{ $semester_label ?? '-' }}</th>
+        <th colspan="7" style="font-style: italic; font-size: 9px; color: #64748b;">Semester: {{ $semester_label ?? '-' }}</th>
     </tr>
     <tr>
         <th></th>
-        <th colspan="3" style="font-size: 9px; color: #64748b;">Dicetak pada: {{ date('d/m/Y H:i:s') }}</th>
+        <th colspan="7" style="font-size: 9px; color: #64748b;">Dicetak pada: {{ date('d/m/Y H:i:s') }}</th>
     </tr>
     <tr>
-        <th colspan="4"></th>
+        <th colspan="8"></th>
     </tr>
     <tr>
         <th style="font-weight: bold; background-color: #eee; border: 1px solid #000;">Kelas:</th>
-        <th colspan="3" style="border: 1px solid #000; font-weight: bold;">{{ $class_name ?? '-' }}</th>
+        <th colspan="7" style="border: 1px solid #000; font-weight: bold;">{{ $class_name ?? '-' }}</th>
     </tr>
     <tr>
         <th style="font-weight: bold; background-color: #eee; border: 1px solid #000;">Mata Pelajaran:</th>
-        <th colspan="3" style="border: 1px solid #000; font-weight: bold;">{{ $subject_name ?? '-' }}</th>
+        <th colspan="7" style="border: 1px solid #000; font-weight: bold;">{{ $subject_name ?? '-' }}</th>
     </tr>
     <tr>
         <th style="font-weight: bold; background-color: #eee; border: 1px solid #000;">Guru:</th>
-        <th colspan="3" style="border: 1px solid #000;">{{ $teacher_name ?? '-' }}</th>
+        <th colspan="7" style="border: 1px solid #000;">{{ $teacher_name ?? '-' }}</th>
     </tr>
-    <tr><th colspan="4"></th></tr>
+    <tr><th colspan="8"></th></tr>
     <tr>
         <th style="font-weight: bold; background-color: #000; color: #fff; border: 2px solid #000; text-align: center;">Nama Siswa</th>
         <th style="font-weight: bold; background-color: #000; color: #fff; border: 2px solid #000; text-align: center;">Tipe</th>
         <th style="font-weight: bold; background-color: #000; color: #fff; border: 2px solid #000; text-align: center;">Nilai</th>
+        <th style="font-weight: bold; background-color: #000; color: #fff; border: 2px solid #000; text-align: center;">Kehadiran (60%)</th>
+        <th style="font-weight: bold; background-color: #000; color: #fff; border: 2px solid #000; text-align: center;">Sikap (20%)</th>
+        <th style="font-weight: bold; background-color: #000; color: #fff; border: 2px solid #000; text-align: center;">Minat (20%)</th>
+        <th style="font-weight: bold; background-color: #000; color: #fff; border: 2px solid #000; text-align: center;">Nilai Akhlak</th>
         <th style="font-weight: bold; background-color: #000; color: #fff; border: 2px solid #000; text-align: center;">Catatan</th>
     </tr>
     </thead>
@@ -53,6 +57,10 @@
             <td style="border: 1px solid #ccc; padding: 4px 8px; font-weight: bold;">{{ $score['student']['name'] ?? '-' }}</td>
             <td style="border: 1px solid #ccc; padding: 4px 8px; text-align: center; font-weight: bold; color: {{ $typeName === 'ASAS' ? '#4F46E5' : '#7C3AED' }};">{{ $typeName }}</td>
             <td style="border: 1px solid #ccc; padding: 4px 8px; text-align: center; font-weight: bold;">{{ $score['score'] }}</td>
+            <td style="border: 1px solid #ccc; padding: 4px 8px; text-align: center;">{{ $score['attendance_percentage'] ?? '—' }}%</td>
+            <td style="border: 1px solid #ccc; padding: 4px 8px; text-align: center;">{{ $score['attitude_score'] ?? '—' }}</td>
+            <td style="border: 1px solid #ccc; padding: 4px 8px; text-align: center;">{{ $score['interest_score'] ?? '—' }}</td>
+            <td style="border: 1px solid #ccc; padding: 4px 8px; text-align: center; font-weight: bold; color: #4F46E5;">{{ $score['character_score'] ?? '—' }}</td>
             <td style="border: 1px solid #ccc; padding: 4px 8px; color: #555;">{{ $score['notes'] ?? '-' }}</td>
         </tr>
         @endforeach

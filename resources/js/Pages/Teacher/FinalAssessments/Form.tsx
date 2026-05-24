@@ -25,6 +25,10 @@ interface ScoreRow {
     nisn?: string;
     score: string;
     notes: string;
+    attendance_percentage: number;
+    attitude_score: string;
+    interest_score: string;
+    character_score?: number;
 }
 
 export default function FinalAssessmentForm({ auth, assessment, activeSemester, allowedTypes, classes, subjects, students, selectedClassId }: PageProps<{
@@ -57,19 +61,23 @@ export default function FinalAssessmentForm({ auth, assessment, activeSemester, 
                 nisn: s.nisn,
                 score: s.score !== undefined ? String(s.score) : '',
                 notes: s.notes ?? '',
+                attendance_percentage: (s as any).attendance_percentage ?? 100,
+                attitude_score: (s as any).attitude_score !== undefined ? String((s as any).attitude_score) : '',
+                interest_score: (s as any).interest_score !== undefined ? String((s as any).interest_score) : '',
+                character_score: (s as any).character_score,
             }));
             setData('scores', rows);
         }
     }, []);
 
-    const fetchStudents = async (classId: string) => {
-        if (!classId) {
+    const fetchStudents = async (classId: string, subjectId: string) => {
+        if (!classId || !subjectId) {
             setData('scores', []);
             return;
         }
         setLoadingStudents(true);
         try {
-            const resp = await fetch(route('teacher.final-assessments.students', classId));
+            const resp = await fetch(route('teacher.final-assessments.students', classId) + `?subject_id=${subjectId}`);
             const data: Student[] = await resp.json();
             const rows: ScoreRow[] = data.map((s) => ({
                 student_id: s.id,
@@ -77,6 +85,9 @@ export default function FinalAssessmentForm({ auth, assessment, activeSemester, 
                 nisn: s.nisn,
                 score: '',
                 notes: '',
+                attendance_percentage: (s as any).attendance_percentage ?? 100,
+                attitude_score: '',
+                interest_score: '',
             }));
             setData('scores', rows);
         } catch {
@@ -88,12 +99,17 @@ export default function FinalAssessmentForm({ auth, assessment, activeSemester, 
 
     const handleClassChange = (classId: string) => {
         setData('academic_class_id', classId);
-        if (!isEditing) fetchStudents(classId);
+        if (!isEditing) fetchStudents(classId, data.subject_id);
     };
 
-    const updateScore = (index: number, field: 'score' | 'notes', value: string) => {
+    const handleSubjectChange = (subjectId: string) => {
+        setData('subject_id', subjectId);
+        if (!isEditing) fetchStudents(data.academic_class_id, subjectId);
+    };
+
+    const updateScore = (index: number, field: keyof ScoreRow, value: string) => {
         const updated = [...data.scores];
-        updated[index] = { ...updated[index], [field]: value };
+        updated[index] = { ...updated[index], [field]: value } as ScoreRow;
         setData('scores', updated);
     };
 
@@ -105,6 +121,9 @@ export default function FinalAssessmentForm({ auth, assessment, activeSemester, 
                 student_id: s.student_id,
                 score: s.score,
                 notes: s.notes,
+                attendance_percentage: s.attendance_percentage,
+                attitude_score: s.attitude_score,
+                interest_score: s.interest_score,
             })),
         };
         if (isEditing) {
@@ -119,7 +138,9 @@ export default function FinalAssessmentForm({ auth, assessment, activeSemester, 
         ASAT: 'ASAT — Asesmen Sumatif Akhir Tahun',
     };
 
-    const allFilled = data.scores.length > 0 && data.scores.every((s) => s.score !== '');
+    const allFilled = data.scores.length > 0 && data.scores.every(
+        (s) => s.score !== '' && s.attitude_score !== '' && s.interest_score !== ''
+    );
 
     return (
         <AuthenticatedLayout header={
@@ -221,7 +242,7 @@ export default function FinalAssessmentForm({ auth, assessment, activeSemester, 
                                     </label>
                                     <select
                                         value={data.subject_id}
-                                        onChange={(e) => setData('subject_id', e.target.value)}
+                                        onChange={(e) => handleSubjectChange(e.target.value)}
                                         disabled={isEditing}
                                         className="w-full rounded-xl border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-sm focus:ring-indigo-500 disabled:opacity-60"
                                     >
@@ -270,51 +291,110 @@ export default function FinalAssessmentForm({ auth, assessment, activeSemester, 
                                     </div>
                                 ) : (
                                     <div className="overflow-x-auto">
-                                        <table className="w-full">
+                                        <table className="w-full text-left text-sm">
                                             <thead>
-                                                <tr className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
-                                                    <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-500">#</th>
-                                                    <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-500">Nama Siswa</th>
-                                                    <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-500">NISN</th>
-                                                    <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-500 w-32">
-                                                        Nilai (0–100) <span className="text-red-500">*</span>
-                                                    </th>
-                                                    <th className="px-4 py-3 text-left text-xs font-bold uppercase tracking-wider text-gray-500">Catatan</th>
+                                                <tr className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700 text-gray-500 text-xs font-bold uppercase tracking-wider">
+                                                    <th className="px-4 py-3 text-center w-12">#</th>
+                                                    <th className="px-4 py-3 w-48">Nama Siswa</th>
+                                                    <th className="px-4 py-3 text-center w-32 font-black text-indigo-600 dark:text-indigo-400">Kehadiran (60%)</th>
+                                                    <th className="px-4 py-3 text-center w-28">ASAS/ASAT <span className="text-red-500">*</span></th>
+                                                    <th className="px-4 py-3 text-center w-28">Sikap (20%) <span className="text-red-500">*</span></th>
+                                                    <th className="px-4 py-3 text-center w-28">Minat (20%) <span className="text-red-500">*</span></th>
+                                                    <th className="px-4 py-3 text-center w-24 text-indigo-600 dark:text-indigo-400">Nilai Akhlak</th>
+                                                    <th className="px-4 py-3">Catatan</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
-                                                {data.scores.map((s, i) => (
-                                                    <tr key={s.student_id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
-                                                        <td className="px-4 py-3 text-sm text-gray-500">{i + 1}</td>
-                                                        <td className="px-4 py-3 text-sm font-semibold text-gray-900 dark:text-white">{s.name}</td>
-                                                        <td className="px-4 py-3 text-sm text-gray-500">{s.nisn || '—'}</td>
-                                                        <td className="px-4 py-3">
-                                                            <input
-                                                                type="number"
-                                                                min={0}
-                                                                max={100}
-                                                                step={0.01}
-                                                                value={s.score}
-                                                                onChange={(e) => updateScore(i, 'score', e.target.value)}
-                                                                className={`w-24 rounded-xl border text-sm text-center font-bold focus:ring-indigo-500 dark:bg-gray-900 ${
-                                                                    s.score === ''
-                                                                        ? 'border-amber-300 dark:border-amber-600'
-                                                                        : 'border-gray-300 dark:border-gray-700'
-                                                                }`}
-                                                                placeholder="—"
-                                                            />
-                                                        </td>
-                                                        <td className="px-4 py-3">
-                                                            <input
-                                                                type="text"
-                                                                value={s.notes}
-                                                                onChange={(e) => updateScore(i, 'notes', e.target.value)}
-                                                                className="w-full rounded-xl border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-sm focus:ring-indigo-500"
-                                                                placeholder="Catatan (opsional)"
-                                                            />
-                                                        </td>
-                                                    </tr>
-                                                ))}
+                                                {data.scores.map((s, i) => {
+                                                    const attPct = s.attendance_percentage ?? 100;
+                                                    const attitude = s.attitude_score !== '' ? Number(s.attitude_score) : null;
+                                                    const interest = s.interest_score !== '' ? Number(s.interest_score) : null;
+                                                    
+                                                    const calculatedAkhlak = (attitude !== null && interest !== null)
+                                                        ? Math.round((attPct * 0.60) + (attitude * 0.20) + (interest * 0.20))
+                                                        : '—';
+
+                                                    let attBadgeColor = 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20';
+                                                    if (attPct < 75) {
+                                                        attBadgeColor = 'bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-400 border border-rose-200 dark:border-rose-500/20';
+                                                    } else if (attPct < 90) {
+                                                        attBadgeColor = 'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20';
+                                                    }
+
+                                                    return (
+                                                        <tr key={s.student_id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
+                                                            <td className="px-4 py-3 text-center text-xs text-gray-400">{i + 1}</td>
+                                                            <td className="px-4 py-3">
+                                                                <p className="font-bold text-gray-900 dark:text-white leading-tight">{s.name}</p>
+                                                                <p className="text-[10px] text-gray-400">NISN: {s.nisn || '—'}</p>
+                                                            </td>
+                                                            <td className="px-4 py-3 text-center">
+                                                                <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-bold ${attBadgeColor}`}>
+                                                                    {attPct}%
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-4 py-3 text-center">
+                                                                <input
+                                                                    type="number"
+                                                                    min={0}
+                                                                    max={100}
+                                                                    value={s.score}
+                                                                    onChange={(e) => updateScore(i, 'score', e.target.value)}
+                                                                    className={`w-20 rounded-xl border text-sm text-center font-bold focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-900 ${
+                                                                        s.score === ''
+                                                                            ? 'border-amber-300 dark:border-amber-600'
+                                                                            : 'border-gray-300 dark:border-gray-700'
+                                                                    }`}
+                                                                    placeholder="—"
+                                                                />
+                                                            </td>
+                                                            <td className="px-4 py-3 text-center">
+                                                                <input
+                                                                    type="number"
+                                                                    min={0}
+                                                                    max={100}
+                                                                    value={s.attitude_score}
+                                                                    onChange={(e) => updateScore(i, 'attitude_score', e.target.value)}
+                                                                    className={`w-20 rounded-xl border text-sm text-center font-bold focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-900 ${
+                                                                        s.attitude_score === ''
+                                                                            ? 'border-amber-300 dark:border-amber-600'
+                                                                            : 'border-gray-300 dark:border-gray-700'
+                                                                    }`}
+                                                                    placeholder="—"
+                                                                />
+                                                            </td>
+                                                            <td className="px-4 py-3 text-center">
+                                                                <input
+                                                                    type="number"
+                                                                    min={0}
+                                                                    max={100}
+                                                                    value={s.interest_score}
+                                                                    onChange={(e) => updateScore(i, 'interest_score', e.target.value)}
+                                                                    className={`w-20 rounded-xl border text-sm text-center font-bold focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-900 ${
+                                                                        s.interest_score === ''
+                                                                            ? 'border-amber-300 dark:border-amber-600'
+                                                                            : 'border-gray-300 dark:border-gray-700'
+                                                                    }`}
+                                                                    placeholder="—"
+                                                                />
+                                                            </td>
+                                                            <td className="px-4 py-3 text-center">
+                                                                <span className={`text-sm font-black ${calculatedAkhlak !== '—' ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400'}`}>
+                                                                    {calculatedAkhlak}
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-4 py-3">
+                                                                <input
+                                                                    type="text"
+                                                                    value={s.notes}
+                                                                    onChange={(e) => updateScore(i, 'notes', e.target.value)}
+                                                                    className="w-full rounded-xl border border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-xs focus:ring-indigo-500 focus:border-indigo-500"
+                                                                    placeholder="Catatan..."
+                                                                />
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
                                             </tbody>
                                         </table>
                                     </div>
@@ -339,7 +419,7 @@ export default function FinalAssessmentForm({ auth, assessment, activeSemester, 
                             </a>
                             <button
                                 type="submit"
-                                disabled={processing || data.scores.length === 0}
+                                disabled={processing || data.scores.length === 0 || !allFilled}
                                 className="px-8 py-2.5 rounded-xl bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/20 disabled:opacity-60 disabled:cursor-not-allowed"
                             >
                                 {processing ? 'Menyimpan...' : isEditing ? 'Perbarui Asesmen' : 'Simpan Asesmen'}
