@@ -7,6 +7,7 @@ use App\Models\DailyAssessment;
 use App\Models\StudentScore;
 use App\Models\AcademicClass;
 use App\Models\Subject;
+use App\Models\Semester;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
@@ -20,6 +21,13 @@ class DailyAssessmentController extends Controller
         $query = DailyAssessment::with(['academicClass'])
             ->where('teacher_id', Auth::id());
 
+        // Default to active semester if no date filters and no semester filter specified
+        $semesterId = $request->input('semester_id');
+        if (!$semesterId && !$request->has('start_date') && !$request->has('end_date')) {
+            $activeSemester = Semester::where('is_active', true)->first();
+            $semesterId = $activeSemester?->id;
+        }
+
         // Filters
         if ($request->academic_class_id) {
             $query->where('academic_class_id', $request->academic_class_id);
@@ -27,11 +35,19 @@ class DailyAssessmentController extends Controller
         if ($request->subject_id) {
             $query->where('subject_id', $request->subject_id);
         }
-        if ($request->start_date) {
-            $query->whereDate('date', '>=', $request->start_date);
-        }
-        if ($request->end_date) {
-            $query->whereDate('date', '<=', $request->end_date);
+
+        if ($semesterId) {
+            $selectedSemester = Semester::find($semesterId);
+            if ($selectedSemester) {
+                $query->whereBetween('date', [$selectedSemester->start_date, $selectedSemester->end_date]);
+            }
+        } else {
+            if ($request->start_date) {
+                $query->whereDate('date', '>=', $request->start_date);
+            }
+            if ($request->end_date) {
+                $query->whereDate('date', '<=', $request->end_date);
+            }
         }
 
         $assessments = $query->latest()
@@ -41,11 +57,29 @@ class DailyAssessmentController extends Controller
         $classes = AcademicClass::all();
         $subjects = Subject::orderBy('name')->get();
 
+        $semesters = Semester::with('academicYear')
+            ->get()
+            ->map(function($sem) {
+                return [
+                    'id' => $sem->id,
+                    'name' => 'TA ' . $sem->academicYear->name . ' - ' . $sem->name,
+                    'start_date' => $sem->start_date,
+                    'end_date' => $sem->end_date,
+                    'is_active' => $sem->is_active,
+                ];
+            });
+
+        $filters = $request->only(['academic_class_id', 'subject_id', 'start_date', 'end_date', 'semester_id']);
+        if (!$request->has('semester_id') && !$request->has('start_date') && !$request->has('end_date')) {
+            $filters['semester_id'] = $semesterId;
+        }
+
         return Inertia::render('Teacher/Assessments/Index', [
             'assessments' => $assessments,
             'classes' => $classes,
             'subjects' => $subjects,
-            'filters' => $request->only(['academic_class_id', 'subject_id', 'start_date', 'end_date'])
+            'semesters' => $semesters,
+            'filters' => $filters
         ]);
     }
 
@@ -293,16 +327,33 @@ class DailyAssessmentController extends Controller
         if ($request->subject_id) {
             $query->where('subject_id', $request->subject_id);
         }
-        if ($request->start_date) {
-            $query->whereDate('date', '>=', $request->start_date);
+
+        $semesterId = $request->input('semester_id');
+        if (!$semesterId && !$request->has('start_date') && !$request->has('end_date')) {
+            $activeSemester = Semester::where('is_active', true)->first();
+            $semesterId = $activeSemester?->id;
         }
-        if ($request->end_date) {
-            $query->whereDate('date', '<=', $request->end_date);
+
+        $start = $request->start_date ?? 'Awal';
+        $end = $request->end_date ?? 'Sekarang';
+
+        if ($semesterId) {
+            $selectedSemester = Semester::find($semesterId);
+            if ($selectedSemester) {
+                $query->whereBetween('date', [$selectedSemester->start_date, $selectedSemester->end_date]);
+                $start = \Carbon\Carbon::parse($selectedSemester->start_date)->format('Y-m-d');
+                $end = \Carbon\Carbon::parse($selectedSemester->end_date)->format('Y-m-d');
+            }
+        } else {
+            if ($request->start_date) {
+                $query->whereDate('date', '>=', $request->start_date);
+            }
+            if ($request->end_date) {
+                $query->whereDate('date', '<=', $request->end_date);
+            }
         }
 
         $assessments = $query->orderBy('date')->get()->toArray();
-        $start = $request->start_date ?? 'Awal';
-        $end = $request->end_date ?? 'Sekarang';
 
         return [
             'assessments' => $assessments,

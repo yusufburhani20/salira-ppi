@@ -39,11 +39,12 @@ interface PaginatedData<T> {
     links: PaginationLinks[];
 }
 
-export default function ConsultationIndex({ auth, consultations, classes, categories, statuses, filters }: PageProps<{ 
+export default function ConsultationIndex({ auth, consultations, classes, categories, statuses, semesters = [], filters }: PageProps<{ 
     consultations: PaginatedData<StudentConsultation>,
     classes: AcademicClass[],
     categories: { value: string, label: string }[],
     statuses: { value: string, label: string }[],
+    semesters: any[],
     filters: any
 }>) {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -83,10 +84,14 @@ export default function ConsultationIndex({ auth, consultations, classes, catego
     };
 
     const updateFilter = (key: string, value: string) => {
-        router.get(route('teacher.consultations.index'), {
-            ...filters,
-            [key]: value
-        }, {
+        const newFilters = { ...filters, [key]: value };
+        if (key === 'semester_id' && value !== '') {
+            newFilters.start_date = '';
+            newFilters.end_date = '';
+        } else if ((key === 'start_date' || key === 'end_date') && value !== '') {
+            newFilters.semester_id = '';
+        }
+        router.get(route('teacher.consultations.index'), newFilters, {
             preserveState: true,
             preserveScroll: true,
             replace: true
@@ -189,13 +194,26 @@ export default function ConsultationIndex({ auth, consultations, classes, catego
 
                     {/* Filter Bar */}
                     <div className="bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
-                        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                        <div className="grid grid-cols-1 md:grid-cols-6 gap-4 items-end">
+                            <div className="space-y-1">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Pilih Semester</label>
+                                <select 
+                                    value={filters.semester_id || ''}
+                                    onChange={(e) => updateFilter('semester_id', e.target.value)}
+                                    className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 text-sm focus:ring-indigo-500 font-medium"
+                                >
+                                    <option value="">-- Custom Tanggal --</option>
+                                    {semesters.map((sem: any) => (
+                                        <option key={sem.id} value={sem.id}>{sem.name}</option>
+                                    ))}
+                                </select>
+                            </div>
                             <div className="space-y-1">
                                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Kelas</label>
                                 <select 
                                     value={filters.academic_class_id || ''}
                                     onChange={(e) => updateFilter('academic_class_id', e.target.value)}
-                                    className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 text-sm focus:ring-indigo-500"
+                                    className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 text-sm focus:ring-indigo-500 font-medium"
                                 >
                                     <option value="">Semua Kelas</option>
                                     {classes.map((c) => (
@@ -208,7 +226,7 @@ export default function ConsultationIndex({ auth, consultations, classes, catego
                                 <select 
                                     value={filters.category || ''}
                                     onChange={(e) => updateFilter('category', e.target.value)}
-                                    className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 text-sm focus:ring-indigo-500"
+                                    className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 text-sm focus:ring-indigo-500 font-medium"
                                 >
                                     <option value="">Semua Kategori</option>
                                     {categories.map((c) => (
@@ -222,7 +240,7 @@ export default function ConsultationIndex({ auth, consultations, classes, catego
                                     type="date"
                                     value={filters.start_date || ''}
                                     onChange={(e) => updateFilter('start_date', e.target.value)}
-                                    className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 text-sm focus:ring-indigo-500"
+                                    className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 text-sm focus:ring-indigo-500 font-medium"
                                 />
                             </div>
                             <div className="space-y-1">
@@ -231,7 +249,7 @@ export default function ConsultationIndex({ auth, consultations, classes, catego
                                     type="date"
                                     value={filters.end_date || ''}
                                     onChange={(e) => updateFilter('end_date', e.target.value)}
-                                    className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 text-sm focus:ring-indigo-500"
+                                    className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 text-sm focus:ring-indigo-500 font-medium"
                                 />
                             </div>
                             <button 
@@ -242,6 +260,7 @@ export default function ConsultationIndex({ auth, consultations, classes, catego
                             </button>
                         </div>
                     </div>
+
 
                     <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-xl border border-gray-200 dark:border-gray-700">
                         {consultations.data.length === 0 ? (

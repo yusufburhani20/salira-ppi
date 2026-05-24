@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\StudentConsultation;
 use App\Models\AcademicClass;
 use App\Models\Student;
+use App\Models\Semester;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Enums\ConsultationCategory;
@@ -22,6 +23,13 @@ class ConsultationController extends Controller
         $query = StudentConsultation::with(['student', 'academicClass'])
             ->where('teacher_id', Auth::id());
 
+        // Default to active semester if no date filters and no semester filter specified
+        $semesterId = $request->input('semester_id');
+        if (!$semesterId && !$request->has('start_date') && !$request->has('end_date')) {
+            $activeSemester = Semester::where('is_active', true)->first();
+            $semesterId = $activeSemester?->id;
+        }
+
         // Filters
         if ($request->academic_class_id) {
             $query->where('class_id', $request->academic_class_id);
@@ -29,11 +37,19 @@ class ConsultationController extends Controller
         if ($request->category) {
             $query->where('category', $request->category);
         }
-        if ($request->start_date) {
-            $query->whereDate('consultation_date', '>=', $request->start_date);
-        }
-        if ($request->end_date) {
-            $query->whereDate('consultation_date', '<=', $request->end_date);
+
+        if ($semesterId) {
+            $selectedSemester = Semester::find($semesterId);
+            if ($selectedSemester) {
+                $query->whereBetween('consultation_date', [$selectedSemester->start_date, $selectedSemester->end_date]);
+            }
+        } else {
+            if ($request->start_date) {
+                $query->whereDate('consultation_date', '>=', $request->start_date);
+            }
+            if ($request->end_date) {
+                $query->whereDate('consultation_date', '<=', $request->end_date);
+            }
         }
 
         $consultations = $query->latest()
@@ -52,12 +68,30 @@ class ConsultationController extends Controller
             $statuses[] = ['value' => $case->value, 'label' => $case->label()];
         }
 
+        $semesters = Semester::with('academicYear')
+            ->get()
+            ->map(function($sem) {
+                return [
+                    'id' => $sem->id,
+                    'name' => 'TA ' . $sem->academicYear->name . ' - ' . $sem->name,
+                    'start_date' => $sem->start_date,
+                    'end_date' => $sem->end_date,
+                    'is_active' => $sem->is_active,
+                ];
+            });
+
+        $filters = $request->only(['academic_class_id', 'category', 'start_date', 'end_date', 'semester_id']);
+        if (!$request->has('semester_id') && !$request->has('start_date') && !$request->has('end_date')) {
+            $filters['semester_id'] = $semesterId;
+        }
+
         return Inertia::render('Teacher/Consultations/Index', [
             'consultations' => $consultations,
             'classes' => $classes,
             'categories' => $categories,
             'statuses' => $statuses,
-            'filters' => $request->only(['academic_class_id', 'category', 'start_date', 'end_date'])
+            'semesters' => $semesters,
+            'filters' => $filters
         ]);
     }
 
@@ -203,11 +237,25 @@ class ConsultationController extends Controller
         if ($request->category) {
             $query->where('category', $request->category);
         }
-        if ($request->start_date) {
-            $query->whereDate('consultation_date', '>=', $request->start_date);
+
+        $semesterId = $request->input('semester_id');
+        if (!$semesterId && !$request->has('start_date') && !$request->has('end_date')) {
+            $activeSemester = Semester::where('is_active', true)->first();
+            $semesterId = $activeSemester?->id;
         }
-        if ($request->end_date) {
-            $query->whereDate('consultation_date', '<=', $request->end_date);
+
+        if ($semesterId) {
+            $selectedSemester = Semester::find($semesterId);
+            if ($selectedSemester) {
+                $query->whereBetween('consultation_date', [$selectedSemester->start_date, $selectedSemester->end_date]);
+            }
+        } else {
+            if ($request->start_date) {
+                $query->whereDate('consultation_date', '>=', $request->start_date);
+            }
+            if ($request->end_date) {
+                $query->whereDate('consultation_date', '<=', $request->end_date);
+            }
         }
 
         return $query->latest('consultation_date')->get()->toArray();

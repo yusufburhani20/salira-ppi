@@ -7,6 +7,7 @@ use App\Models\AcademicClass;
 use App\Models\ClassAgenda;
 use App\Models\StudentAttendance;
 use App\Models\Subject;
+use App\Models\Semester;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Carbon\Carbon;
@@ -26,29 +27,62 @@ class ClassAgendaController extends Controller
         $query = ClassAgenda::with('academicClass')
             ->where('teacher_id', Auth::id());
 
-        // Filters
+        // Default to active semester if no date filters and no semester filter specified
+        $semesterId = $request->input('semester_id');
+        if (!$semesterId && !$request->has('start_date') && !$request->has('end_date')) {
+            $activeSemester = Semester::where('is_active', true)->first();
+            $semesterId = $activeSemester?->id;
+        }
+
+        // Apply filters
         if ($request->academic_class_id) {
             $query->where('academic_class_id', $request->academic_class_id);
         }
-        if ($request->start_date) {
-            $query->whereDate('date', '>=', $request->start_date);
-        }
-        if ($request->end_date) {
-            $query->whereDate('date', '<=', $request->end_date);
-        }
         if ($request->subject_id) {
             $query->where('subject_id', $request->subject_id);
+        }
+
+        if ($semesterId) {
+            $selectedSemester = Semester::find($semesterId);
+            if ($selectedSemester) {
+                $query->whereBetween('date', [$selectedSemester->start_date, $selectedSemester->end_date]);
+            }
+        } else {
+            if ($request->start_date) {
+                $query->whereDate('date', '>=', $request->start_date);
+            }
+            if ($request->end_date) {
+                $query->whereDate('date', '<=', $request->end_date);
+            }
         }
 
         $agendas = $query->latest('date')
             ->latest('id')
             ->get();
 
+        $semesters = Semester::with('academicYear')
+            ->get()
+            ->map(function($sem) {
+                return [
+                    'id' => $sem->id,
+                    'name' => 'TA ' . $sem->academicYear->name . ' - ' . $sem->name,
+                    'start_date' => $sem->start_date,
+                    'end_date' => $sem->end_date,
+                    'is_active' => $sem->is_active,
+                ];
+            });
+
+        $filters = $request->only(['academic_class_id', 'start_date', 'end_date', 'subject_id', 'semester_id']);
+        if (!$request->has('semester_id') && !$request->has('start_date') && !$request->has('end_date')) {
+            $filters['semester_id'] = $semesterId;
+        }
+
         return Inertia::render('Teacher/Agendas/Index', [
             'agendas' => $agendas,
             'classes' => AcademicClass::all(),
             'subjects' => Subject::all(),
-            'filters' => $request->only(['academic_class_id', 'start_date', 'end_date', 'subject_id'])
+            'semesters' => $semesters,
+            'filters' => $filters
         ]);
     }
 
@@ -418,11 +452,25 @@ class ClassAgendaController extends Controller
         if ($request->subject_id) {
             $query->where('subject_id', $request->subject_id);
         }
-        if ($request->start_date) {
-            $query->whereDate('date', '>=', $request->start_date);
+
+        $semesterId = $request->input('semester_id');
+        if (!$semesterId && !$request->has('start_date') && !$request->has('end_date')) {
+            $activeSemester = Semester::where('is_active', true)->first();
+            $semesterId = $activeSemester?->id;
         }
-        if ($request->end_date) {
-            $query->whereDate('date', '<=', $request->end_date);
+
+        if ($semesterId) {
+            $selectedSemester = Semester::find($semesterId);
+            if ($selectedSemester) {
+                $query->whereBetween('date', [$selectedSemester->start_date, $selectedSemester->end_date]);
+            }
+        } else {
+            if ($request->start_date) {
+                $query->whereDate('date', '>=', $request->start_date);
+            }
+            if ($request->end_date) {
+                $query->whereDate('date', '<=', $request->end_date);
+            }
         }
 
         return $query->latest('date')->get()->toArray();
@@ -479,15 +527,34 @@ class ClassAgendaController extends Controller
     {
         $request->validate([
             'academic_class_id' => 'required|exists:academic_classes,id',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
+            'semester_id' => 'nullable|exists:semesters,id',
+            'start_date' => 'required_without:semester_id|nullable|date',
+            'end_date' => 'required_without:semester_id|nullable|date|after_or_equal:start_date',
         ]);
 
         Carbon::setLocale('id');
         
         $classId = $request->academic_class_id;
-        $start = Carbon::parse($request->start_date)->startOfDay();
-        $end = Carbon::parse($request->end_date)->endOfDay();
+        
+        $semesterId = $request->input('semester_id');
+        if (!$semesterId && !$request->has('start_date') && !$request->has('end_date')) {
+            $activeSemester = Semester::where('is_active', true)->first();
+            $semesterId = $activeSemester?->id;
+        }
+
+        if ($semesterId) {
+            $selectedSemester = Semester::find($semesterId);
+            if ($selectedSemester) {
+                $start = Carbon::parse($selectedSemester->start_date)->startOfDay();
+                $end = Carbon::parse($selectedSemester->end_date)->endOfDay();
+            } else {
+                $start = Carbon::parse($request->start_date)->startOfDay();
+                $end = Carbon::parse($request->end_date)->endOfDay();
+            }
+        } else {
+            $start = Carbon::parse($request->start_date)->startOfDay();
+            $end = Carbon::parse($request->end_date)->endOfDay();
+        }
 
         // Get agendas for this teacher in this class
         $query = ClassAgenda::where('teacher_id', Auth::id())

@@ -63,7 +63,52 @@ class AcademicYearController extends Controller
             'name' => 'required|string|max:255|unique:academic_years,name,' . $academicYear->id,
         ]);
 
-        $academicYear->update($validated);
+        DB::transaction(function () use ($academicYear, $validated) {
+            $academicYear->update($validated);
+
+            // Parse year from name (e.g. "2025/2026" -> 2025)
+            $startYear = (int) substr($academicYear->name, 0, 4);
+            $startYear = $startYear > 2000 ? $startYear : date('Y');
+            $endYear = $startYear + 1;
+
+            // Sync Ganjil semester
+            $ganjil = Semester::where('academic_year_id', $academicYear->id)
+                ->where('name', 'Ganjil')
+                ->first();
+            if ($ganjil) {
+                $ganjil->update([
+                    'start_date' => $startYear . '-07-01',
+                    'end_date' => $startYear . '-12-31',
+                ]);
+            } else {
+                Semester::create([
+                    'academic_year_id' => $academicYear->id,
+                    'name' => 'Ganjil',
+                    'is_active' => true,
+                    'start_date' => $startYear . '-07-01',
+                    'end_date' => $startYear . '-12-31',
+                ]);
+            }
+
+            // Sync Genap semester
+            $genap = Semester::where('academic_year_id', $academicYear->id)
+                ->where('name', 'Genap')
+                ->first();
+            if ($genap) {
+                $genap->update([
+                    'start_date' => $endYear . '-01-01',
+                    'end_date' => $endYear . '-06-30',
+                ]);
+            } else {
+                Semester::create([
+                    'academic_year_id' => $academicYear->id,
+                    'name' => 'Genap',
+                    'is_active' => false,
+                    'start_date' => $endYear . '-01-01',
+                    'end_date' => $endYear . '-06-30',
+                ]);
+            }
+        });
 
         return redirect()->back()->with('success', 'Tahun ajaran berhasil diperbarui.');
     }
