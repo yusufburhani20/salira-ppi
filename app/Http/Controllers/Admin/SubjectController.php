@@ -13,14 +13,25 @@ use App\Imports\SubjectImport;
 
 class SubjectController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $subjects = Subject::with('academicClasses')->latest()->paginate(15);
+        $query = Subject::with('academicClasses');
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('code', 'like', "%{$search}%");
+            });
+        }
+
+        $subjects = $query->latest()->paginate(15)->withQueryString();
         $classes = \App\Models\AcademicClass::all();
         
         return Inertia::render('Admin/Subjects/Index', [
             'subjects' => $subjects,
             'classes' => $classes,
+            'filters' => $request->only(['search']),
         ]);
     }
 

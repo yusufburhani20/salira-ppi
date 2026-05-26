@@ -37,12 +37,13 @@ interface PaginatedData<T> {
     links: PaginationLinks[];
 }
 
-export default function SubjectIndex({ auth, subjects, classes }: PageProps<{ subjects: PaginatedData<Subject>, classes: AcademicClass[] }>) {
+export default function SubjectIndex({ auth, subjects, classes, filters }: PageProps<{ subjects: PaginatedData<Subject>, classes: AcademicClass[], filters?: { search?: string } }>) {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
     const [isClassDropdownOpen, setIsClassDropdownOpen] = useState(false);
+    const [search, setSearch] = useState(filters?.search || '');
 
     const { data, setData, post, put, delete: destroy, reset, processing, errors } = useForm({
         code: '',
@@ -123,6 +124,27 @@ export default function SubjectIndex({ auth, subjects, classes }: PageProps<{ su
         }
     };
 
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setSearch(value);
+        if (value === '') {
+            router.get(route('admin.subjects.index'), {}, {
+                preserveState: true,
+                preserveScroll: true,
+                replace: true
+            });
+        }
+    };
+
+    const submitSearch = (e: React.FormEvent) => {
+        e.preventDefault();
+        router.get(route('admin.subjects.index'), { search }, {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true
+        });
+    };
+
     return (
         <AuthenticatedLayout header={<h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Master Data Mata Pelajaran</h2>}>
             <Head title="Mata Pelajaran" />
@@ -154,6 +176,24 @@ export default function SubjectIndex({ auth, subjects, classes }: PageProps<{ su
                                 Tambah Baru
                             </button>
                         </div>
+                    </div>
+
+                    {/* Search Bar */}
+                    <div className="flex justify-start">
+                        <form onSubmit={submitSearch} className="w-full md:w-80">
+                            <div className="relative">
+                                <input
+                                    type="text"
+                                    placeholder="Cari kode atau nama mapel..."
+                                    value={search}
+                                    onChange={handleSearchChange}
+                                    className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white rounded-lg focus:border-primary focus:ring-primary shadow-sm text-sm"
+                                />
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+                                </div>
+                            </div>
+                        </form>
                     </div>
 
                     <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-xl border border-gray-200 dark:border-gray-700">
