@@ -7,7 +7,7 @@ import { UserIcon, AcademicCapIcon } from '@heroicons/react/24/outline';
 interface Semester { id: number; name: string; is_active: boolean; }
 interface AcademicYear { id: number; name: string; }
 interface AcademicClass { id: number; name: string; }
-interface Subject { id: number; name: string; academic_classes?: { id: number }[]; }
+interface Subject { id: number; name: string; academic_classes?: { id: number }[]; kkm?: number; }
 interface Student { id: number; name: string; nisn?: string; score?: number; notes?: string; }
 
 interface FinalAssessment {
@@ -73,6 +73,16 @@ export default function FinalAssessmentForm({ auth, assessment, activeSemester, 
             setData('scores', rows);
         }
     }, []);
+
+    // Auto-fill default KKTP when subject changes
+    useEffect(() => {
+        if (!isEditing && data.subject_id) {
+            const selectedSubject = subjects.find(s => s.id.toString() === data.subject_id.toString());
+            if (selectedSubject) {
+                setData('kktp', selectedSubject.kkm || 75);
+            }
+        }
+    }, [data.subject_id]);
 
     const fetchStudents = async (classId: string, subjectId: string) => {
         if (!classId || !subjectId) {

@@ -1,6 +1,6 @@
 import { PageProps } from '@/types';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, useForm, Link } from '@inertiajs/react';
+import { Head, useForm, Link, router } from '@inertiajs/react';
 import React, { useState } from 'react';
 import { 
     PlusIcon, 
@@ -43,7 +43,6 @@ export default function SubjectIndex({ auth, subjects, classes, filters }: PageP
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
     const [selectedSubject, setSelectedSubject] = useState<Subject | null>(null);
     const [isClassDropdownOpen, setIsClassDropdownOpen] = useState(false);
-    const [search, setSearch] = useState(filters?.search || '');
 
     const { data, setData, post, put, delete: destroy, reset, processing, errors } = useForm({
         code: '',
@@ -124,25 +123,8 @@ export default function SubjectIndex({ auth, subjects, classes, filters }: PageP
         }
     };
 
-    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value;
-        setSearch(value);
-        if (value === '') {
-            router.get(route('admin.subjects.index'), {}, {
-                preserveState: true,
-                preserveScroll: true,
-                replace: true
-            });
-        }
-    };
-
-    const submitSearch = (e: React.FormEvent) => {
-        e.preventDefault();
-        router.get(route('admin.subjects.index'), { search }, {
-            preserveState: true,
-            preserveScroll: true,
-            replace: true
-        });
+    const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+        router.get(route('admin.subjects.index'), { search: e.target.value }, { preserveState: true, replace: true });
     };
 
     return (
@@ -180,20 +162,18 @@ export default function SubjectIndex({ auth, subjects, classes, filters }: PageP
 
                     {/* Search Bar */}
                     <div className="flex justify-start">
-                        <form onSubmit={submitSearch} className="w-full md:w-80">
-                            <div className="relative">
-                                <input
-                                    type="text"
-                                    placeholder="Cari kode atau nama mapel..."
-                                    value={search}
-                                    onChange={handleSearchChange}
-                                    className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white rounded-lg focus:border-primary focus:ring-primary shadow-sm text-sm"
-                                />
-                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
-                                </div>
+                        <div className="relative w-full md:w-80">
+                            <input
+                                type="text"
+                                placeholder="Cari kode atau nama mapel..."
+                                defaultValue={filters?.search || ''}
+                                onChange={handleSearch}
+                                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white rounded-lg focus:border-primary focus:ring-primary shadow-sm text-sm"
+                            />
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
                             </div>
-                        </form>
+                        </div>
                     </div>
 
                     <div className="bg-white dark:bg-gray-800 overflow-hidden shadow-sm rounded-xl border border-gray-200 dark:border-gray-700">
