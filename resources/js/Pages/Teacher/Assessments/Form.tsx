@@ -181,7 +181,7 @@ export default function AssessmentForm({ auth, classes, students: initialStudent
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">KKM Asesmen</label>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">KKTP Asesmen</label>
                                     <input 
                                         type="number" 
                                         min="0" 

@@ -46,7 +46,7 @@
             <th style="font-weight: bold; background-color: #eee; border: 2px solid #000000; text-align: center; width: 100px;">
                 {{ \Carbon\Carbon::parse($a['date'])->format('d/m') }}<br>
                 {{ $a['title'] }}<br>
-                (KKM: {{ $a['kkm'] ?? 75 }})
+                (KKTP: {{ $a['kkm'] ?? 75 }})
             </th>
         @endforeach
         <th style="font-weight: bold; background-color: #eee; border: 2px solid #000000; text-align: center; width: 100px;">Rata-rata</th>

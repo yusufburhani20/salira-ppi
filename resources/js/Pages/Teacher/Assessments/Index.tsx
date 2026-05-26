@@ -187,7 +187,7 @@ export default function AssessmentIndex({ auth, assessments, classes, subjects, 
                                         <th className="px-6 py-4 font-medium text-gray-900 dark:text-white text-xs uppercase tracking-wider">Tanggal</th>
                                         <th className="px-6 py-4 font-medium text-gray-900 dark:text-white text-xs uppercase tracking-wider">Mata Pelajaran</th>
                                         <th className="px-6 py-4 font-medium text-gray-900 dark:text-white text-xs uppercase tracking-wider">Judul / Topik</th>
-                                        <th className="px-6 py-4 font-medium text-gray-900 dark:text-white text-xs uppercase tracking-wider">KKM</th>
+                                        <th className="px-6 py-4 font-medium text-gray-900 dark:text-white text-xs uppercase tracking-wider">KKTP</th>
                                         <th className="px-6 py-4 font-medium text-gray-900 dark:text-white text-xs uppercase tracking-wider">Kelas</th>
                                         <th className="px-6 py-4 font-medium text-gray-900 dark:text-white text-xs uppercase tracking-wider text-right">Aksi</th>
                                     </tr>

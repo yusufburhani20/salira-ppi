@@ -163,7 +163,7 @@ export default function SubjectIndex({ auth, subjects, classes }: PageProps<{ su
                                     <tr className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700 text-xs uppercase tracking-wider">
                                         <th className="px-6 py-4 font-bold text-gray-900 dark:text-white">Kode</th>
                                         <th className="px-6 py-4 font-bold text-gray-900 dark:text-white">Nama Mata Pelajaran</th>
-                                        <th className="px-6 py-4 font-bold text-gray-900 dark:text-white">KKM</th>
+                                        <th className="px-6 py-4 font-bold text-gray-900 dark:text-white">KKTP</th>
                                         <th className="px-6 py-4 font-bold text-gray-900 dark:text-white">Deskripsi</th>
                                         <th className="px-6 py-4 font-bold text-gray-900 dark:text-white">Diterapkan Di</th>
                                         <th className="px-6 py-4 font-bold text-gray-900 dark:text-white text-right">Aksi</th>
@@ -252,7 +252,7 @@ export default function SubjectIndex({ auth, subjects, classes }: PageProps<{ su
                                         {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
                                     </div>
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">KKM (Kriteria Ketuntasan Minimal)</label>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">KKTP (Kriteria Ketercapaian Tujuan Pembelajaran)</label>
                                         <input type="number" min="0" max="100" value={data.kkm} onChange={e => setData('kkm', parseInt(e.target.value) || 0)} required placeholder="Contoh: 75" className="w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:border-primary focus:ring-primary shadow-sm" />
                                         {errors.kkm && <p className="text-red-500 text-xs mt-1">{errors.kkm}</p>}
                                     </div>
