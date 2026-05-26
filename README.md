@@ -15,7 +15,7 @@ Sistem informasi manajemen sekolah terintegrasi — dari presensi hingga laporan
 [![Inertia.js](https://img.shields.io/badge/Inertia.js-2-9553E9?style=flat-square)](https://inertiajs.com)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 
-[📘 Panduan Penggunaan](PANDUAN.md) · [🌐 Demo](#) · [🐛 Laporkan Bug](https://github.com/yusufburhani20/Salira/issues)
+[📘 Panduan Penggunaan](PANDUAN.md) · [🚀 Panduan aaPanel](DEPLOY_AAPANEL.md) · [🌐 Demo](#) · [🐛 Laporkan Bug](https://github.com/yusufburhani20/Salira/issues)
 
 </div>
 
@@ -27,7 +27,8 @@ Sistem informasi manajemen sekolah terintegrasi — dari presensi hingga laporan
 - [Fitur Utama](#-fitur-utama)
 - [Tech Stack](#-tech-stack)
 - [Persyaratan Sistem](#-persyaratan-sistem)
-- [Instalasi](#-instalasi)
+- [Instalasi (Lokal)](#-instalasi)
+- [Instalasi (aaPanel VPS)](DEPLOY_AAPANEL.md)
 - [Konfigurasi Lingkungan](#-konfigurasi-lingkungan)
 - [Akun Default](#-akun-default)
 - [Peran Pengguna](#-peran-pengguna)

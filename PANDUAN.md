@@ -7,6 +7,9 @@
 
 ## 📋 Daftar Isi
 
+> [!TIP]
+> Bagi administrator yang ingin memasang aplikasi ini di server VPS menggunakan **aaPanel**, silakan merujuk ke panduan khusus: **[🚀 Panduan Deployment aaPanel](DEPLOY_AAPANEL.md)**.
+
 1. [Tentang SALIRA](#1-tentang-salira)
 2. [Peran Pengguna (Role)](#2-peran-pengguna-role)
 3. [Login & Akses Aplikasi](#3-login--akses-aplikasi)
