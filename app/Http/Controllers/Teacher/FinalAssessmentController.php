@@ -129,6 +129,8 @@ class FinalAssessmentController extends Controller
             'academic_class_id' => 'required|exists:academic_classes,id',
             'subject_id'        => 'required|exists:subjects,id',
             'type'              => 'required|in:ASAS,ASAT',
+            'kktp'              => 'required|integer|min:0|max:100',
+            'kka'               => 'required|integer|min:0|max:100',
             'description'       => 'nullable|string',
             'scores'            => 'required|array|min:1',
             'scores.*.student_id' => 'required|exists:students,id',
@@ -187,6 +189,8 @@ class FinalAssessmentController extends Controller
                 'subject_id'        => $request->subject_id,
                 'teacher_id'        => Auth::id(),
                 'type'              => $request->type,
+                'kktp'              => $request->kktp ?? 75,
+                'kka'               => $request->kka ?? 75,
                 'description'       => $request->description,
             ]);
 
@@ -281,6 +285,8 @@ class FinalAssessmentController extends Controller
         }
 
         $request->validate([
+            'kktp'        => 'required|integer|min:0|max:100',
+            'kka'         => 'required|integer|min:0|max:100',
             'description' => 'nullable|string',
             'scores'      => 'required|array|min:1',
             'scores.*.student_id' => 'required|exists:students,id',
@@ -322,6 +328,8 @@ class FinalAssessmentController extends Controller
         DB::transaction(function () use ($request, $assessment, $attendanceMap) {
             $assessment->update([
                 'description' => $request->description,
+                'kktp'        => $request->kktp ?? 75,
+                'kka'         => $request->kka ?? 75,
             ]);
 
             foreach ($request->scores as $scoreData) {

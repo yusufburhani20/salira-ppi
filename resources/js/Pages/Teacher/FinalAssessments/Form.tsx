@@ -16,6 +16,8 @@ interface FinalAssessment {
     academic_class_id: number;
     subject_id: number;
     description: string | null;
+    kktp?: number;
+    kka?: number;
     scores: { student_id: number; score: number; notes?: string }[];
 }
 
@@ -47,6 +49,8 @@ export default function FinalAssessmentForm({ auth, assessment, activeSemester, 
         subject_id: assessment?.subject_id?.toString() ?? '',
         type: assessment?.type ?? (allowedTypes[0] ?? 'ASAS'),
         description: assessment?.description ?? '',
+        kktp: assessment?.kktp ?? 75,
+        kka: assessment?.kka ?? 75,
         scores: [] as ScoreRow[],
     });
 
@@ -264,6 +268,42 @@ export default function FinalAssessmentForm({ auth, assessment, activeSemester, 
                                     className="w-full rounded-xl border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-sm focus:ring-indigo-500"
                                 />
                             </div>
+
+                            {/* KKTP and KKA input fields */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-100 dark:border-gray-700">
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
+                                        KKTP {data.type} <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min={0}
+                                        max={100}
+                                        value={data.kktp}
+                                        onChange={e => setData('kktp', parseInt(e.target.value) || 0)}
+                                        required
+                                        className="w-full rounded-xl border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-sm focus:ring-indigo-500"
+                                        placeholder="Contoh: 75"
+                                    />
+                                    {errors.kktp && <p className="mt-1 text-sm text-red-600">{errors.kktp}</p>}
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-1">
+                                        KKA (Kriteria Ketuntasan Akhlak) <span className="text-red-500">*</span>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min={0}
+                                        max={100}
+                                        value={data.kka}
+                                        onChange={e => setData('kka', parseInt(e.target.value) || 0)}
+                                        required
+                                        className="w-full rounded-xl border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-sm focus:ring-indigo-500"
+                                        placeholder="Contoh: 75"
+                                    />
+                                    {errors.kka && <p className="mt-1 text-sm text-red-600">{errors.kka}</p>}
+                                </div>
+                            </div>
                         </div>
 
                         {/* Score Input Table */}
@@ -343,7 +383,9 @@ export default function FinalAssessmentForm({ auth, assessment, activeSemester, 
                                                                     className={`w-20 rounded-xl border text-sm text-center font-bold focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-900 ${
                                                                         s.score === ''
                                                                             ? 'border-amber-300 dark:border-amber-600'
-                                                                            : 'border-gray-300 dark:border-gray-700'
+                                                                            : Number(s.score) < data.kktp
+                                                                                ? 'border-red-300 text-red-900 dark:text-red-300 dark:border-red-950 bg-red-50/30 dark:bg-red-950/10 focus:border-red-500 focus:ring-red-500'
+                                                                                : 'border-emerald-300 text-emerald-900 dark:text-emerald-300 dark:border-emerald-950 bg-emerald-50/30 dark:bg-emerald-950/10 focus:border-emerald-500 focus:ring-emerald-500'
                                                                     }`}
                                                                     placeholder="—"
                                                                 />
@@ -379,9 +421,26 @@ export default function FinalAssessmentForm({ auth, assessment, activeSemester, 
                                                                 />
                                                             </td>
                                                             <td className="px-4 py-3 text-center">
-                                                                <span className={`text-sm font-black ${calculatedAkhlak !== '—' ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-400'}`}>
-                                                                    {calculatedAkhlak}
-                                                                </span>
+                                                                <div className="flex flex-col items-center justify-center">
+                                                                    <span className={`text-sm font-black ${
+                                                                        calculatedAkhlak !== '—' 
+                                                                            ? Number(calculatedAkhlak) < data.kka 
+                                                                                ? 'text-rose-600 dark:text-rose-400' 
+                                                                                : 'text-emerald-600 dark:text-emerald-400' 
+                                                                            : 'text-gray-400'
+                                                                    }`}>
+                                                                        {calculatedAkhlak}
+                                                                    </span>
+                                                                    {calculatedAkhlak !== '—' && (
+                                                                        <span className={`px-2 py-0.5 rounded text-[10px] font-bold mt-1 ${
+                                                                            Number(calculatedAkhlak) < data.kka
+                                                                                ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400 border border-rose-100 dark:border-rose-900/30'
+                                                                                : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/30'
+                                                                        }`}>
+                                                                            {Number(calculatedAkhlak) < data.kka ? 'Remedial' : 'Tuntas'}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
                                                             </td>
                                                             <td className="px-4 py-3">
                                                                 <input
