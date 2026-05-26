@@ -2,7 +2,7 @@ import { PageProps } from '@/types';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm, router } from '@inertiajs/react';
 import React, { useState } from 'react';
-import { PlusIcon, PencilIcon, TrashIcon, UserCircleIcon, KeyIcon, ArrowDownTrayIcon, ArrowUpTrayIcon } from '@heroicons/react/24/outline';
+import { PlusIcon, PencilIcon, TrashIcon, UserCircleIcon, KeyIcon, ArrowDownTrayIcon, ArrowUpTrayIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 
 interface Role {
     name: string;
@@ -22,6 +22,14 @@ interface User {
 export default function UserIndex({ auth, users, roles, statuses }: PageProps<{ users: User[], roles: string[], statuses: {value: string, label: string}[] }>) {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<User | null>(null);
+    const [search, setSearch] = useState('');
+
+    const filteredUsers = users.filter(userRecord => 
+        userRecord.name.toLowerCase().includes(search.toLowerCase()) ||
+        userRecord.email.toLowerCase().includes(search.toLowerCase()) ||
+        (userRecord.nip && userRecord.nip.toLowerCase().includes(search.toLowerCase())) ||
+        (userRecord.phone && userRecord.phone.toLowerCase().includes(search.toLowerCase()))
+    );
 
     const { data, setData, post, put, delete: destroy, reset, processing, errors } = useForm({
         name: '',
@@ -138,6 +146,22 @@ export default function UserIndex({ auth, users, roles, statuses }: PageProps<{ 
                         </div>
                     </div>
 
+                    {/* Search Bar */}
+                    <div className="flex justify-start">
+                        <div className="relative w-full md:w-80">
+                            <input
+                                type="text"
+                                placeholder="Cari nama, email, NIP, atau HP..."
+                                value={search}
+                                onChange={e => setSearch(e.target.value)}
+                                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white rounded-lg focus:border-primary focus:ring-primary shadow-sm text-sm"
+                            />
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
+                            </div>
+                        </div>
+                    </div>
+
                     <div className="bg-white dark:bg-gray-800 shadow-sm border border-gray-100 dark:border-gray-700 rounded-xl overflow-hidden">
                         <div className="overflow-x-auto">
                             <table className="w-full text-left border-collapse">
@@ -151,54 +175,60 @@ export default function UserIndex({ auth, users, roles, statuses }: PageProps<{ 
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                                    {users.map((userRecord) => (
-                                        <tr key={userRecord.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20">
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center space-x-3">
-                                                    <UserCircleIcon className="w-8 h-8 text-gray-400" />
-                                                    <div>
-                                                        <p className="font-semibold text-gray-900 dark:text-white">{userRecord.name}</p>
-                                                        <p className="text-xs text-gray-500 dark:text-gray-400">{userRecord.email}</p>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="text-sm">
-                                                    <p className="text-gray-900 dark:text-white font-medium">{userRecord.nip || '-'}</p>
-                                                    <p className="text-gray-500 dark:text-gray-400">{userRecord.phone || '-'}</p>
-                                                    <p className="text-xs text-blue-500">{userRecord.telegram_id || '-'}</p>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex flex-wrap gap-1">
-                                                    {userRecord.roles.map(r => (
-                                                        <span key={r.name} className="inline-flex text-xs font-semibold rounded-full bg-indigo-100 text-indigo-800 px-2.5 py-0.5">
-                                                            {r.name}
-                                                        </span>
-                                                    ))}
-                                                    {userRecord.roles.length === 0 && <span className="text-xs text-gray-400">No Role</span>}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <span className={`inline-flex text-xs font-semibold rounded-full px-2.5 py-0.5 capitalize 
-                                                    \${userRecord.status === 'active' ? 'bg-green-100 text-green-800' : 
-                                                    userRecord.status === 'inactive' ? 'bg-gray-100 text-gray-800' : 
-                                                    'bg-red-100 text-red-800'}`}>
-                                                    {userRecord.status}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 text-right space-x-2">
-                                                <button onClick={() => openDialog(userRecord)} className="p-2 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/30 rounded-lg transition-colors">
-                                                    <PencilIcon className="w-5 h-5" />
-                                                </button>
-                                                {auth.user.id !== userRecord.id && (
-                                                    <button onClick={() => handleDelete(userRecord.id)} className="p-2 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30 rounded-lg transition-colors">
-                                                        <TrashIcon className="w-5 h-5" />
-                                                    </button>
-                                                )}
-                                            </td>
+                                    {filteredUsers.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={5} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400 italic">Data pengguna tidak ditemukan.</td>
                                         </tr>
-                                    ))}
+                                    ) : (
+                                        filteredUsers.map((userRecord) => (
+                                            <tr key={userRecord.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20">
+                                                <td className="px-6 py-4">
+                                                    <div className="flex items-center space-x-3">
+                                                        <UserCircleIcon className="w-8 h-8 text-gray-400" />
+                                                        <div>
+                                                            <p className="font-semibold text-gray-900 dark:text-white">{userRecord.name}</p>
+                                                            <p className="text-xs text-gray-500 dark:text-gray-400">{userRecord.email}</p>
+                                                        </div>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <div className="text-sm">
+                                                        <p className="text-gray-900 dark:text-white font-medium">{userRecord.nip || '-'}</p>
+                                                        <p className="text-gray-500 dark:text-gray-400">{userRecord.phone || '-'}</p>
+                                                        <p className="text-xs text-blue-500">{userRecord.telegram_id || '-'}</p>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {userRecord.roles.map(r => (
+                                                            <span key={r.name} className="inline-flex text-xs font-semibold rounded-full bg-indigo-100 text-indigo-800 px-2.5 py-0.5">
+                                                                {r.name}
+                                                            </span>
+                                                        ))}
+                                                        {userRecord.roles.length === 0 && <span className="text-xs text-gray-400">No Role</span>}
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <span className={`inline-flex text-xs font-semibold rounded-full px-2.5 py-0.5 capitalize 
+                                                        ${userRecord.status === 'active' ? 'bg-green-100 text-green-800' : 
+                                                        userRecord.status === 'inactive' ? 'bg-gray-100 text-gray-800' : 
+                                                        'bg-red-100 text-red-800'}`}>
+                                                        {userRecord.status}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4 text-right space-x-2">
+                                                    <button onClick={() => openDialog(userRecord)} className="p-2 text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/30 rounded-lg transition-colors">
+                                                        <PencilIcon className="w-5 h-5" />
+                                                    </button>
+                                                    {auth.user.id !== userRecord.id && (
+                                                        <button onClick={() => handleDelete(userRecord.id)} className="p-2 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/30 rounded-lg transition-colors">
+                                                            <TrashIcon className="w-5 h-5" />
+                                                        </button>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
                                 </tbody>
                             </table>
                         </div>
