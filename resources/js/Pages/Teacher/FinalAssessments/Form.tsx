@@ -112,8 +112,12 @@ export default function FinalAssessmentForm({ auth, assessment, activeSemester, 
     };
 
     const handleClassChange = (classId: string) => {
-        setData('academic_class_id', classId);
-        if (!isEditing) fetchStudents(classId, data.subject_id);
+        setData(prev => ({
+            ...prev,
+            academic_class_id: classId,
+            subject_id: '',
+            scores: []
+        }));
     };
 
     const handleSubjectChange = (subjectId: string) => {
@@ -257,11 +261,19 @@ export default function FinalAssessmentForm({ auth, assessment, activeSemester, 
                                     <select
                                         value={data.subject_id}
                                         onChange={(e) => handleSubjectChange(e.target.value)}
-                                        disabled={isEditing}
+                                        disabled={isEditing || !data.academic_class_id}
                                         className="w-full rounded-xl border-gray-300 dark:border-gray-700 dark:bg-gray-900 text-sm focus:ring-indigo-500 disabled:opacity-60"
                                     >
                                         <option value="">— Pilih Mata Pelajaran —</option>
-                                        {subjects.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                        {subjects
+                                            .filter((s) => 
+                                                !data.academic_class_id || 
+                                                s.academic_classes?.some((ac) => ac.id.toString() === data.academic_class_id.toString())
+                                            )
+                                            .map((s) => (
+                                                <option key={s.id} value={s.id}>{s.name}</option>
+                                            ))
+                                        }
                                     </select>
                                     {errors.subject_id && <p className="mt-1 text-sm text-red-600">{errors.subject_id}</p>}
                                 </div>
