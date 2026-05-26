@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Panduan Penggunaan SALIRA</title>
+  <meta name="description" content="Panduan lengkap penggunaan aplikasi SALIRA — Sistem Absensi, Logistik, Inventaris & Rekapitulasi Akademik untuk semua pengguna." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-primary: #0a0f1e; --bg-secondary: #0f1729; --bg-card: #141e35;
+      --bg-card-hover: #1a2642; --bg-sidebar: #0d1525; --border: #1e2d4a;
+      --border-light: #243352; --text-primary: #e8edf5; --text-secondary: #8a9bbf;
+      --text-muted: #5a6a8a; --accent: #3b82f6; --accent-glow: rgba(59,130,246,0.15);
+      --accent-hover: #60a5fa; --green: #10b981; --yellow: #f59e0b; --red: #ef4444;
+      --purple: #8b5cf6; --cyan: #06b6d4; --orange: #f97316;
+      --sidebar-width: 280px; --header-height: 64px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', sans-serif; background: var(--bg-primary); color: var(--text-primary); line-height: 1.7; overflow-x: hidden; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg-secondary); }
+    ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+    .top-header { position: fixed; top: 0; left: 0; right: 0; height: var(--header-height); background: rgba(10,15,30,0.85); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 24px; z-index: 100; gap: 16px; }
+    .logo-icon { width: 36px; height: 36px; background: linear-gradient(135deg,#3b82f6,#8b5cf6); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; color: #fff; flex-shrink: 0; }
+    .logo-text { font-weight: 700; font-size: 18px; color: var(--text-primary); }
+    .logo-sub { font-size: 11px; color: var(--text-muted); font-weight: 400; }
+    .header-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .header-search { flex: 1; max-width: 400px; margin-left: auto; position: relative; }
+    .header-search input { width: 100%; background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 8px 16px 8px 40px; color: var(--text-primary); font-family: 'Inter', sans-serif; font-size: 14px; outline: none; transition: all 0.2s; }
+    .header-search input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+    .header-search input::placeholder { color: var(--text-muted); }
+    .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 16px; }
+    .header-badge { background: linear-gradient(135deg,var(--accent),var(--purple)); color: #fff; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 20px; white-space: nowrap; }
+
+    .layout { display: flex; margin-top: var(--header-height); min-height: calc(100vh - var(--header-height)); }
+
+    .sidebar { width: var(--sidebar-width); background: var(--bg-sidebar); border-right: 1px solid var(--border); position: fixed; top: var(--header-height); left: 0; bottom: 0; overflow-y: auto; padding: 20px 0; z-index: 50; }
+    .sidebar-section-label { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; color: var(--text-muted); padding: 16px 20px 6px; text-transform: uppercase; }
+    .sidebar-item { display: flex; align-items: center; gap: 10px; padding: 9px 20px; color: var(--text-secondary); text-decoration: none; font-size: 13.5px; font-weight: 500; border-left: 3px solid transparent; transition: all 0.15s; cursor: pointer; }
+    .sidebar-item:hover { color: var(--text-primary); background: var(--bg-card); border-left-color: var(--border-light); }
+    .sidebar-item.active { color: var(--accent-hover); background: var(--accent-glow); border-left-color: var(--accent); }
+    .sidebar-item .item-icon { font-size: 16px; flex-shrink: 0; }
+
+    .main { margin-left: var(--sidebar-width); flex: 1; padding: 48px 56px; max-width: calc(100% - var(--sidebar-width)); }
+
+    .hero { background: linear-gradient(135deg,rgba(59,130,246,0.08) 0%,rgba(139,92,246,0.08) 100%); border: 1px solid var(--border); border-radius: 20px; padding: 48px; margin-bottom: 48px; position: relative; overflow: hidden; }
+    .hero::before { content:''; position:absolute; top:-80px; right:-80px; width:300px; height:300px; background:radial-gradient(circle,rgba(59,130,246,0.12) 0%,transparent 70%); pointer-events:none; }
+    .hero-tag { display: inline-flex; align-items: center; gap: 6px; background: var(--accent-glow); border: 1px solid rgba(59,130,246,0.3); color: var(--accent-hover); font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: 20px; margin-bottom: 16px; }
+    .hero h1 { font-size: 40px; font-weight: 800; line-height: 1.2; background: linear-gradient(135deg,#e8edf5 30%,#8b9bbf 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 12px; }
+    .hero p { font-size: 16px; color: var(--text-secondary); max-width: 600px; margin-bottom: 32px; }
+    .hero-features { display: flex; flex-wrap: wrap; gap: 10px; }
+    .hero-feature { display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; font-size: 13px; color: var(--text-secondary); }
+    .hero-feature .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+
+    .role-filter { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 40px; }
+    .role-btn { display: flex; align-items: center; gap: 7px; padding: 8px 16px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-secondary); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.2s; font-family: 'Inter', sans-serif; }
+    .role-btn:hover { border-color: var(--border-light); color: var(--text-primary); }
+    .role-btn.active { border-color: var(--accent); background: var(--accent-glow); color: var(--accent-hover); }
+    .role-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+    .section { margin-bottom: 64px; scroll-margin-top: calc(var(--header-height) + 24px); }
+    .section-header { display: flex; align-items: center; gap: 14px; margin-bottom: 28px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+    .section-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+    .section-header h2 { font-size: 24px; font-weight: 700; color: var(--text-primary); }
+    .section-header .role-tag { margin-left: auto; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 6px; }
+
+    .subsection { margin-bottom: 32px; }
+    .subsection h3 { font-size: 17px; font-weight: 600; color: var(--text-primary); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .subsection h3::before { content:''; width:3px; height:18px; background:var(--accent); border-radius:2px; flex-shrink:0; }
+    .subsection h4 { font-size: 13px; font-weight: 600; color: var(--text-secondary); margin: 16px 0 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+    .menu-badge { display: inline-flex; align-items: center; gap: 4px; background: var(--bg-card); border: 1px solid var(--border-light); border-radius: 6px; padding: 3px 10px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--cyan); margin-bottom: 12px; }
+
+    .steps { display: flex; flex-direction: column; gap: 0; margin: 12px 0; }
+    .step { display: flex; gap: 16px; align-items: flex-start; position: relative; }
+    .step:not(:last-child)::before { content:''; position:absolute; left:15px; top:32px; bottom:-2px; width:2px; background:var(--border); }
+    .step-num { width: 32px; height: 32px; background: var(--bg-card); border: 2px solid var(--border-light); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: var(--accent); flex-shrink: 0; position: relative; z-index: 1; }
+    .step-content { padding: 4px 0 20px; color: var(--text-secondary); font-size: 14px; flex: 1; }
+    .step-content strong { color: var(--text-primary); }
+
+    .bullet-list { list-style: none; display: flex; flex-direction: column; gap: 6px; margin: 8px 0; }
+    .bullet-list li { display: flex; align-items: flex-start; gap: 10px; color: var(--text-secondary); font-size: 14px; line-height: 1.6; }
+    .bullet-list li::before { content:'▸'; color:var(--accent); flex-shrink:0; margin-top:1px; }
+    .bullet-list li strong { color: var(--text-primary); }
+
+    .data-table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 14px; }
+    .data-table th { background: var(--bg-card); color: var(--text-secondary); font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; padding: 10px 16px; text-align: left; border-bottom: 2px solid var(--border); }
+    .data-table td { padding: 11px 16px; border-bottom: 1px solid var(--border); color: var(--text-secondary); vertical-align: top; }
+    .data-table tr:hover td { background: rgba(255,255,255,0.02); }
+    .data-table td strong { color: var(--text-primary); }
+
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; margin: 12px 0; }
+    .info-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 18px; transition: all 0.2s; }
+    .info-card:hover { border-color: var(--border-light); transform: translateY(-2px); }
+    .info-card .card-icon { font-size: 24px; margin-bottom: 10px; }
+    .info-card .card-title { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+    .info-card .card-desc { font-size: 12.5px; color: var(--text-muted); line-height: 1.5; }
+
+    .alert { display: flex; gap: 14px; border-radius: 12px; padding: 14px 18px; margin: 16px 0; border: 1px solid; font-size: 14px; line-height: 1.6; align-items: flex-start; }
+    .alert-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+    .alert-text { flex: 1; }
+    .alert-text strong { display: block; font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 4px; }
+    .alert-note { background: rgba(59,130,246,0.08); border-color: rgba(59,130,246,0.25); color: #93c5fd; }
+    .alert-note strong { color: #60a5fa; }
+    .alert-important { background: rgba(245,158,11,0.08); border-color: rgba(245,158,11,0.25); color: #fcd34d; }
+    .alert-important strong { color: #f59e0b; }
+    .alert-caution { background: rgba(239,68,68,0.08); border-color: rgba(239,68,68,0.25); color: #fca5a5; }
+    .alert-caution strong { color: #ef4444; }
+    .alert-warning { background: rgba(249,115,22,0.08); border-color: rgba(249,115,22,0.25); color: #fdba74; }
+    .alert-warning strong { color: #f97316; }
+
+    .role-table { display: grid; gap: 10px; margin: 16px 0; }
+    .role-row { display: flex; align-items: center; gap: 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px; transition: all 0.2s; }
+    .role-row:hover { border-color: var(--border-light); }
+    .role-pill { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; white-space: nowrap; min-width: 140px; }
+    .role-access { font-size: 13.5px; color: var(--text-secondary); }
+
+    .report-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin: 12px 0; }
+    .report-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 14px; font-size: 13px; }
+    .report-card .r-title { font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+    .report-card .r-desc { color: var(--text-muted); font-size: 12px; }
+
+    .faq-item { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 10px; overflow: hidden; }
+    .faq-question { padding: 16px 20px; font-weight: 600; font-size: 14px; color: var(--text-primary); cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 12px; user-select: none; transition: background 0.15s; }
+    .faq-question:hover { background: var(--bg-card-hover); }
+    .faq-q-icon { color: var(--accent); font-size: 18px; }
+    .faq-chevron { color: var(--text-muted); transition: transform 0.25s; flex-shrink: 0; }
+    .faq-item.open .faq-chevron { transform: rotate(180deg); }
+    .faq-answer { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; }
+    .faq-item.open .faq-answer { max-height: 220px; }
+    .faq-answer-inner { padding: 12px 20px 16px; color: var(--text-secondary); font-size: 14px; line-height: 1.7; border-top: 1px solid var(--border); }
+
+    code { font-family: 'JetBrains Mono', monospace; background: var(--bg-card); border: 1px solid var(--border); border-radius: 5px; padding: 2px 7px; font-size: 12.5px; color: var(--cyan); }
+    .divider { height: 1px; background: var(--border); margin: 48px 0; }
+    .footer { margin-top: 64px; padding: 32px 0; border-top: 1px solid var(--border); text-align: center; color: var(--text-muted); font-size: 13px; }
+    mark { background: rgba(245,158,11,0.25); color: var(--yellow); border-radius: 2px; padding: 0 2px; }
+
+    .reading-progress { position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(90deg,var(--accent),var(--purple)); z-index: 200; transition: width 0.1s linear; }
+
+    @keyframes fadeInUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+    .section { animation: fadeInUp 0.4s ease both; }
+
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; padding: 32px 24px; max-width: 100%; }
+      .hero h1 { font-size: 28px; } .hero { padding: 28px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="reading-progress" id="readingProgress"></div>
+
+<header class="top-header">
+  <a href="#hero" class="header-logo">
+    <div class="logo-icon">S</div>
+    <div><div class="logo-text">SALIRA</div><div class="logo-sub">Panduan Pengguna v1.1</div></div>
+  </a>
+  <div class="header-search">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="searchInput" placeholder="Cari panduan..." autocomplete="off" />
+  </div>
+  <div class="header-badge">v1.1 · Mei 2026</div>
+</header>
+
+<div class="layout">
+
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-section-label">Mulai</div>
+    <a class="sidebar-item active" href="#tentang" onclick="setActive(this)"><span class="item-icon">📘</span> Tentang SALIRA</a>
+    <a class="sidebar-item" href="#role" onclick="setActive(this)"><span class="item-icon">👥</span> Peran Pengguna</a>
+    <a class="sidebar-item" href="#login" onclick="setActive(this)"><span class="item-icon">🔐</span> Login & Akses</a>
+    <div class="sidebar-section-label">Panduan per Role</div>
+    <a class="sidebar-item" href="#super-admin" onclick="setActive(this)"><span class="item-icon">⚙️</span> Super Admin</a>
+    <a class="sidebar-item" href="#kepala-sekolah" onclick="setActive(this)"><span class="item-icon">🏫</span> Kepala Sekolah</a>
+    <a class="sidebar-item" href="#staff-tu" onclick="setActive(this)"><span class="item-icon">📋</span> Staff / TU</a>
+    <a class="sidebar-item" href="#bendahara" onclick="setActive(this)"><span class="item-icon">💰</span> Bendahara</a>
+    <a class="sidebar-item" href="#guru" onclick="setActive(this)"><span class="item-icon">📚</span> Guru</a>
+    <a class="sidebar-item" href="#wali-kelas" onclick="setActive(this)"><span class="item-icon">🎓</span> Wali Kelas</a>
+    <a class="sidebar-item" href="#portal-siswa" onclick="setActive(this)"><span class="item-icon">🧑‍🎓</span> Portal Siswa</a>
+    <div class="sidebar-section-label">Lainnya</div>
+    <a class="sidebar-item" href="#fitur-umum" onclick="setActive(this)"><span class="item-icon">✨</span> Fitur Umum</a>
+    <a class="sidebar-item" href="#faq" onclick="setActive(this)"><span class="item-icon">❓</span> FAQ</a>
+  </nav>
+
+  <main class="main" id="mainContent">
+
+    <div class="hero" id="hero">
+      <div class="hero-tag">📘 Panduan Resmi v1.1</div>
+      <h1>Panduan Penggunaan<br>SALIRA</h1>
+      <p>Sistem Absensi, Logistik, Inventaris &amp; Rekapitulasi Akademik — panduan lengkap untuk semua pengguna sistem.</p>
+      <div class="hero-features">
+        <div class="hero-feature"><span class="dot"></span>Presensi GPS</div>
+        <div class="hero-feature"><span class="dot"></span>Jurnal Mengajar</div>
+        <div class="hero-feature"><span class="dot"></span>Asesmen Harian &amp; Akhir</div>
+        <div class="hero-feature"><span class="dot"></span>Inventaris Barang</div>
+        <div class="hero-feature"><span class="dot"></span>Tagihan SPP</div>
+        <div class="hero-feature"><span class="dot"></span>Notifikasi WhatsApp</div>
+        <div class="hero-feature"><span class="dot"></span>Portal Siswa</div>
+      </div>
+    </div>
+
+    <div class="role-filter" id="roleFilter">
+      <button class="role-btn active" onclick="filterRole('all',this)"><span class="role-dot" style="background:#8b9bbf"></span>Semua Role</button>
+      <button class="role-btn" onclick="filterRole('super-admin',this)"><span class="role-dot" style="background:#ef4444"></span>Super Admin</button>
+      <button class="role-btn" onclick="filterRole('kepala-sekolah',this)"><span class="role-dot" style="background:#f59e0b"></span>Kepala Sekolah</button>
+      <button class="role-btn" onclick="filterRole('staff-tu',this)"><span class="role-dot" style="background:#10b981"></span>Staff/TU</button>
+      <button class="role-btn" onclick="filterRole('bendahara',this)"><span class="role-dot" style="background:#06b6d4"></span>Bendahara</button>
+      <button class="role-btn" onclick="filterRole('guru',this)"><span class="role-dot" style="background:#8b5cf6"></span>Guru</button>
+      <button class="role-btn" onclick="filterRole('wali-kelas',this)"><span class="role-dot" style="background:#f97316"></span>Wali Kelas</button>
+      <button class="role-btn" onclick="filterRole('portal-siswa',this)"><span class="role-dot" style="background:#3b82f6"></span>Siswa</button>
+    </div>
+
+    <!-- 1. TENTANG -->
+    <div class="section" id="tentang" data-roles="all">
+      <div class="section-header">
+        <div class="section-icon" style="background:rgba(59,130,246,0.12)">📘</div>
+        <div><h2>1. Tentang SALIRA</h2><p style="color:var(--text-muted);font-size:13px;margin-top:2px">Sistem Informasi Manajemen Sekolah Terintegrasi</p></div>
+      </div>
+      <p style="color:var(--text-secondary);font-size:14px;margin-bottom:20px"><strong style="color:var(--text-primary)">SALIRA</strong> adalah sistem informasi manajemen sekolah yang mengintegrasikan seluruh proses operasional akademik dan non-akademik dalam satu platform.</p>
+      <div class="card-grid">
+        <div class="info-card"><div class="card-icon">📍</div><div class="card-title">Presensi GPS</div><div class="card-desc">Check-in/out pegawai dengan verifikasi lokasi geofence</div></div>
+        <div class="info-card"><div class="card-icon">📚</div><div class="card-title">Jurnal & Asesmen</div><div class="card-desc">Jurnal mengajar, asesmen harian (ASAS/ASAT)</div></div>
+        <div class="info-card"><div class="card-icon">📦</div><div class="card-title">Inventaris</div><div class="card-desc">Manajemen barang dengan barcode scanner</div></div>
+        <div class="info-card"><div class="card-icon">💰</div><div class="card-title">Keuangan</div><div class="card-desc">Tagihan SPP, pengeluaran, analitik keuangan</div></div>
+        <div class="info-card"><div class="card-icon">📊</div><div class="card-title">Rekapitulasi</div><div class="card-desc">Laporan lengkap, export PDF &amp; Excel</div></div>
+        <div class="info-card"><div class="card-icon">💬</div><div class="card-title">Notifikasi WA</div><div class="card-desc">Pesan otomatis ke orang tua &amp; guru via WhatsApp</div></div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 2. PERAN -->
+    <div class="section" id="role" data-roles="all">
+      <div class="section-header">
+        <div class="section-icon" style="background:rgba(139,92,246,0.12)">👥</div>
+        <div><h2>2. Peran Pengguna</h2></div>
+      </div>
+      <div class="role-table">
+        <div class="role-row"><span class="role-pill" style="background:rgba(239,68,68,0.12);color:#fca5a5;border:1px solid rgba(239,68,68,0.25)"><span style="width:7px;height:7px;border-radius:50%;background:#ef4444;display:inline-block"></span>Super Admin</span><span class="role-access">Akses penuh — konfigurasi, manajemen pengguna, semua modul</span></div>
+        <div class="role-row"><span class="role-pill" style="background:rgba(245,158,11,0.12);color:#fcd34d;border:1px solid rgba(245,158,11,0.25)"><span style="width:7px;height:7px;border-radius:50%;background:#f59e0b;display:inline-block"></span>Kepala Sekolah</span><span class="role-access">Dashboard pimpinan, rekapitulasi, rekap absensi pegawai, approval perizinan</span></div>
+        <div class="role-row"><span class="role-pill" style="background:rgba(16,185,129,0.12);color:#6ee7b7;border:1px solid rgba(16,185,129,0.25)"><span style="width:7px;height:7px;border-radius:50%;background:#10b981;display:inline-block"></span>Staff/TU</span><span class="role-access">Data siswa, kelas, mata pelajaran, tahun ajaran, inventaris barang</span></div>
+        <div class="role-row"><span class="role-pill" style="background:rgba(6,182,212,0.12);color:#67e8f9;border:1px solid rgba(6,182,212,0.25)"><span style="width:7px;height:7px;border-radius:50%;background:#06b6d4;display:inline-block"></span>Bendahara</span><span class="role-access">Manajemen tagihan SPP, analitik keuangan, catat pengeluaran</span></div>
+        <div class="role-row"><span class="role-pill" style="background:rgba(139,92,246,0.12);color:#c4b5fd;border:1px solid rgba(139,92,246,0.25)"><span style="width:7px;height:7px;border-radius:50%;background:#8b5cf6;display:inline-block"></span>Guru</span><span class="role-access">Jurnal mengajar, asesmen harian &amp; akhir (ASAS/ASAT), bimbingan siswa</span></div>
+        <div class="role-row"><span class="role-pill" style="background:rgba(249,115,22,0.12);color:#fdba74;border:1px solid rgba(249,115,22,0.25)"><span style="width:7px;height:7px;border-radius:50%;background:#f97316;display:inline-block"></span>Wali Kelas</span><span class="role-access">Semua fitur Guru + laporan wali kelas, kirim laporan ke orang tua via WA</span></div>
+        <div class="role-row"><span class="role-pill" style="background:rgba(59,130,246,0.12);color:#93c5fd;border:1px solid rgba(59,130,246,0.25)"><span style="width:7px;height:7px;border-radius:50%;background:#3b82f6;display:inline-block"></span>Siswa</span><span class="role-access">Portal siswa: nilai, absensi, tagihan, pengajuan izin, kartu digital</span></div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 3. LOGIN -->
+    <div class="section" id="login" data-roles="all">
+      <div class="section-header">
+        <div class="section-icon" style="background:rgba(16,185,129,0.12)">🔐</div>
+        <div><h2>3. Login &amp; Akses Aplikasi</h2></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px">
+          <div style="font-weight:600;color:var(--text-primary);margin-bottom:12px">🖥️ Staf &amp; Guru</div>
+          <div class="steps">
+            <div class="step"><div class="step-num">1</div><div class="step-content">Buka URL aplikasi utama sekolah</div></div>
+            <div class="step"><div class="step-num">2</div><div class="step-content">Masukkan <strong>Email</strong> dan <strong>Password</strong></div></div>
+            <div class="step"><div class="step-num">3</div><div class="step-content">Klik <strong>Masuk</strong> → diarahkan ke Dashboard sesuai role</div></div>
+          </div>
+        </div>
+        <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:20px">
+          <div style="font-weight:600;color:var(--text-primary);margin-bottom:12px">🧑‍🎓 Siswa (Portal)</div>
+          <div class="steps">
+            <div class="step"><div class="step-num">1</div><div class="step-content">Buka <code>/portal/login</code></div></div>
+            <div class="step"><div class="step-num">2</div><div class="step-content">Masukkan <strong>NIS</strong> dan <strong>Password</strong></div></div>
+            <div class="step"><div class="step-num">3</div><div class="step-content">Klik <strong>Masuk ke Portal</strong></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="alert alert-note"><div class="alert-icon">ℹ️</div><div class="alert-text"><strong>Catatan</strong>Password default akun baru adalah <code>password</code>. Segera ganti melalui menu <strong>Profil</strong> setelah login pertama.</div></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 4. SUPER ADMIN -->
+    <div class="section" id="super-admin" data-roles="super-admin">
+      <div class="section-header">
+        <div class="section-icon" style="background:rgba(239,68,68,0.12)">⚙️</div>
+        <div><h2>4. Super Admin</h2><p style="color:var(--text-muted);font-size:13px;margin-top:2px">Akses penuh ke seluruh sistem</p></div>
+        <span class="role-tag" style="background:rgba(239,68,68,0.12);color:#fca5a5;border:1px solid rgba(239,68,68,0.2)">Super Admin</span>
+      </div>
+
+      <div class="subsection">
+        <h3>4.1 Manajemen Pengguna</h3>
+        <div class="menu-badge">Sistem &amp; Pengaturan → Data Pengguna</div>
+        <ul class="bullet-list">
+          <li><strong>Tambah pengguna</strong> — nama, NIP, email, role, nomor WhatsApp</li>
+          <li><strong>Edit / Reset password</strong> pengguna yang ada</li>
+          <li><strong>Hapus</strong> akun yang tidak aktif</li>
+          <li><strong>Import Excel</strong> — tambah banyak pengguna sekaligus dari template</li>
+          <li><strong>Export</strong> — unduh daftar seluruh pengguna</li>
+        </ul>
+        <div class="alert alert-important"><div class="alert-icon">⚠️</div><div class="alert-text"><strong>Penting</strong>Hanya Super Admin yang bisa mengelola akun. Pastikan nomor WhatsApp diisi agar notifikasi otomatis berfungsi.</div></div>
+      </div>
+
+      <div class="subsection">
+        <h3>4.2 Pengaturan Sistem</h3>
+        <div class="menu-badge">Sistem &amp; Pengaturan → Pengaturan Umum</div>
+        <ul class="bullet-list">
+          <li><strong>Informasi Sekolah</strong> — nama, logo, alamat sekolah</li>
+          <li><strong>Update Sistem</strong> — perbarui aplikasi ke versi terbaru</li>
+          <li><strong>Log Update</strong> — lihat riwayat pembaruan</li>
+        </ul>
+      </div>
+
+      <div class="subsection">
+        <h3>4.3 Notifikasi &amp; WhatsApp Gateway</h3>
+        <div class="menu-badge">Sistem &amp; Pengaturan → Notifikasi &amp; Gateway</div>
+        <ul class="bullet-list">
+          <li><strong>Status Gateway</strong> — cek apakah WhatsApp terhubung</li>
+          <li><strong>Restart Gateway</strong> — restart koneksi jika bermasalah</li>
+          <li><strong>Matriks Notifikasi</strong> — atur notifikasi apa yang dikirim ke siapa</li>
+          <li><strong>Template Pesan</strong> — ubah teks pesan WhatsApp</li>
+          <li><strong>Tes Kirim</strong> — kirim pesan uji coba</li>
+        </ul>
+      </div>
+
+      <div class="subsection">
+        <h3>4.4 Lokasi Geofence</h3>
+        <div class="menu-badge">Sistem &amp; Pengaturan → Lokasi Geofence</div>
+        <ul class="bullet-list">
+          <li><strong>Tambah geofence</strong> — nama, koordinat (lat/lng), radius (meter)</li>
+          <li><strong>Aktifkan/nonaktifkan</strong> sesuai kebutuhan</li>
+          <li><strong>Hapus</strong> geofence yang tidak terpakai</li>
+        </ul>
+      </div>
+
+      <div class="subsection">
+        <h3>4.5 Tahun Ajaran &amp; Semester</h3>
+        <div class="menu-badge">Data Master → Tahun Ajaran</div>
+        <ul class="bullet-list">
+          <li>Tambah tahun ajaran baru (contoh: <code>2025/2026</code>)</li>
+          <li>Aktifkan/nonaktifkan tahun ajaran &amp; semester</li>
+          <li>Setiap tahun ajaran memiliki <strong>2 semester</strong></li>
+        </ul>
+        <div class="alert alert-caution"><div class="alert-icon">🚨</div><div class="alert-text"><strong>Perhatian</strong>Hanya boleh ada <strong>satu tahun ajaran aktif</strong> dan <strong>satu semester aktif</strong> pada satu waktu.</div></div>
+      </div>
+
+      <div class="subsection">
+        <h3>4.6 Pengumuman</h3>
+        <div class="menu-badge">Beranda → Pengumuman</div>
+        <ul class="bullet-list">
+          <li>Buat pengumuman — judul, isi, penerima</li>
+          <li>Edit atau hapus pengumuman yang ada</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 5. KEPALA SEKOLAH -->
+    <div class="section" id="kepala-sekolah" data-roles="kepala-sekolah">
+      <div class="section-header">
+        <div class="section-icon" style="background:rgba(245,158,11,0.12)">🏫</div>
+        <div><h2>5. Kepala Sekolah</h2><p style="color:var(--text-muted);font-size:13px;margin-top:2px">Dashboard pimpinan, rekapitulasi, dan approval</p></div>
+        <span class="role-tag" style="background:rgba(245,158,11,0.12);color:#fcd34d;border:1px solid rgba(245,158,11,0.2)">Kepala Sekolah</span>
+      </div>
+
+      <div class="subsection">
+        <h3>5.1 Dashboard Pimpinan</h3>
+        <div class="menu-badge">Dashboard → Leader Dashboard</div>
+        <ul class="bullet-list">
+          <li>Total siswa, guru, kelas aktif secara real-time</li>
+          <li>Statistik presensi hari ini</li>
+          <li>Grafik kehadiran bulanan</li>
+          <li>Ringkasan keuangan</li>
+        </ul>
+      </div>
+
+      <div class="subsection">
+        <h3>5.2 Rekapitulasi &amp; Laporan</h3>
+        <div class="menu-badge">KBM &amp; Akademik → Rekapitulasi</div>
+        <div class="report-cards">
+          <div class="report-card"><div class="r-title">📅 Rekap Absensi</div><div class="r-desc">Kehadiran pegawai per periode</div></div>
+          <div class="report-card"><div class="r-title">📖 Rekap per Mapel</div><div class="r-desc">Kehadiran siswa per mata pelajaran</div></div>
+          <div class="report-card"><div class="r-title">📝 Rekap Penilaian</div><div class="r-desc">Nilai harian per kelas/mapel</div></div>
+          <div class="report-card"><div class="r-title">📒 Rekap Agenda</div><div class="r-desc">Jurnal mengajar guru</div></div>
+          <div class="report-card"><div class="r-title">🤝 Rekap Bimbingan</div><div class="r-desc">Catatan bimbingan siswa</div></div>
+          <div class="report-card"><div class="r-title">👤 Resume Siswa</div><div class="r-desc">Laporan perkembangan lengkap</div></div>
+        </div>
+        <p style="color:var(--text-muted);font-size:13px;margin-top:8px">Semua laporan dapat difilter dan diekspor ke <strong>Excel</strong> atau <strong>PDF</strong>.</p>
+      </div>
+
+      <div class="subsection">
+        <h3>5.3 Rekap Absensi Pegawai</h3>
+        <div class="menu-badge">Kepegawaian → Rekap Absensi Pegawai</div>
+        <ul class="bullet-list">
+          <li>Lihat rekap presensi seluruh staf &amp; guru</li>
+          <li>Filter berdasarkan tanggal atau bulan</li>
+          <li>Export ke Excel atau PDF</li>
+        </ul>
+      </div>
+
+      <div class="subsection">
+        <h3>5.4 Approval Perizinan</h3>
+        <div class="menu-badge">Kepegawaian → Approval Perizinan</div>
+        <div class="steps">
+          <div class="step"><div class="step-num">1</div><div class="step-content">Buka menu <strong>Approval Perizinan</strong></div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-content">Lihat daftar pengajuan yang berstatus <strong>Menunggu</strong></div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-content">Klik <strong>Setujui</strong> atau <strong>Tolak</strong> dan tambahkan catatan jika perlu</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 6. STAFF/TU -->
+    <div class="section" id="staff-tu" data-roles="staff-tu">
+      <div class="section-header">
+        <div class="section-icon" style="background:rgba(16,185,129,0.12)">📋</div>
+        <div><h2>6. Staff / Tata Usaha</h2><p style="color:var(--text-muted);font-size:13px;margin-top:2px">Manajemen data operasional sekolah</p></div>
+        <span class="role-tag" style="background:rgba(16,185,129,0.12);color:#6ee7b7;border:1px solid rgba(16,185,129,0.2)">Staff/TU</span>
+      </div>
+
+      <div class="subsection">
+        <h3>6.1 Data Siswa</h3>
+        <div class="menu-badge">Data Master → Data Siswa</div>
+        <h4>Tambah Satu per Satu</h4>
+        <div class="steps">
+          <div class="step"><div class="step-num">1</div><div class="step-content">Klik <strong>+ Tambah Siswa</strong></div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-content">Isi: Nama, NIS, NISN, tanggal lahir, jenis kelamin, kelas, nomor WA orang tua</div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-content">Klik <strong>Simpan</strong></div></div>
+        </div>
+        <h4>Import dari Excel</h4>
+        <div class="steps">
+          <div class="step"><div class="step-num">1</div><div class="step-content">Unduh <strong>template Excel</strong> terlebih dahulu</div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-content">Isi data siswa sesuai format template</div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-content">Klik <strong>Import</strong> → pilih file yang sudah diisi</div></div>
+        </div>
+        <h4>Fitur Lainnya</h4>
+        <ul class="bullet-list">
+          <li><strong>Export Excel</strong> — unduh daftar seluruh siswa</li>
+          <li><strong>Cetak Kartu Siswa</strong> — pilih kelas → cetak kartu identitas</li>
+        </ul>
+      </div>
+
+      <div class="subsection">
+        <h3>6.2 Data Kelas</h3>
+        <div class="menu-badge">Data Master → Data Kelas</div>
+        <ul class="bullet-list">
+          <li><strong>Tambah kelas</strong> — nama, tingkat, wali kelas</li>
+          <li><strong>Edit / Hapus</strong> kelas</li>
+          <li><strong>Import/Export</strong> via Excel</li>
+        </ul>
+      </div>
+
+      <div class="subsection">
+        <h3>6.3 Mata Pelajaran</h3>
+        <div class="menu-badge">Data Master → Mata Pelajaran</div>
+        <ul class="bullet-list">
+          <li><strong>Tambah</strong> — nama mapel, guru pengampu</li>
+          <li><strong>Edit / Hapus</strong> mata pelajaran</li>
+          <li><strong>Import/Export</strong> via Excel</li>
+        </ul>
+      </div>
+
+      <div class="subsection">
+        <h3>6.4 Inventaris Barang</h3>
+        <div class="menu-badge">Sarpras &amp; Inventaris → Kelola Barang</div>
+        <h4>Menambah Barang</h4>
+        <div class="steps">
+          <div class="step"><div class="step-num">1</div><div class="step-content">Klik <strong>+ Tambah Barang</strong></div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-content">Isi nama, kategori, jumlah, kondisi, keterangan</div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-content">Klik <strong>Simpan</strong></div></div>
+        </div>
+        <h4>Scanner Barcode</h4>
+        <div class="menu-badge">Sarpras &amp; Inventaris → Scanner Barcode</div>
+        <div class="steps">
+          <div class="step"><div class="step-num">1</div><div class="step-content">Arahkan kamera ke barcode barang</div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-content">Pilih aksi: <strong>Pinjam</strong>, <strong>Kembalikan</strong>, atau <strong>Catat Keluar</strong></div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-content">Klik <strong>Proses</strong></div></div>
+        </div>
+        <p style="color:var(--text-muted);font-size:13px;margin-top:8px">Lihat riwayat aktivitas di <strong>Sarpras &amp; Inventaris → Log Transaksi</strong>.</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 7. BENDAHARA -->
+    <div class="section" id="bendahara" data-roles="bendahara">
+      <div class="section-header">
+        <div class="section-icon" style="background:rgba(6,182,212,0.12)">💰</div>
+        <div><h2>7. Bendahara</h2><p style="color:var(--text-muted);font-size:13px;margin-top:2px">Tagihan SPP, keuangan, dan pengeluaran</p></div>
+        <span class="role-tag" style="background:rgba(6,182,212,0.12);color:#67e8f9;border:1px solid rgba(6,182,212,0.2)">Bendahara</span>
+      </div>
+
+      <div class="subsection">
+        <h3>7.1 Manajemen Tagihan (SPP)</h3>
+        <div class="menu-badge">Keuangan &amp; Administrasi → Manajemen Tagihan (SPP)</div>
+        <h4>Membuat Tagihan Baru</h4>
+        <div class="steps">
+          <div class="step"><div class="step-num">1</div><div class="step-content">Klik <strong>+ Buat Tagihan</strong></div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-content">Pilih siswa (satu / seluruh kelas)</div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-content">Isi nama tagihan, jumlah, dan batas waktu</div></div>
+          <div class="step"><div class="step-num">4</div><div class="step-content">Klik <strong>Buat Tagihan</strong> — notifikasi WA terkirim otomatis ke orang tua</div></div>
+        </div>
+        <h4>Tandai Lunas Manual (Pembayaran Tunai)</h4>
+        <div class="steps">
+          <div class="step"><div class="step-num">1</div><div class="step-content">Temukan tagihan yang bersangkutan</div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-content">Klik <strong>Tandai Lunas</strong> → konfirmasi</div></div>
+        </div>
+        <p style="color:var(--text-muted);font-size:13px;margin-top:8px">Gunakan <strong>Sync Status</strong> untuk memperbarui status dari gateway Midtrans.</p>
+      </div>
+
+      <div class="subsection">
+        <h3>7.2 Analitik Keuangan</h3>
+        <div class="menu-badge">Keuangan &amp; Administrasi → Analitik Keuangan</div>
+        <ul class="bullet-list">
+          <li>Grafik pemasukan vs pengeluaran</li>
+          <li>Ringkasan per kategori &amp; saldo bersih</li>
+        </ul>
+      </div>
+
+      <div class="subsection">
+        <h3>7.3 Catat Pengeluaran &amp; Kategori</h3>
+        <div class="menu-badge">Keuangan &amp; Administrasi → Catat Pengeluaran</div>
+        <ul class="bullet-list">
+          <li>Tambah pengeluaran — tanggal, kategori, jumlah, keterangan</li>
+          <li>Kelola kategori di <strong>Kategori Keuangan</strong></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 8. GURU -->
+    <div class="section" id="guru" data-roles="guru">
+      <div class="section-header">
+        <div class="section-icon" style="background:rgba(139,92,246,0.12)">📚</div>
+        <div><h2>8. Guru</h2><p style="color:var(--text-muted);font-size:13px;margin-top:2px">Jurnal, asesmen, bimbingan, dan presensi</p></div>
+        <span class="role-tag" style="background:rgba(139,92,246,0.12);color:#c4b5fd;border:1px solid rgba(139,92,246,0.2)">Guru</span>
+      </div>
+
+      <div class="subsection">
+        <h3>8.1 Presensi Mandiri (Check-In / Check-Out)</h3>
+        <div class="menu-badge">Kepegawaian → Presensi Pegawai</div>
+        <div class="alert alert-important"><div class="alert-icon">📍</div><div class="alert-text"><strong>Penting</strong>Presensi menggunakan <strong>GPS</strong>. Pastikan lokasi aktif dan Anda berada dalam zona geofence yang ditetapkan.</div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px">
+          <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px">
+            <div style="font-weight:600;color:#10b981;margin-bottom:8px;font-size:13px">✅ Check-In</div>
+            <div class="steps">
+              <div class="step"><div class="step-num">1</div><div class="step-content">Buka <strong>Presensi Pegawai</strong></div></div>
+              <div class="step"><div class="step-num">2</div><div class="step-content">Izinkan akses lokasi di browser</div></div>
+              <div class="step"><div class="step-num">3</div><div class="step-content">Klik <strong>Check In</strong></div></div>
+            </div>
+          </div>
+          <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:16px">
+            <div style="font-weight:600;color:#ef4444;margin-bottom:8px;font-size:13px">🚪 Check-Out</div>
+            <div class="steps">
+              <div class="step"><div class="step-num">1</div><div class="step-content">Buka <strong>Presensi Pegawai</strong></div></div>
+              <div class="step"><div class="step-num">2</div><div class="step-content">Klik <strong>Check Out</strong> → konfirmasi</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3>8.2 Jurnal Mengajar</h3>
+        <div class="menu-badge">KBM &amp; Akademik → Jurnal Mengajar</div>
+        <div class="steps">
+          <div class="step"><div class="step-num">1</div><div class="step-content">Klik <strong>+ Buat Agenda</strong></div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-content">Pilih <strong>kelas</strong> dan <strong>mata pelajaran</strong></div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-content">Isi <strong>tanggal</strong>, <strong>jam</strong>, dan <strong>topik/materi</strong></div></div>
+          <div class="step"><div class="step-num">4</div><div class="step-content">Catat kehadiran siswa — Hadir / Tidak Hadir / Izin / Sakit</div></div>
+          <div class="step"><div class="step-num">5</div><div class="step-content">Klik <strong>Simpan</strong></div></div>
+        </div>
+        <p style="color:var(--text-muted);font-size:13px;margin-top:8px">Jurnal dapat diedit, dihapus, dan diekspor ke <strong>Excel</strong> atau <strong>PDF</strong>.</p>
+      </div>
+
+      <div class="subsection">
+        <h3>8.3 Asesmen Harian</h3>
+        <div class="menu-badge">KBM &amp; Akademik → Asesmen Harian</div>
+        <div class="steps">
+          <div class="step"><div class="step-num">1</div><div class="step-content">Klik <strong>+ Buat Penilaian</strong></div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-content">Pilih <strong>kelas</strong>, <strong>mata pelajaran</strong>, dan <strong>tanggal</strong></div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-content">Tentukan <strong>jenis penilaian</strong> (Tugas, Kuis, Praktik, dll.)</div></div>
+          <div class="step"><div class="step-num">4</div><div class="step-content">Masukkan nilai setiap siswa → klik <strong>Simpan</strong></div></div>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3>8.4 Asesmen Akhir (ASAS &amp; ASAT)</h3>
+        <div class="menu-badge">KBM &amp; Akademik → Asesmen Akhir (ASAS/ASAT)</div>
+        <p style="color:var(--text-secondary);font-size:14px;margin-bottom:12px">Untuk nilai <strong>Asesmen Sumatif Akhir Semester (ASAS)</strong> dan <strong>Asesmen Sumatif Akhir Tahun (ASAT)</strong>.</p>
+        <div class="steps">
+          <div class="step"><div class="step-num">1</div><div class="step-content">Klik <strong>+ Buat Penilaian Akhir</strong></div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-content">Pilih <strong>kelas</strong> dan <strong>mata pelajaran</strong></div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-content">Tentukan <strong>jenis</strong> (ASAS / ASAT) dan <strong>semester</strong></div></div>
+          <div class="step"><div class="step-num">4</div><div class="step-content">Masukkan nilai setiap siswa → klik <strong>Simpan</strong></div></div>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3>8.5 Bimbingan Siswa</h3>
+        <div class="menu-badge">KBM &amp; Akademik → Bimbingan Siswa</div>
+        <div class="steps">
+          <div class="step"><div class="step-num">1</div><div class="step-content">Klik <strong>+ Tambah Catatan Bimbingan</strong></div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-content">Pilih <strong>kelas</strong> dan <strong>siswa</strong></div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-content">Isi <strong>tanggal</strong>, <strong>topik</strong>, dan <strong>catatan hasil</strong></div></div>
+          <div class="step"><div class="step-num">4</div><div class="step-content">Klik <strong>Simpan</strong></div></div>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3>8.6 Pengajuan Izin</h3>
+        <div class="menu-badge">Kepegawaian → Pengajuan Izin</div>
+        <div class="steps">
+          <div class="step"><div class="step-num">1</div><div class="step-content">Klik <strong>+ Ajukan Izin</strong></div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-content">Pilih jenis: Sakit, Izin, Cuti, dll.</div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-content">Isi tanggal mulai, tanggal selesai, dan alasan</div></div>
+          <div class="step"><div class="step-num">4</div><div class="step-content">Lampirkan dokumen pendukung jika ada → klik <strong>Ajukan</strong></div></div>
+          <div class="step"><div class="step-num">5</div><div class="step-content">Tunggu persetujuan dari <strong>Kepala Sekolah</strong></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 9. WALI KELAS -->
+    <div class="section" id="wali-kelas" data-roles="wali-kelas">
+      <div class="section-header">
+        <div class="section-icon" style="background:rgba(249,115,22,0.12)">🎓</div>
+        <div><h2>9. Wali Kelas</h2><p style="color:var(--text-muted);font-size:13px;margin-top:2px">Semua fitur Guru + laporan wali kelas</p></div>
+        <span class="role-tag" style="background:rgba(249,115,22,0.12);color:#fdba74;border:1px solid rgba(249,115,22,0.2)">Wali Kelas</span>
+      </div>
+
+      <div class="alert alert-note"><div class="alert-icon">ℹ️</div><div class="alert-text"><strong>Catatan</strong>Wali Kelas memiliki <strong>semua akses Guru</strong> (lihat bagian 8) ditambah fitur khusus berikut.</div></div>
+
+      <div class="subsection">
+        <h3>9.1 Laporan Wali Kelas</h3>
+        <div class="menu-badge">KBM &amp; Akademik → Laporan Wali Kelas</div>
+        <ul class="bullet-list">
+          <li>Lihat daftar lengkap siswa di kelas yang diampu</li>
+          <li>Klik nama siswa untuk melihat <strong>resume/profil lengkap</strong></li>
+        </ul>
+        <p style="color:var(--text-secondary);font-size:14px;margin:12px 0 8px">Resume siswa mencakup:</p>
+        <ul class="bullet-list">
+          <li><strong>Absensi</strong> — total hadir, tidak hadir, izin, sakit</li>
+          <li><strong>Nilai Harian</strong> — ringkasan per mata pelajaran</li>
+          <li><strong>Nilai Akhir (ASAS/ASAT)</strong> — nilai asesmen akhir</li>
+          <li><strong>Catatan Bimbingan</strong> — riwayat konsultasi</li>
+        </ul>
+        <p style="color:var(--text-muted);font-size:13px;margin-top:8px">Klik <strong>Download PDF</strong> untuk mengunduh resume.</p>
+      </div>
+
+      <div class="subsection">
+        <h3>9.2 Kirim Laporan ke Orang Tua</h3>
+        <div class="menu-badge">KBM &amp; Akademik → Laporan Wali Kelas</div>
+        <h4>Kirim Satu Siswa</h4>
+        <div class="steps">
+          <div class="step"><div class="step-num">1</div><div class="step-content">Klik <strong>Kirim Laporan</strong> di samping nama siswa</div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-content">Sistem mengirim laporan via <strong>WhatsApp</strong> ke orang tua</div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-content">Konfirmasi pengiriman berhasil</div></div>
+        </div>
+        <h4>Kirim Laporan Massal</h4>
+        <div class="steps">
+          <div class="step"><div class="step-num">1</div><div class="step-content">Klik <strong>Kirim Semua Laporan</strong></div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-content">Konfirmasi — laporan terkirim ke <strong>semua orang tua</strong> di kelas</div></div>
+        </div>
+        <div class="alert alert-note"><div class="alert-icon">ℹ️</div><div class="alert-text"><strong>Catatan</strong>Nomor WA orang tua harus sudah diisi di data siswa, dan WhatsApp Gateway harus aktif.</div></div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 10. PORTAL SISWA -->
+    <div class="section" id="portal-siswa" data-roles="portal-siswa">
+      <div class="section-header">
+        <div class="section-icon" style="background:rgba(59,130,246,0.12)">🧑‍🎓</div>
+        <div><h2>10. Portal Siswa</h2><p style="color:var(--text-muted);font-size:13px;margin-top:2px">Nilai, absensi, tagihan, dan izin</p></div>
+        <span class="role-tag" style="background:rgba(59,130,246,0.12);color:#93c5fd;border:1px solid rgba(59,130,246,0.2)">Siswa</span>
+      </div>
+
+      <p style="color:var(--text-secondary);font-size:14px;margin-bottom:20px">Diakses melalui: <code>/portal/login</code></p>
+
+      <div class="subsection">
+        <h3>10.1 Dashboard Siswa</h3>
+        <ul class="bullet-list">
+          <li>Status kehadiran hari ini</li>
+          <li>Tagihan yang belum dibayar</li>
+          <li>Notifikasi terbaru &amp; pengumuman sekolah</li>
+        </ul>
+      </div>
+
+      <div class="subsection">
+        <h3>10.2 Presensi Siswa (Kiosk Mode)</h3>
+        <div class="menu-badge">/portal/attendance/scanner</div>
+        <div class="alert alert-note"><div class="alert-icon">🖥️</div><div class="alert-text"><strong>Mode Kiosk</strong>Halaman ini dapat diakses <strong>tanpa login</strong>. Dipasang di komputer/tablet di pintu masuk sekolah.</div></div>
+        <div class="steps">
+          <div class="step"><div class="step-num">1</div><div class="step-content">Tampilkan <strong>barcode/QR kartu siswa</strong> ke kamera</div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-content">Sistem mencatat kehadiran secara otomatis</div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-content">Konfirmasi tampil di layar</div></div>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3>10.3 Tagihan &amp; Pembayaran</h3>
+        <div class="menu-badge">Portal → Tagihan</div>
+        <ul class="bullet-list">
+          <li>Lihat semua tagihan beserta status (Lunas / Belum Bayar)</li>
+          <li>Klik <strong>Bayar Sekarang</strong> untuk pembayaran online via Midtrans</li>
+          <li>Unduh invoice setelah pembayaran berhasil</li>
+        </ul>
+        <h4>Pembayaran via Link WhatsApp</h4>
+        <div class="steps">
+          <div class="step"><div class="step-num">1</div><div class="step-content">Buka link invoice dari WhatsApp</div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-content">Klik <strong>Bayar Sekarang</strong></div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-content">Pilih metode: Transfer Bank, GoPay, OVO, QRIS, dll.</div></div>
+          <div class="step"><div class="step-num">4</div><div class="step-content">Selesaikan pembayaran sesuai instruksi</div></div>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3>10.4 Pengajuan Izin</h3>
+        <div class="menu-badge">Portal → Izin</div>
+        <div class="steps">
+          <div class="step"><div class="step-num">1</div><div class="step-content">Klik <strong>+ Ajukan Izin</strong></div></div>
+          <div class="step"><div class="step-num">2</div><div class="step-content">Pilih jenis: <strong>Sakit</strong> atau <strong>Izin</strong></div></div>
+          <div class="step"><div class="step-num">3</div><div class="step-content">Isi tanggal dan alasan → klik <strong>Ajukan</strong></div></div>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3>10.5 Fitur Lainnya</h3>
+        <div class="card-grid">
+          <div class="info-card"><div class="card-icon">📊</div><div class="card-title">Data Absensi</div><div class="card-desc">Rekap kehadiran per bulan dengan grafik visual</div></div>
+          <div class="info-card"><div class="card-icon">📝</div><div class="card-title">Nilai</div><div class="card-desc">Asesmen harian &amp; nilai akhir (ASAS/ASAT)</div></div>
+          <div class="info-card"><div class="card-icon">🪪</div><div class="card-title">Kartu Digital</div><div class="card-desc">Kartu identitas siswa dengan barcode</div></div>
+          <div class="info-card"><div class="card-icon">📄</div><div class="card-title">Laporan</div><div class="card-desc">Unduh laporan perkembangan dari Wali Kelas</div></div>
+          <div class="info-card"><div class="card-icon">🔔</div><div class="card-title">Notifikasi</div><div class="card-desc">Tagihan baru, pengumuman, informasi penting</div></div>
+          <div class="info-card"><div class="card-icon">👤</div><div class="card-title">Profil</div><div class="card-desc">Ubah foto, data pribadi, dan password</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- 11. FITUR UMUM -->
+    <div class="section" id="fitur-umum" data-roles="all">
+      <div class="section-header">
+        <div class="section-icon" style="background:rgba(139,92,246,0.12)">✨</div>
+        <div><h2>11. Fitur Umum</h2><p style="color:var(--text-muted);font-size:13px;margin-top:2px">Tersedia untuk semua pengguna</p></div>
+      </div>
+
+      <div class="subsection">
+        <h3>11.1 Notifikasi Sistem</h3>
+        <p style="color:var(--text-secondary);font-size:14px;margin-bottom:8px">Klik ikon 🔔 di pojok kanan atas navbar.</p>
+        <ul class="bullet-list">
+          <li>Tampilkan semua notifikasi masuk</li>
+          <li>Klik notifikasi untuk diarahkan ke halaman terkait</li>
+          <li>Tandai semua sebagai <strong>sudah dibaca</strong> sekaligus</li>
+        </ul>
+      </div>
+
+      <div class="subsection">
+        <h3>11.2 Edit Profil</h3>
+        <p style="color:var(--text-secondary);font-size:14px;margin-bottom:8px">Klik nama/foto di pojok kanan atas → <strong>Profil</strong>.</p>
+        <ul class="bullet-list">
+          <li>Ubah <strong>nama</strong>, <strong>email</strong>, <strong>foto profil</strong></li>
+          <li>Ganti <strong>password</strong></li>
+          <li>Perbarui nomor WhatsApp agar notifikasi diterima</li>
+        </ul>
+      </div>
+
+      <div class="subsection">
+        <h3>11.3 Presensi Mandiri</h3>
+        <div class="menu-badge">Kepegawaian → Presensi Pegawai</div>
+        <ul class="bullet-list">
+          <li><strong>Check In</strong> saat tiba di sekolah</li>
+          <li><strong>Check Out</strong> saat meninggalkan sekolah</li>
+        </ul>
+        <div class="alert alert-warning"><div class="alert-icon">⚠️</div><div class="alert-text"><strong>Peringatan</strong>Presensi hanya bisa dilakukan dalam <strong>zona geofence</strong> yang ditetapkan Super Admin. Jika gagal, hubungi Admin untuk verifikasi pengaturan geofence.</div></div>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- FAQ -->
+    <div class="section" id="faq" data-roles="all">
+      <div class="section-header">
+        <div class="section-icon" style="background:rgba(245,158,11,0.12)">❓</div>
+        <div><h2>Pertanyaan Umum (FAQ)</h2></div>
+      </div>
+
+      <div class="faq-item" id="faq1">
+        <div class="faq-question" onclick="toggleFaq('faq1')"><span class="faq-q-icon">🔑</span>Saya lupa password, apa yang harus dilakukan?<span class="faq-chevron">▼</span></div>
+        <div class="faq-answer"><div class="faq-answer-inner">Hubungi <strong>Super Admin</strong> untuk mereset password Anda melalui menu <strong>Sistem &amp; Pengaturan → Data Pengguna</strong>.</div></div>
+      </div>
+
+      <div class="faq-item" id="faq2">
+        <div class="faq-question" onclick="toggleFaq('faq2')"><span class="faq-q-icon">📍</span>Mengapa presensi saya gagal (error lokasi)?<span class="faq-chevron">▼</span></div>
+        <div class="faq-answer"><div class="faq-answer-inner">Pastikan <strong>GPS aktif</strong>, <strong>izin lokasi</strong> diberikan ke browser, dan Anda berada dalam area geofence. Jika masih gagal, minta Super Admin cek pengaturan <strong>Lokasi Geofence</strong>.</div></div>
+      </div>
+
+      <div class="faq-item" id="faq3">
+        <div class="faq-question" onclick="toggleFaq('faq3')"><span class="faq-q-icon">💬</span>Notifikasi WhatsApp tidak masuk?<span class="faq-chevron">▼</span></div>
+        <div class="faq-answer"><div class="faq-answer-inner">Periksa nomor WhatsApp di profil. Jika sudah benar, minta Super Admin cek status gateway di <strong>Notifikasi &amp; Gateway</strong>.</div></div>
+      </div>
+
+      <div class="faq-item" id="faq4">
+        <div class="faq-question" onclick="toggleFaq('faq4')"><span class="faq-q-icon">💰</span>Bagaimana cara membayar tagihan jika tidak ada internet?<span class="faq-chevron">▼</span></div>
+        <div class="faq-answer"><div class="faq-answer-inner">Pembayaran tunai dilaporkan ke <strong>Bendahara</strong> untuk ditandai lunas manual di <strong>Manajemen Tagihan (SPP)</strong>.</div></div>
+      </div>
+
+      <div class="faq-item" id="faq5">
+        <div class="faq-question" onclick="toggleFaq('faq5')"><span class="faq-q-icon">📄</span>Apakah laporan bisa dikirim ulang ke orang tua?<span class="faq-chevron">▼</span></div>
+        <div class="faq-answer"><div class="faq-answer-inner">Ya, <strong>Wali Kelas</strong> dapat mengirim ulang kapan saja melalui <strong>KBM &amp; Akademik → Laporan Wali Kelas</strong>.</div></div>
+      </div>
+
+      <div class="faq-item" id="faq6">
+        <div class="faq-question" onclick="toggleFaq('faq6')"><span class="faq-q-icon">🏫</span>Bagaimana cara mengganti tahun ajaran aktif?<span class="faq-chevron">▼</span></div>
+        <div class="faq-answer"><div class="faq-answer-inner">Hanya <strong>Super Admin</strong> yang bisa melalui <strong>Data Master → Tahun Ajaran</strong>. Nonaktifkan yang lama, aktifkan yang baru. Pastikan hanya satu yang aktif.</div></div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p>📘 <strong>Panduan Penggunaan SALIRA</strong> · Versi 1.1 · Mei 2026</p>
+      <p style="margin-top:6px">Dibuat berdasarkan analisis kode sumber aplikasi SALIRA.</p>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  window.addEventListener('scroll', () => {
+    const el = document.getElementById('readingProgress');
+    const scrolled = (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100;
+    el.style.width = Math.min(scrolled, 100) + '%';
+  });
+
+  function setActive(el) {
+    document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  const sections = document.querySelectorAll('.section[id]');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.id;
+        document.querySelectorAll('.sidebar-item').forEach(item => {
+          item.classList.toggle('active', item.getAttribute('href') === '#' + id);
+        });
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  sections.forEach(s => observer.observe(s));
+
+  function filterRole(role, btn) {
+    document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.section').forEach(section => {
+      const roles = section.dataset.roles || 'all';
+      section.style.display = (role === 'all' || roles === 'all' || roles === role) ? '' : 'none';
+    });
+    document.querySelectorAll('.divider').forEach(d => d.style.display = role === 'all' ? '' : 'none');
+  }
+
+  function toggleFaq(id) {
+    const item = document.getElementById(id);
+    const isOpen = item.classList.contains('open');
+    document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+    if (!isOpen) item.classList.add('open');
+  }
+
+  const searchInput = document.getElementById('searchInput');
+  let searchTimeout;
+  searchInput.addEventListener('input', () => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      const q = searchInput.value.trim().toLowerCase();
+      document.querySelectorAll('mark').forEach(m => {
+        const parent = m.parentNode;
+        parent.replaceChild(document.createTextNode(m.textContent), m);
+        parent.normalize();
+      });
+      if (!q) {
+        document.querySelectorAll('.section').forEach(s => s.style.display = '');
+        document.querySelectorAll('.divider').forEach(d => d.style.display = '');
+        return;
+      }
+      document.querySelectorAll('.divider').forEach(d => d.style.display = 'none');
+      document.querySelectorAll('.section').forEach(section => {
+        if (section.textContent.toLowerCase().includes(q)) {
+          section.style.display = '';
+          highlightText(section, q);
+        } else { section.style.display = 'none'; }
+      });
+    }, 250);
+  });
+
+  function highlightText(node, query) {
+    const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT);
+    const matches = [];
+    let n;
+    while (n = walker.nextNode()) { if (n.nodeValue.toLowerCase().includes(query)) matches.push(n); }
+    matches.forEach(textNode => {
+      const idx = textNode.nodeValue.toLowerCase().indexOf(query);
+      if (idx === -1) return;
+      const before = document.createTextNode(textNode.nodeValue.slice(0, idx));
+      const mark = document.createElement('mark');
+      mark.textContent = textNode.nodeValue.slice(idx, idx + query.length);
+      const after = document.createTextNode(textNode.nodeValue.slice(idx + query.length));
+      const parent = textNode.parentNode;
+      parent.insertBefore(before, textNode);
+      parent.insertBefore(mark, textNode);
+      parent.insertBefore(after, textNode);
+      parent.removeChild(textNode);
+    });
+  }
+</script>
+</body>
+</html>
