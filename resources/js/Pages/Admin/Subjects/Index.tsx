@@ -227,9 +227,9 @@ export default function SubjectIndex({ auth, subjects, classes }: PageProps<{ su
                     <div className="flex items-center justify-center min-h-screen p-4 text-center sm:block sm:p-0">
                         <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={() => { setIsAddModalOpen(false); setIsEditModalOpen(false); }}></div>
                         <span className="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
-                        <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
+                        <div className="inline-block align-bottom bg-white dark:bg-gray-800 rounded-2xl text-left overflow-visible shadow-2xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg w-full">
                             <form onSubmit={isAddModalOpen ? submitAdd : submitEdit}>
-                                <div className="p-6 border-b dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-700/30">
+                                <div className="p-6 border-b dark:border-gray-700 flex justify-between items-center bg-gray-50 dark:bg-gray-700/30 rounded-t-2xl">
                                     <h3 className="text-xl font-bold text-gray-900 dark:text-white">
                                         {isAddModalOpen ? 'Tambah Mata Pelajaran' : 'Edit Mata Pelajaran'}
                                     </h3>
@@ -287,7 +287,7 @@ export default function SubjectIndex({ auth, subjects, classes }: PageProps<{ su
                                         </div>
                                     </div>
                                 </div>
-                                <div className="p-6 bg-gray-50 dark:bg-gray-700/50 flex justify-end space-x-3">
+                                <div className="p-6 bg-gray-50 dark:bg-gray-700/50 flex justify-end space-x-3 rounded-b-2xl">
                                     <button type="button" onClick={() => { setIsAddModalOpen(false); setIsEditModalOpen(false); }} className="px-6 py-2 border border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-300 hover:bg-gray-100 transition-colors">Batal</button>
                                     <button type="submit" disabled={processing} className="px-8 py-2 bg-primary hover:bg-primary-hover text-white rounded-xl font-bold transition-all shadow-md">{processing ? 'Menyimpan...' : 'Simpan'}</button>
                                 </div>
