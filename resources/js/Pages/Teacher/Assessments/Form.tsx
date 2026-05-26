@@ -24,6 +24,7 @@ interface Assessment {
     subject_id: number;
     title: string;
     learning_objective: string | null;
+    kkm?: number;
     date: string;
     description: string | null;
 }
@@ -31,6 +32,7 @@ interface Assessment {
 interface Subject {
     id: number;
     name: string;
+    kkm: number;
 }
 
 export default function AssessmentForm({ auth, classes, students: initialStudents, assessment, selectedClassId, subjects = [] }: PageProps<{ 
@@ -46,6 +48,7 @@ export default function AssessmentForm({ auth, classes, students: initialStudent
         academic_class_id: assessment?.academic_class_id || selectedClassId || '',
         subject_id: assessment?.subject_id || '',
         title: assessment?.title || '',
+        kkm: assessment?.kkm || 75,
         learning_objective: assessment?.learning_objective || '',
         date: assessment?.date ? (() => {
             const d = new Date(assessment.date);
@@ -60,6 +63,15 @@ export default function AssessmentForm({ auth, classes, students: initialStudent
             notes: s.notes || ''
         }))
     });
+
+    useEffect(() => {
+        if (!isEdit && data.subject_id) {
+            const selectedSubject = subjects.find(s => s.id.toString() === data.subject_id.toString());
+            if (selectedSubject) {
+                setData('kkm', selectedSubject.kkm || 75);
+            }
+        }
+    }, [data.subject_id]);
 
     const handleClassChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const id = e.target.value;
@@ -167,6 +179,20 @@ export default function AssessmentForm({ auth, classes, students: initialStudent
                                     />
                                     {errors.date && <p className="text-red-500 text-xs mt-1">{errors.date}</p>}
                                 </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">KKM Asesmen</label>
+                                    <input 
+                                        type="number" 
+                                        min="0" 
+                                        max="100" 
+                                        value={data.kkm} 
+                                        onChange={e => setData('kkm', parseInt(e.target.value) || 0)} 
+                                        required 
+                                        className="w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:border-primary focus:ring-primary shadow-sm"
+                                    />
+                                    {errors.kkm && <p className="text-red-500 text-xs mt-1">{errors.kkm}</p>}
+                                </div>
                             </div>
                             <div className="px-6 pb-6 pt-0">
                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tujuan Pembelajaran</label>
@@ -210,15 +236,28 @@ export default function AssessmentForm({ auth, classes, students: initialStudent
                                                     <td className="px-6 py-4 font-medium text-gray-900 dark:text-white">{score.name}</td>
                                                     <td className="px-6 py-4 text-xs text-gray-500 font-mono italic">{score.nisn}</td>
                                                     <td className="px-6 py-4">
-                                                        <input 
-                                                            type="number" 
-                                                            min="0" 
-                                                            max="100" 
-                                                            step="0.01"
-                                                            value={score.score} 
-                                                            onChange={e => handleScoreChange(index, e.target.value)}
-                                                            className="w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:border-primary focus:ring-primary shadow-sm"
-                                                        />
+                                                        <div className="flex items-center space-x-2">
+                                                            <input 
+                                                                type="number" 
+                                                                min="0" 
+                                                                max="100" 
+                                                                step="0.01"
+                                                                value={score.score} 
+                                                                onChange={e => handleScoreChange(index, e.target.value)}
+                                                                className={`w-24 rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-1 shadow-sm transition-all ${
+                                                                    score.score < data.kkm 
+                                                                        ? 'border-red-300 text-red-900 dark:text-red-300 dark:border-red-950/50 bg-red-50/30 dark:bg-red-950/10 focus:border-red-500 focus:ring-red-500' 
+                                                                        : 'border-emerald-300 text-emerald-900 dark:text-emerald-300 dark:border-emerald-950/50 bg-emerald-50/30 dark:bg-emerald-950/10 focus:border-emerald-500 focus:ring-emerald-500'
+                                                                }`}
+                                                            />
+                                                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                                                score.score < data.kkm 
+                                                                    ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400 border border-rose-100 dark:border-rose-900/30' 
+                                                                    : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-900/30'
+                                                            }`}>
+                                                                {score.score < data.kkm ? 'Remedial' : 'Tuntas'}
+                                                            </span>
+                                                        </div>
                                                     </td>
                                                     <td className="px-6 py-4">
                                                         <input 

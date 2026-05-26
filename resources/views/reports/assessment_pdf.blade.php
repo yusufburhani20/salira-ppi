@@ -11,6 +11,7 @@
                 <th class="text-center">
                     <div style="font-weight: bold; color: #000;">{{ \Carbon\Carbon::parse($a['date'])->format('d/m') }}</div>
                     <div style="font-size: 7px; font-weight: normal; color: #333; text-transform: none;">{{ $a['title'] }}</div>
+                    <div style="font-size: 6.5px; font-weight: bold; color: #666; text-transform: none; margin-top: 1px;">KKM: {{ $a['kkm'] ?? 75 }}</div>
                 </th>
             @endforeach
             <th class="text-center" width="60" style="background-color: #eee; color: #000;">Rata-rata</th>
@@ -28,12 +29,13 @@
                         return ($s['student']['name'] ?? '') === $studentName;
                     });
                     $val = $scoreObj['score'] ?? '-';
+                    $kkmVal = $a['kkm'] ?? 75;
                     if ($val !== '-') {
                         $total += $val;
                         $count++;
                     }
                 @endphp
-                <td class="text-center" style="{{ $val != '-' ? 'font-weight: bold;' : 'color: #999;' }}">
+                <td class="text-center" style="{{ $val != '-' ? 'font-weight: bold;' : 'color: #999;' }} {{ $val != '-' && $val < $kkmVal ? 'color: #b91c1c; background-color: #fef2f2;' : '' }}">
                     {{ $val }}
                 </td>
             @endforeach

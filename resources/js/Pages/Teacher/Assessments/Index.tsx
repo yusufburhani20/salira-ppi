@@ -21,6 +21,7 @@ interface DailyAssessment {
     title: string;
     date: string;
     max_score: number;
+    kkm?: number;
 }
 
 interface PaginationLinks {
@@ -186,6 +187,7 @@ export default function AssessmentIndex({ auth, assessments, classes, subjects, 
                                         <th className="px-6 py-4 font-medium text-gray-900 dark:text-white text-xs uppercase tracking-wider">Tanggal</th>
                                         <th className="px-6 py-4 font-medium text-gray-900 dark:text-white text-xs uppercase tracking-wider">Mata Pelajaran</th>
                                         <th className="px-6 py-4 font-medium text-gray-900 dark:text-white text-xs uppercase tracking-wider">Judul / Topik</th>
+                                        <th className="px-6 py-4 font-medium text-gray-900 dark:text-white text-xs uppercase tracking-wider">KKM</th>
                                         <th className="px-6 py-4 font-medium text-gray-900 dark:text-white text-xs uppercase tracking-wider">Kelas</th>
                                         <th className="px-6 py-4 font-medium text-gray-900 dark:text-white text-xs uppercase tracking-wider text-right">Aksi</th>
                                     </tr>
@@ -193,7 +195,7 @@ export default function AssessmentIndex({ auth, assessments, classes, subjects, 
                                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                                     {assessments.data.length === 0 ? (
                                         <tr>
-                                            <td colSpan={5} className="px-6 py-12 text-center text-gray-500">
+                                            <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
                                                 <ClipboardDocumentCheckIcon className="w-12 h-12 mx-auto mb-3 text-gray-300" />
                                                 <p>Belum ada data asesmen.</p>
                                             </td>
@@ -209,6 +211,9 @@ export default function AssessmentIndex({ auth, assessments, classes, subjects, 
                                                 </td>
                                                 <td className="px-6 py-4 text-gray-600 dark:text-gray-300 text-sm">
                                                     {item.title}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 dark:text-white">
+                                                    {item.kkm || 75}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                     <span className="bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider">

@@ -45,7 +45,8 @@
         @foreach($assessments as $a)
             <th style="font-weight: bold; background-color: #eee; border: 2px solid #000000; text-align: center; width: 100px;">
                 {{ \Carbon\Carbon::parse($a['date'])->format('d/m') }}<br>
-                {{ $a['title'] }}
+                {{ $a['title'] }}<br>
+                (KKM: {{ $a['kkm'] ?? 75 }})
             </th>
         @endforeach
         <th style="font-weight: bold; background-color: #eee; border: 2px solid #000000; text-align: center; width: 100px;">Rata-rata</th>
@@ -62,12 +63,13 @@
                         return ($s['student']['name'] ?? '') === $studentName;
                     });
                     $val = $scoreObj['score'] ?? '-';
+                    $kkmVal = $a['kkm'] ?? 75;
                     if ($val !== '-') {
                         $total += $val;
                         $count++;
                     }
                 @endphp
-                <td style="border: 1px solid #000; text-align: center; {{ $val != '-' ? 'font-weight: bold;' : 'color: #333;' }}">
+                <td style="border: 1px solid #000; text-align: center; {{ $val != '-' ? 'font-weight: bold;' : 'color: #333;' }} {{ $val != '-' && $val < $kkmVal ? 'color: #b91c1c; background-color: #fef2f2;' : '' }}">
                     {{ $val }}
                 </td>
             @endforeach

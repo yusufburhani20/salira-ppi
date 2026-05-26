@@ -64,6 +64,12 @@
                 <td colspan="3"><strong>{{ $subject_name }}</strong></td>
             </tr>
             @endif
+            @if(isset($teacher_name))
+            <tr>
+                <td>Guru:</td>
+                <td colspan="3"><strong>{{ $teacher_name }}</strong></td>
+            </tr>
+            @endif
         </table>
     </div>
 

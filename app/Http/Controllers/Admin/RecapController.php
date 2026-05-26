@@ -38,11 +38,13 @@ class RecapController extends Controller
                 ];
             });
         $activeSemester = Semester::where('is_active', true)->first();
+        $teachers = \App\Models\User::role(['Guru', 'Wali Kelas', 'Super Admin'])->orderBy('name')->get(['id', 'name']);
         
         return Inertia::render('Admin/Reports/Index', [
             'classes' => $classes,
             'subjects' => $subjects,
             'semesters' => $semesters,
+            'teachers' => $teachers,
             'activeSemesterId' => $activeSemester?->id,
         ]);
     }
@@ -244,11 +246,17 @@ class RecapController extends Controller
             'academic_class_id' => 'required|exists:academic_classes,id',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
+            'teacher_id' => 'nullable|exists:users,id',
         ]);
 
-        $agendas = ClassAgenda::where('academic_class_id', $request->academic_class_id)
-            ->whereBetween('date', [$request->start_date, $request->end_date])
-            ->with(['teacher', 'subject'])
+        $query = ClassAgenda::where('academic_class_id', $request->academic_class_id)
+            ->whereBetween('date', [$request->start_date, $request->end_date]);
+
+        if ($request->filled('teacher_id')) {
+            $query->where('teacher_id', $request->teacher_id);
+        }
+
+        $agendas = $query->with(['teacher', 'subject'])
             ->orderBy('date')
             ->get();
 
@@ -328,7 +336,14 @@ class RecapController extends Controller
         }
         
         $class = \App\Models\AcademicClass::find($request->academic_class_id);
-        $teacherName = auth()->user() ? auth()->user()->name : 'Guru';
+        
+        $teacherName = 'Semua Guru';
+        if ($request->filled('teacher_id')) {
+            $selectedTeacher = \App\Models\User::find($request->teacher_id);
+            if ($selectedTeacher) {
+                $teacherName = $selectedTeacher->name;
+            }
+        }
         
         $meta = [
             'school_name' => Setting::get('school_name', 'SALIRA ACADEMY'),
@@ -435,9 +450,18 @@ class RecapController extends Controller
         $end = Carbon::parse($request->end_date)->format('d/m/Y');
         $settings = $this->getPdfSettings('Rekap Jurnal / Agenda Mengajar', $className, "$start - $end");
 
+        $teacherName = 'Semua Guru';
+        if ($request->filled('teacher_id')) {
+            $selectedTeacher = \App\Models\User::find($request->teacher_id);
+            if ($selectedTeacher) {
+                $teacherName = $selectedTeacher->name;
+            }
+        }
+
         $pdf = Pdf::loadView('reports.agenda_pdf', array_merge($settings, [
             'data' => $data,
-            'matrix' => $matrix
+            'matrix' => $matrix,
+            'teacher_name' => $teacherName
         ]))->setPaper('a4', 'landscape');
 
         return $pdf->stream('rekap_jurnal.pdf');

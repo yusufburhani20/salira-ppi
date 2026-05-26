@@ -30,6 +30,7 @@ class SubjectController extends Controller
             'code' => 'required|string|unique:subjects,code',
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'kkm' => 'required|integer|min:0|max:100',
             'academic_class_ids' => 'nullable|array',
             'academic_class_ids.*' => 'exists:academic_classes,id',
         ]);
@@ -38,6 +39,7 @@ class SubjectController extends Controller
             'code' => $validated['code'],
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,
+            'kkm' => $validated['kkm'] ?? 75,
         ]);
 
         if (isset($validated['academic_class_ids'])) {
@@ -53,6 +55,7 @@ class SubjectController extends Controller
             'code' => 'required|string|unique:subjects,code,' . $subject->id,
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
+            'kkm' => 'required|integer|min:0|max:100',
             'academic_class_ids' => 'nullable|array',
             'academic_class_ids.*' => 'exists:academic_classes,id',
         ]);
@@ -61,6 +64,7 @@ class SubjectController extends Controller
             'code' => $validated['code'],
             'name' => $validated['name'],
             'description' => $validated['description'] ?? null,
+            'kkm' => $validated['kkm'] ?? 75,
         ]);
 
         if (isset($validated['academic_class_ids'])) {

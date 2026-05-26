@@ -17,6 +17,7 @@ interface Subject {
     code: string;
     name: string;
     description: string | null;
+    kkm: number;
     academic_classes?: { id: number; name: string }[];
 }
 
@@ -47,6 +48,7 @@ export default function SubjectIndex({ auth, subjects, classes }: PageProps<{ su
         code: '',
         name: '',
         description: '',
+        kkm: 75,
         academic_class_ids: [] as number[],
     });
 
@@ -67,6 +69,7 @@ export default function SubjectIndex({ auth, subjects, classes }: PageProps<{ su
             code: subject.code,
             name: subject.name,
             description: subject.description || '',
+            kkm: subject.kkm || 75,
             academic_class_ids: subject.academic_classes?.map(c => c.id) || [],
         });
         setIsEditModalOpen(true);
@@ -160,6 +163,7 @@ export default function SubjectIndex({ auth, subjects, classes }: PageProps<{ su
                                     <tr className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700 text-xs uppercase tracking-wider">
                                         <th className="px-6 py-4 font-bold text-gray-900 dark:text-white">Kode</th>
                                         <th className="px-6 py-4 font-bold text-gray-900 dark:text-white">Nama Mata Pelajaran</th>
+                                        <th className="px-6 py-4 font-bold text-gray-900 dark:text-white">KKM</th>
                                         <th className="px-6 py-4 font-bold text-gray-900 dark:text-white">Deskripsi</th>
                                         <th className="px-6 py-4 font-bold text-gray-900 dark:text-white">Diterapkan Di</th>
                                         <th className="px-6 py-4 font-bold text-gray-900 dark:text-white text-right">Aksi</th>
@@ -168,13 +172,14 @@ export default function SubjectIndex({ auth, subjects, classes }: PageProps<{ su
                                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                                     {subjects.data.length === 0 ? (
                                         <tr>
-                                            <td colSpan={4} className="px-6 py-12 text-center text-gray-500 italic">Belum ada data mata pelajaran.</td>
+                                            <td colSpan={5} className="px-6 py-12 text-center text-gray-500 italic">Belum ada data mata pelajaran.</td>
                                         </tr>
                                     ) : (
                                         subjects.data.map((subject) => (
                                             <tr key={subject.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/20 transition-colors">
                                                 <td className="px-6 py-4 whitespace-nowrap font-mono text-sm text-indigo-600 dark:text-indigo-400 font-bold">{subject.code}</td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-gray-900 dark:text-white font-medium">{subject.name}</td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 dark:text-white">{subject.kkm || 75}</td>
                                                 <td className="px-6 py-4 text-gray-500 dark:text-gray-400 text-sm max-w-md truncate">{subject.description || '-'}</td>
                                                 <td className="px-6 py-4 text-gray-500 dark:text-gray-400 text-xs">
                                                     {subject.academic_classes && subject.academic_classes.length > 0 ? (
@@ -245,6 +250,11 @@ export default function SubjectIndex({ auth, subjects, classes }: PageProps<{ su
                                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nama Mata Pelajaran</label>
                                         <input type="text" value={data.name} onChange={e => setData('name', e.target.value)} required placeholder="Contoh: Matematika" className="w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:border-primary focus:ring-primary shadow-sm" />
                                         {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">KKM (Kriteria Ketuntasan Minimal)</label>
+                                        <input type="number" min="0" max="100" value={data.kkm} onChange={e => setData('kkm', parseInt(e.target.value) || 0)} required placeholder="Contoh: 75" className="w-full rounded-lg border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:border-primary focus:ring-primary shadow-sm" />
+                                        {errors.kkm && <p className="text-red-500 text-xs mt-1">{errors.kkm}</p>}
                                     </div>
                                     <div>
                                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Deskripsi (Opsional)</label>

@@ -24,7 +24,12 @@ interface Subject {
     name: string;
 }
 
-export default function ReportIndex({ auth, classes, subjects, semesters = [], activeSemesterId }: PageProps<{ classes: AcademicClass[], subjects: Subject[], semesters: any[], activeSemesterId: any }>) {
+interface Teacher {
+    id: number;
+    name: string;
+}
+
+export default function ReportIndex({ auth, classes, subjects, semesters = [], activeSemesterId, teachers = [] }: PageProps<{ classes: AcademicClass[], subjects: Subject[], semesters: any[], activeSemesterId: any, teachers: Teacher[] }>) {
     const [activeTab, setActiveTab] = useState<'attendance' | 'attendance_subject' | 'assessment' | 'agenda' | 'consultation'>('attendance');
     const [results, setResults] = useState<any>({
         attendance: null,
@@ -42,6 +47,7 @@ export default function ReportIndex({ auth, classes, subjects, semesters = [], a
         start_date: activeSemesterId ? '' : firstDayOfMonth(new Date().getFullYear(), new Date().getMonth()), // Awal bulan ini
         end_date: activeSemesterId ? '' : todayLocal(),
         student_id: '',
+        teacher_id: '',
     });
 
     const fetchReport = async () => {
@@ -163,6 +169,20 @@ export default function ReportIndex({ auth, classes, subjects, semesters = [], a
                                             >
                                                 <option value="">-- Semua Kelas --</option>
                                                 {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                            </select>
+                                        </div>
+                                    )}
+
+                                    {activeTab === 'agenda' && (
+                                        <div className="relative">
+                                            <select
+                                                value={data.teacher_id}
+                                                onChange={e => setData('teacher_id', e.target.value)}
+                                                className="w-full h-12 pl-4 pr-10 rounded-xl border-gray-100 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-primary focus:border-primary transition-all appearance-none bg-no-repeat bg-[right_1rem_center] bg-[length:1em_1em] font-bold text-sm"
+                                                style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")` }}
+                                            >
+                                                <option value="">-- Semua Guru --</option>
+                                                {teachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                                             </select>
                                         </div>
                                     )}
