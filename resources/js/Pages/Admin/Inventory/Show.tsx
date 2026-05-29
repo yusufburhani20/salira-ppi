@@ -56,9 +56,12 @@ interface BarcodeItemProps {
     onToggleSelect: () => void;
     onDelete: () => void;
     onAction: (barcodeId: number, action: string, notes: string) => Promise<boolean>;
+    schoolName: string;
+    schoolLogo: string;
+    itemName: string;
 }
 
-function BarcodeItem({ barcode, selected, onToggleSelect, onDelete, onAction }: BarcodeItemProps) {
+function BarcodeItem({ barcode, selected, onToggleSelect, onDelete, onAction, schoolName, schoolLogo, itemName }: BarcodeItemProps) {
     const svgRef = useRef<SVGSVGElement>(null);
     const [actionLoading, setActionLoading] = useState<string | null>(null);
     const [showNotes, setShowNotes] = useState<string | null>(null); // which action is pending notes
@@ -80,9 +83,42 @@ function BarcodeItem({ barcode, selected, onToggleSelect, onDelete, onAction }: 
     }, [barcode.barcode_value]);
 
     const handlePrint = () => {
-        const w = window.open('', '_blank', 'width=420,height=320');
+        const w = window.open('', '_blank', 'width=450,height=320');
         if (!w || !svgRef.current) return;
-        w.document.write(`<!DOCTYPE html><html><head><title>${barcode.barcode_value}</title><style>body{display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;font-family:monospace;}div{text-align:center;padding:16px;border:1px solid #ccc;border-radius:8px;}</style></head><body><div>${svgRef.current.outerHTML}<p style="font-size:10px;margin-top:6px">${barcode.serial_number || ''}</p></div><script>window.print();window.close();<\/script></body></html>`);
+        
+        const html = `<!DOCTYPE html><html><head><title>${barcode.barcode_value}</title>
+        <style>
+            body{display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0;font-family:Arial,sans-serif;}
+            .barcode-box{border:1.5px solid #000;border-radius:6px;padding:10px;width:280px;display:flex;flex-direction:column;align-items:center;background:#fff;box-sizing:border-box;}
+            .header{display:flex;align-items:center;width:100%;gap:8px;margin-bottom:4px;}
+            .logo{width:28px;height:28px;object-fit:contain;}
+            .school-info{text-align:left;line-height:1.1;}
+            .school-name{font-size:9px;font-weight:800;text-transform:uppercase;color:#000;}
+            .tagline{font-size:7px;color:#666;font-weight:600;}
+            .divider{width:100%;border-top:1.5px solid #000;margin:6px 0;}
+            .item-name{font-size:9px;font-weight:700;text-align:center;margin-bottom:4px;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;}
+            svg{max-width:100%;height:35px;}
+            .serial{font-size:9px;font-weight:700;font-family:monospace;margin-top:4px;}
+        </style></head>
+        <body>
+            <div class="barcode-box">
+                <div class="header">
+                    <img src="${schoolLogo}" class="logo" />
+                    <div class="school-info">
+                        <div class="school-name">${schoolName}</div>
+                        <div class="tagline">INVENTARIS SEKOLAH</div>
+                    </div>
+                </div>
+                <div class="divider"></div>
+                <div class="item-name">${itemName}</div>
+                ${svgRef.current.outerHTML}
+                <div class="serial">${barcode.serial_number || barcode.barcode_value}</div>
+            </div>
+            <script>window.print();window.close();<\/script>
+        </body></html>`;
+        
+        w.document.write(html);
+        w.document.close();
     };
 
     const confirmAction = async (action: string) => {
@@ -179,7 +215,7 @@ function BarcodeItem({ barcode, selected, onToggleSelect, onDelete, onAction }: 
     );
 }
 
-export default function InventoryShow({ item }: any) {
+export default function InventoryShow({ item, schoolName, schoolLogo }: any) {
     const [showGenForm, setShowGenForm] = useState(false);
     const [selectedBarcodes, setSelectedBarcodes] = useState<number[]>([]);
     const [toast, setToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
@@ -252,42 +288,85 @@ export default function InventoryShow({ item }: any) {
             <title>Cetak Barcode Massal - ${item.name}</title>
             <style>
                 @media print {
-                    @page { size: A4 portrait; margin: 15mm; }
+                    @page { size: A4 portrait; margin: 10mm 8mm; }
                     body { margin: 0; background: white; }
                 }
                 body { 
-                    font-family: monospace; 
-                    margin: 20px auto; 
+                    font-family: Arial, sans-serif; 
+                    margin: 10px auto; 
                     max-width: 210mm; /* A4 width */
                     background: #f8fafc;
                 }
                 .page-container {
                     display: grid;
-                    grid-template-columns: repeat(2, 1fr);
-                    gap: 15mm;
-                    padding: 15mm;
+                    grid-template-columns: repeat(3, 1fr);
+                    gap: 6px;
+                    padding: 10px;
                     background: white;
                     box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
                     min-height: 297mm; /* A4 height */
                     box-sizing: border-box;
                 }
                 @media print {
-                    .page-container { box-shadow: none; padding: 0; min-height: auto; display: grid; grid-template-columns: repeat(2, 1fr); gap: 15mm; }
+                    .page-container { box-shadow: none; padding: 0; min-height: auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
                 }
                 .barcode-box { 
-                    text-align: center; 
-                    padding: 12px; 
-                    border: 1px dashed #ccc; 
-                    border-radius: 8px; 
-                    break-inside: avoid; 
+                    border: 1.5px solid #000; 
+                    border-radius: 6px; 
+                    padding: 8px; 
+                    box-sizing: border-box; 
                     display: flex; 
                     flex-direction: column; 
                     align-items: center; 
-                    justify-content: center; 
                     background: white;
+                    break-inside: avoid; 
+                    page-break-inside: avoid; 
                 }
-                svg { max-width: 100%; height: auto; }
-                p { margin: 10px 0 0 0; font-size: 14px; font-weight: bold; }
+                .header {
+                    display: flex;
+                    align-items: center;
+                    width: 100%;
+                    gap: 6px;
+                    margin-bottom: 2px;
+                }
+                .logo {
+                    width: 24px;
+                    height: 24px;
+                    object-fit: contain;
+                }
+                .school-info {
+                    text-align: left;
+                    line-height: 1.1;
+                }
+                .school-name {
+                    font-size: 8px;
+                    font-weight: 800;
+                    text-transform: uppercase;
+                    color: #000;
+                }
+                .tagline {
+                    font-size: 6px;
+                    color: #666;
+                    font-weight: 600;
+                }
+                .divider {
+                    width: 100%;
+                    border-top: 1.5px solid #000;
+                    margin: 4px 0;
+                }
+                .item-name {
+                    font-size: 8px;
+                    font-weight: 700;
+                    text-align: center;
+                    margin-bottom: 2px;
+                    text-transform: uppercase;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    width: 100%;
+                }
+                svg { max-width: 100%; height: 30px; }
+                .serial { font-size: 8px; font-weight: bold; font-family: monospace; margin-top: 2px; }
             </style>
             <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"><\/script>
         </head>
@@ -295,17 +374,27 @@ export default function InventoryShow({ item }: any) {
             <div class="page-container">
             ` + selectedBarcodes.map(bcId => {
                 const bc = item.barcodes.find((b:any) => b.id === bcId);
-                return '<div class="barcode-box">' +
-                    '<svg id="bc-' + bc.id + '"></svg>' +
-                    '<p>' + (bc.serial_number || '') + '</p>' +
-                '</div>';
+                return `
+                <div class="barcode-box">
+                    <div class="header">
+                        <img src="${schoolLogo}" class="logo" />
+                        <div class="school-info">
+                            <div class="school-name">${schoolName}</div>
+                            <div class="tagline">INVENTARIS SEKOLAH</div>
+                        </div>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="item-name">${item.name}</div>
+                    <svg id="bc-${bc.id}"></svg>
+                    <div class="serial">${bc.serial_number || bc.barcode_value}</div>
+                </div>`;
             }).join('') + `
             </div>
             <script>
                 window.onload = function() {
                     ` + selectedBarcodes.map(bcId => {
                         const bc = item.barcodes.find((b:any) => b.id === bcId);
-                        return 'JsBarcode("#bc-' + bc.id + '", "' + bc.barcode_value + '", { format: "CODE128", width: 2, height: 50, displayValue: true, fontSize: 14, margin: 8 });';
+                        return 'JsBarcode("#bc-' + bc.id + '", "' + bc.barcode_value + '", { format: "CODE128", width: 1.5, height: 30, displayValue: false, margin: 4 });';
                     }).join('\n') + `
                     setTimeout(() => { window.print(); window.close(); }, 500);
                 };
@@ -461,6 +550,9 @@ export default function InventoryShow({ item }: any) {
                                         onToggleSelect={() => toggleSelect(bc.id)}
                                         onDelete={() => handleDeleteBarcode(bc.id)}
                                         onAction={handleAction}
+                                        schoolName={schoolName}
+                                        schoolLogo={schoolLogo}
+                                        itemName={item.name}
                                     />
                                 ))}
                             </div>

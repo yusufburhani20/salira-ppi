@@ -59,6 +59,7 @@ export default function History({ auth, attendances, geofences, stats, filters }
     
     // Modal & Map States
     const [selectedAttendance, setSelectedAttendance] = useState<Attendance | null>(null);
+    const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
     const [isMapOpen, setIsMapOpen] = useState(false);
     const [leafletLoaded, setLeafletLoaded] = useState(false);
     const modalMapRef = useRef<any>(null);
@@ -336,9 +337,13 @@ export default function History({ auth, attendances, geofences, stats, filters }
                                                             alt="Check-in selfie" 
                                                             className="w-10 h-10 object-cover rounded-xl border border-slate-200 shadow-sm"
                                                         />
-                                                        <a href={item.photo_url} target="_blank" className="absolute inset-0 bg-black/40 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <button 
+                                                            type="button"
+                                                            onClick={() => setSelectedPhoto(item.photo_url)}
+                                                            className="absolute inset-0 bg-black/40 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                                        >
                                                             <CameraIcon className="w-4 h-4 text-white" />
-                                                        </a>
+                                                        </button>
                                                     </div>
                                                 ) : (
                                                     <div className="w-10 h-10 bg-slate-100 dark:bg-slate-700 rounded-xl flex items-center justify-center text-slate-400 shrink-0">
@@ -369,9 +374,13 @@ export default function History({ auth, attendances, geofences, stats, filters }
                                                             alt="Check-out selfie" 
                                                             className="w-10 h-10 object-cover rounded-xl border border-slate-200 shadow-sm"
                                                         />
-                                                        <a href={item.checkout_photo_url} target="_blank" className="absolute inset-0 bg-black/40 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <button 
+                                                            type="button"
+                                                            onClick={() => setSelectedPhoto(item.checkout_photo_url)}
+                                                            className="absolute inset-0 bg-black/40 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                                        >
                                                             <CameraIcon className="w-4 h-4 text-white" />
-                                                        </a>
+                                                        </button>
                                                     </div>
                                                 ) : (
                                                     <div className="w-10 h-10 bg-slate-100 dark:bg-slate-700 rounded-xl flex items-center justify-center text-slate-400 shrink-0">
@@ -500,6 +509,22 @@ export default function History({ auth, attendances, geofences, stats, filters }
                                 Tutup
                             </button>
                         </div>
+                    </div>
+                </div>
+            )}
+            {/* Photo Lightbox Modal */}
+            {selectedPhoto && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center px-4 overflow-x-hidden overflow-y-auto">
+                    <div onClick={() => setSelectedPhoto(null)} className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm transition-opacity"></div>
+                    <div className="relative max-w-xl w-full bg-white dark:bg-slate-800 rounded-3xl overflow-hidden shadow-2xl z-10 border border-slate-200 dark:border-slate-700 p-2 transform transition-all flex flex-col items-center">
+                        <button 
+                            type="button"
+                            onClick={() => setSelectedPhoto(null)}
+                            className="absolute top-4 right-4 p-1.5 rounded-full bg-slate-900/60 text-white hover:bg-slate-900/80 z-20 transition-colors"
+                        >
+                            <XMarkIcon className="w-5 h-5" />
+                        </button>
+                        <img src={selectedPhoto} alt="Selfie absensi besar" className="w-full h-auto max-h-[75vh] object-contain rounded-2xl" />
                     </div>
                 </div>
             )}

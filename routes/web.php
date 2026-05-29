@@ -96,8 +96,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/attendances', [\App\Http\Controllers\Admin\AttendanceController::class, 'index'])->name('attendances.index');
         Route::get('/attendances/export/excel', [\App\Http\Controllers\Admin\AttendanceController::class, 'exportExcel'])->name('attendances.export.excel');
         Route::get('/attendances/export/pdf', [\App\Http\Controllers\Admin\AttendanceController::class, 'exportPdf'])->name('attendances.export.pdf');
+    });
 
-        // Reports / Rekapitulasi
+    // Reports / Rekapitulasi (Accessible to Super Admin, Kepala Sekolah, Bendahara, and Kepala Program)
+    Route::middleware(['role:Super Admin|Kepala Sekolah|Bendahara|Kepala Program'])->prefix('admin')->name('admin.')->group(function () {
         Route::prefix('reports')->name('reports.')->group(function () {
             Route::get('/', [\App\Http\Controllers\Admin\RecapController::class, 'index'])->name('index');
             
@@ -131,7 +133,10 @@ Route::middleware('auth')->group(function () {
             Route::get('/student-resume/data', [\App\Http\Controllers\Admin\StudentReportController::class, 'resumeData'])->name('student-resume.data');
             Route::get('/student-resume/pdf', [\App\Http\Controllers\Admin\StudentReportController::class, 'resumePdf'])->name('student-resume.pdf');
         });
+    });
 
+    // Admin Group C continued: Super Admin, Admin, Pimpinan, Bendahara (Finance/Bills)
+    Route::middleware(['role:Super Admin|Kepala Sekolah|Bendahara'])->prefix('admin')->name('admin.')->group(function () {
         // Bills / Financial
         Route::get('/bills', [\App\Http\Controllers\Admin\BillController::class, 'index'])->name('bills.index');
         Route::get('/bills/create', [\App\Http\Controllers\Admin\BillController::class, 'create'])->name('bills.create');
