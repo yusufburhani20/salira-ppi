@@ -9,6 +9,7 @@ use Carbon\Carbon;
 use App\Enums\AttendanceStatus;
 use App\Enums\VerificationStatus;
 use Illuminate\Support\Facades\Auth;
+use Inertia\Inertia;
 
 class AttendanceController extends Controller
 {
@@ -49,6 +50,7 @@ class AttendanceController extends Controller
             'latitude' => 'required|numeric',
             'longitude' => 'required|numeric',
             'photo' => 'required|image|max:2048', // Max 2MB
+            'notes' => 'nullable|string|max:500',
         ]);
 
         $user = Auth::user();
@@ -87,7 +89,7 @@ class AttendanceController extends Controller
             ['user_id' => $user->id, 'date' => $date],
             [
                 'check_in' => Carbon::now()->format('H:i:s'),
-                'status' => $status, // You might need enum if using strictly enum Enum::Hadir, depending on implementation
+                'status' => $status,
                 'latitude' => $request->latitude,
                 'longitude' => $request->longitude,
                 'photo_path' => $path,
@@ -95,11 +97,9 @@ class AttendanceController extends Controller
                 'device_id' => $request->header('User-Agent'),
                 'verification_status' => $verificationStatus,
                 'system_notes' => $notes,
+                'notes' => $request->notes,
             ]
         );
-
-        // Map status cleanly to DB if enums are problematic, but Laravel handles strings to enums gracefully if defined correctly
-        // Wait, is AttendanceStatus an Enum or what? The model uses it. Let's make sure it passes.
 
         return back()->with('success', 'Checked in successfully.');
     }
@@ -110,6 +110,7 @@ class AttendanceController extends Controller
             'latitude' => 'required|numeric',
             'longitude' => 'required|numeric',
             'photo' => 'nullable|image|max:2048', // photo might be optional for checkout
+            'notes' => 'nullable|string|max:500',
         ]);
 
         $user = Auth::user();
@@ -166,8 +167,49 @@ class AttendanceController extends Controller
             'system_notes' => $notes,
             'verification_status' => $verificationStatus,
             'checkout_photo_path' => $checkoutPath,
+            'checkout_notes' => $request->notes,
         ]);
 
         return back()->with('success', 'Checked out successfully.');
+    }
+
+    public function history(Request $request)
+    {
+        $user = Auth::user();
+        
+        $month = $request->input('month', Carbon::now()->format('m'));
+        $year = $request->input('year', Carbon::now()->format('Y'));
+        
+        $attendances = Attendance::where('user_id', $user->id)
+            ->whereYear('date', $year)
+            ->whereMonth('date', $month)
+            ->orderBy('date', 'desc')
+            ->get();
+            
+        // Hitung stats
+        $totalDays = $attendances->count();
+        $present = $attendances->filter(fn($a) => in_array($a->status->value ?? $a->status, ['hadir', 'terlambat', 'lembur', 'pulang_awal']))->count();
+        $late = $attendances->filter(fn($a) => ($a->status->value ?? $a->status) === 'terlambat')->count();
+        $permit = $attendances->filter(fn($a) => in_array($a->status->value ?? $a->status, ['izin', 'sakit']))->count();
+        $alpha = $attendances->filter(fn($a) => ($a->status->value ?? $a->status) === 'alpha')->count();
+        
+        $geofences = Geofence::where('is_active', true)->get();
+
+        return Inertia::render('User/Attendances/History', [
+            'attendances' => $attendances,
+            'geofences' => $geofences,
+            'stats' => [
+                'total_days' => $totalDays,
+                'present' => $present,
+                'late' => $late,
+                'permit' => $permit,
+                'alpha' => $alpha,
+                'attendance_rate' => $totalDays > 0 ? round(($present / $totalDays) * 100, 1) : 0,
+            ],
+            'filters' => [
+                'month' => $month,
+                'year' => $year,
+            ]
+        ]);
     }
 }

@@ -9,6 +9,10 @@ export default function AttendanceScanner({ existingRecord, geofences = [] }: { 
     // Geofence validation state
     const [nearestGeofence, setNearestGeofence] = useState<{ name: string, distance: number, radius: number, valid: boolean } | null>(null);
     
+    // Leaflet map states
+    const [leafletLoaded, setLeafletLoaded] = useState(false);
+    const mapRef = useRef<any>(null);
+
     // Haversine Distance helper
     const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
         const R = 6371000; // meters
@@ -29,10 +33,11 @@ export default function AttendanceScanner({ existingRecord, geofences = [] }: { 
     const [photoPreview, setPhotoPreview] = useState<string | null>(null);
     const [cameraError, setCameraError] = useState<string | null>(null);
     
-    const { data, setData, post, processing, errors } = useForm<{ latitude: string, longitude: string, photo: File | null }>({
+    const { data, setData, post, processing, errors } = useForm({
         latitude: '',
         longitude: '',
-        photo: null,
+        photo: null as File | null,
+        notes: '',
     });
 
     // Start Webcam
@@ -62,15 +67,38 @@ export default function AttendanceScanner({ existingRecord, geofences = [] }: { 
         }
     };
 
+    // Load Leaflet dynamically
     useEffect(() => {
-        // Start geolocation
+        if ((window as any).L) {
+            setLeafletLoaded(true);
+            return;
+        }
+
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+        document.head.appendChild(link);
+
+        const script = document.createElement('script');
+        script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+        script.async = true;
+        script.onload = () => setLeafletLoaded(true);
+        document.body.appendChild(script);
+
+        return () => {
+            // Keep map scripts in DOM to avoid reloading next time
+        };
+    }, []);
+
+    // Initial Geolocation
+    useEffect(() => {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 (position) => {
-                    setLocation({
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude
-                    });
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    
+                    setLocation({ lat, lng });
                     
                     // Trigger distance update
                     if (geofences.length > 0) {
@@ -78,7 +106,7 @@ export default function AttendanceScanner({ existingRecord, geofences = [] }: { 
                         let minInfo = null;
                         
                         for (const gf of geofences) {
-                            const d = calculateDistance(position.coords.latitude, position.coords.longitude, parseFloat(gf.latitude), parseFloat(gf.longitude));
+                            const d = calculateDistance(lat, lng, parseFloat(gf.latitude), parseFloat(gf.longitude));
                             if (closest === null || d < closest) {
                                 closest = d;
                                 minInfo = { name: gf.name, distance: d, radius: gf.radius, valid: d <= gf.radius };
@@ -86,15 +114,13 @@ export default function AttendanceScanner({ existingRecord, geofences = [] }: { 
                         }
                         setNearestGeofence(minInfo);
                     } else {
-                        // If no geofences configured, system might allow anyway or require one.
-                        // For now we assume valid if none configured (backend will final check)
                         setNearestGeofence({ name: 'Tanpa Pembatasan', distance: 0, radius: 999999, valid: true });
                     }
 
                     setData(d => ({
                         ...d,
-                        latitude: String(position.coords.latitude),
-                        longitude: String(position.coords.longitude)
+                        latitude: String(lat),
+                        longitude: String(lng)
                     }));
                 },
                 (error) => {
@@ -106,14 +132,12 @@ export default function AttendanceScanner({ existingRecord, geofences = [] }: { 
             setLocationError("Browser ini tidak mendukung Geolocation.");
         }
 
-        // Only start camera if not already fully checked out
         const isCheckedOut = existingRecord && existingRecord.check_out;
         if (!isCheckedOut) {
             startCamera();
         }
 
         return () => {
-            // Use streamRef (not stream state) so this cleanup always sees the latest value
             if (streamRef.current) {
                 streamRef.current.getTracks().forEach(track => track.stop());
                 streamRef.current = null;
@@ -121,13 +145,75 @@ export default function AttendanceScanner({ existingRecord, geofences = [] }: { 
         };
     }, []);
 
+    // Render/Update Leaflet Map
+    useEffect(() => {
+        if (!location || !leafletLoaded) return;
+
+        const L = (window as any).L;
+        if (!L) return;
+
+        const containerId = 'attendance-map';
+        const mapContainer = document.getElementById(containerId);
+        if (!mapContainer) return;
+
+        try {
+            if (!mapRef.current) {
+                mapRef.current = L.map(containerId, {
+                    zoomControl: true,
+                    attributionControl: false
+                }).setView([location.lat, location.lng], 16);
+
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapRef.current);
+            } else {
+                mapRef.current.setView([location.lat, location.lng], 16);
+            }
+
+            // Clear existing layers
+            mapRef.current.eachLayer((layer: any) => {
+                if (layer instanceof L.Marker || layer instanceof L.Circle) {
+                    mapRef.current.removeLayer(layer);
+                }
+            });
+
+            // Draw Geofences
+            geofences.forEach(gf => {
+                const lat = parseFloat(gf.latitude);
+                const lng = parseFloat(gf.longitude);
+                const isInside = nearestGeofence?.valid && nearestGeofence.name === gf.name;
+
+                L.circle([lat, lng], {
+                    color: isInside ? '#10b981' : '#4f46e5',
+                    fillColor: isInside ? '#a7f3d0' : '#c7d2fe',
+                    fillOpacity: 0.25,
+                    radius: parseInt(gf.radius)
+                }).addTo(mapRef.current).bindPopup(`<b>${gf.name}</b><br>Radius: ${gf.radius}m`);
+            });
+
+            // Draw User Marker
+            const userIcon = L.divIcon({
+                className: 'custom-user-icon',
+                html: `<div class="w-5 h-5 bg-indigo-600 rounded-full border-2 border-white shadow-xl flex items-center justify-center"><div class="w-2 h-2 bg-white rounded-full animate-ping"></div></div>`,
+                iconSize: [20, 20],
+                iconAnchor: [10, 10]
+            });
+
+            L.marker([location.lat, location.lng], { icon: userIcon })
+                .addTo(mapRef.current)
+                .bindPopup('Lokasi Anda Sekarang')
+                .openPopup();
+
+        } catch (e) {
+            console.error("Map rendering error: ", e);
+        }
+
+    }, [location, leafletLoaded, nearestGeofence, geofences]);
+
     const capturePhoto = useCallback((e: React.MouseEvent) => {
         e.preventDefault();
         if (videoRef.current && canvasRef.current) {
             const video = videoRef.current;
             const canvas = canvasRef.current;
             
-            // Set canvas size to match video
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
             
@@ -135,11 +221,9 @@ export default function AttendanceScanner({ existingRecord, geofences = [] }: { 
             if (context) {
                 context.drawImage(video, 0, 0, canvas.width, canvas.height);
                 
-                // Convert to dataUrl for preview
                 const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
                 setPhotoPreview(dataUrl);
                 
-                // Convert to File for form submission
                 canvas.toBlob((blob) => {
                     if (blob) {
                         const file = new File([blob], "selfie.jpg", { type: "image/jpeg" });
@@ -147,7 +231,6 @@ export default function AttendanceScanner({ existingRecord, geofences = [] }: { 
                     }
                 }, 'image/jpeg', 0.8);
                 
-                // Stop camera stream instantly after taking photo
                 stopCamera();
             }
         }
@@ -166,10 +249,10 @@ export default function AttendanceScanner({ existingRecord, geofences = [] }: { 
         post(route(routeName), {
             preserveScroll: true,
             onSuccess: () => {
-                // If it was a success, we should restart the camera if they need to check out later
                 if (type === 'checkIn') {
                     setPhotoPreview(null);
                     setData('photo', null);
+                    setData('notes', '');
                     startCamera();
                 }
             }
@@ -182,7 +265,7 @@ export default function AttendanceScanner({ existingRecord, geofences = [] }: { 
     if (isCheckedOut) {
         return (
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 text-center h-full flex flex-col justify-center items-center space-y-4 shadow-md transition-shadow">
-                <CheckCircleIcon className="w-16 h-16 text-emerald-500" />
+                <CheckCircleIcon className="w-16 h-16 text-emerald-500 animate-bounce" />
                 <div>
                     <h3 className="text-xl font-bold text-gray-900 dark:text-white">Presensi Selesai</h3>
                     <p className="text-gray-500 dark:text-gray-400 mt-2">Anda telah menyelesaikan Check-In dan Check-Out hari ini.</p>
@@ -195,13 +278,13 @@ export default function AttendanceScanner({ existingRecord, geofences = [] }: { 
         <form onSubmit={submit(isCheckedIn ? 'checkOut' : 'checkIn')} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 flex flex-col h-full shadow-md transition-shadow">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 border-b pb-4 dark:border-gray-700 flex justify-between items-center">
                 <span>{isCheckedIn ? 'Check-Out (Pulang)' : 'Check-In (Hadir)'} - Jendela Pemindai</span>
-                {isCheckedIn && <span className="text-xs bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-300 px-2 py-1 rounded-full">Telah Hadir: {existingRecord.check_in}</span>}
+                {isCheckedIn && <span className="text-xs bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-300 px-2 py-1 rounded-full font-bold">Telah Hadir: {existingRecord.check_in}</span>}
             </h3>
             
             <div className="flex-1 flex flex-col space-y-4">
                 {/* Geofence Status Badge */}
                 {location && nearestGeofence && (
-                    <div className={`flex items-center justify-between p-3 rounded-lg border transition-all ${nearestGeofence.valid ? 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-400 font-bold' : 'bg-rose-50 border-rose-200 text-rose-700 dark:bg-rose-900/40 dark:border-rose-800 dark:text-rose-400 animate-pulse'}`}>
+                    <div className={`flex items-center justify-between p-3 rounded-lg border transition-all ${nearestGeofence.valid ? 'bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-900/20 dark:border-emerald-800 dark:text-emerald-400 font-bold' : 'bg-rose-50 border-rose-200 text-rose-700 dark:bg-rose-900/40 dark:border-rose-800 dark:text-rose-400'}`}>
                         <div className="flex items-center">
                             <MapPinIcon className="w-5 h-5 mr-2" />
                             <span className="text-sm">{nearestGeofence.name}</span>
@@ -213,7 +296,7 @@ export default function AttendanceScanner({ existingRecord, geofences = [] }: { 
                     </div>
                 )}
 
-                {/* Location Status Badge (Only if no lock yet) */}
+                {/* Location Status Badge */}
                 {!location && (
                     <div className={`flex items-center justify-center p-3 rounded-lg border ${locationError ? 'bg-red-50 border-red-200 text-red-700 dark:bg-red-900/20 dark:border-red-800 dark:text-red-400' : 'bg-gray-50 border-gray-200 text-gray-600 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400'}`}>
                         {locationError ? (
@@ -233,6 +316,21 @@ export default function AttendanceScanner({ existingRecord, geofences = [] }: { 
                     </div>
                 )}
 
+                {/* Leaflet Visual Map */}
+                {location && (
+                    <div className="relative">
+                        <div 
+                            id="attendance-map" 
+                            className="w-full h-44 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-inner z-0"
+                        ></div>
+                        {!leafletLoaded && (
+                            <div className="absolute inset-0 bg-slate-100 dark:bg-slate-800 flex items-center justify-center rounded-xl text-slate-400 text-xs">
+                                Memuat peta...
+                            </div>
+                        )}
+                    </div>
+                )}
+
                 {/* Camera Viewfinder */}
                 <div className="flex-1 min-h-[300px] flex flex-col items-center justify-center rounded-xl relative overflow-hidden bg-black shadow-inner border border-gray-200 dark:border-gray-700 group">
                     {cameraError && !photoPreview ? (
@@ -244,24 +342,20 @@ export default function AttendanceScanner({ existingRecord, geofences = [] }: { 
                         </div>
                     ) : (
                         <>
-                            {/* Live Video Feed (Hidden if preview exists) */}
                             <video 
                                 ref={videoRef} 
                                 autoPlay 
                                 playsInline 
                                 muted 
-                                className={`w-full h-full object-cover absolute inset-0 \${photoPreview ? 'hidden' : 'block'}`}
+                                className={`w-full h-full object-cover absolute inset-0 ${photoPreview ? 'hidden' : 'block'}`}
                             ></video>
                             
-                            {/* Canvas for processing (Always hidden) */}
                             <canvas ref={canvasRef} className="hidden"></canvas>
                             
-                            {/* Photo Preview (Hidden if live feed) */}
                             {photoPreview && (
                                 <img src={photoPreview} alt="Selfie Preview" className="w-full h-full object-cover absolute inset-0" />
                             )}
 
-                            {/* Camera Overlay Controls */}
                             <div className="absolute bottom-4 left-0 right-0 flex justify-center z-10 space-x-4">
                                 {!photoPreview ? (
                                     <button 
@@ -288,6 +382,23 @@ export default function AttendanceScanner({ existingRecord, geofences = [] }: { 
                         </>
                     )}
                 </div>
+
+                {/* Input Catatan Absensi */}
+                {location && photoPreview && (
+                    <div className="space-y-1.5">
+                        <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
+                            {isCheckedIn ? 'Catatan Pulang (Opsional)' : 'Catatan Masuk (Opsional)'}
+                        </label>
+                        <textarea
+                            value={data.notes}
+                            onChange={(e) => setData('notes', e.target.value)}
+                            placeholder={isCheckedIn ? 'Tulis aktivitas singkat hari ini...' : 'Tulis keterangan check-in jika diperlukan...'}
+                            rows={2}
+                            maxLength={500}
+                            className="w-full text-sm rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        />
+                    </div>
+                )}
                 
                 {errors.photo && <p className="text-red-500 text-xs text-center font-semibold">Peringatan: {errors.photo}</p>}
                 {errors.latitude && <p className="text-red-500 text-xs text-center font-semibold">Peringatan: Anda belum terdeteksi oleh GPS (Lokasi Wajib).</p>}
@@ -296,7 +407,7 @@ export default function AttendanceScanner({ existingRecord, geofences = [] }: { 
             <button 
                 type="submit" 
                 disabled={processing || !location || !photoPreview || !nearestGeofence?.valid}
-                className="mt-6 w-full py-4 px-4 bg-primary hover:bg-primary-hover disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed text-white rounded-xl font-bold shadow-lg transition-all flex justify-center items-center space-x-2 text-lg lg:text-xl active:scale-[0.98]"
+                className="mt-6 w-full py-4 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 disabled:text-gray-500 disabled:cursor-not-allowed text-white rounded-xl font-bold shadow-lg transition-all flex justify-center items-center space-x-2 text-lg lg:text-xl active:scale-[0.98]"
             >
                 {processing ? (
                     <>

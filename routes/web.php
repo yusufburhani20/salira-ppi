@@ -199,6 +199,7 @@ Route::middleware('auth')->group(function () {
     
     Route::post('/attendances/check-in', [\App\Http\Controllers\AttendanceController::class, 'checkIn'])->name('attendances.check-in');
     Route::post('/attendances/check-out', [\App\Http\Controllers\AttendanceController::class, 'checkOut'])->name('attendances.check-out');
+    Route::get('/attendances/history', [\App\Http\Controllers\AttendanceController::class, 'history'])->name('attendances.history');
     
     // User Permissions (Izin/Cuti)
     Route::resource('permissions', \App\Http\Controllers\User\PermissionController::class)->names('user.permissions')->only(['index', 'store', 'destroy']);
