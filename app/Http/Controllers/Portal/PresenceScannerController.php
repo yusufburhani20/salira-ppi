@@ -19,28 +19,52 @@ class PresenceScannerController extends Controller
 
     public function scan(Request $request)
     {
-        $token = $request->qr_token;
-        $manualNis = $request->nis;
+        $token = $request->qr_token ? trim($request->qr_token) : null;
+        $manualNis = $request->nis ? trim($request->nis) : null;
         
         if (!$token && !$manualNis) {
             return response()->json(['success' => false, 'message' => 'Token QR atau NIS tidak ditemukan.'], 400);
         }
 
         try {
+            $nis = null;
+            $isToken = false;
+            $tokenToProcess = null;
+
+            // Tentukan apakah input berupa token QR/Barcode terenkripsi atau NIS langsung
             if ($token) {
-                $decoded = base64_decode($token);
-                $parts = explode(':', $decoded);
-
-                if (count($parts) !== 3) {
-                    return response()->json(['success' => false, 'message' => 'Format QR tidak valid.'], 400);
+                $isToken = true;
+                $tokenToProcess = $token;
+            } elseif ($manualNis) {
+                // Periksa apakah manualNis merupakan token base64 terenkripsi
+                // (misalnya saat menggunakan hardware barcode/QR scanner pada kartu QR)
+                $decoded = base64_decode($manualNis, true);
+                if ($decoded !== false && strpos($decoded, ':') !== false) {
+                    $parts = explode(':', $decoded);
+                    if (count($parts) === 3) {
+                        $isToken = true;
+                        $tokenToProcess = $manualNis;
+                    }
                 }
+            }
 
-                list($nis, $timestamp, $signature) = $parts;
+            if ($isToken) {
+                $decoded = base64_decode($tokenToProcess);
+                $parts = explode(':', $decoded);
+                list($decodedNis, $timestamp, $signature) = $parts;
 
-                // Validasi Signature
-                $expectedSignature = hash_hmac('sha256', "{$nis}:{$timestamp}", config('app.key'));
-                if ($signature !== $expectedSignature) {
-                    return response()->json(['success' => false, 'message' => 'Token keamanan tidak valid.'], 403);
+                // Validasi Signature untuk keamanan
+                $expectedSignature = hash_hmac('sha256', "{$decodedNis}:{$timestamp}", config('app.key'));
+                if ($signature === $expectedSignature) {
+                    $nis = $decodedNis;
+                } else {
+                    // Jika signature tidak cocok tapi asalnya dikirim lewat kolom manual/scanner fisik,
+                    // ada kemungkinan itu NIS manual biasa yang kebetulan memiliki format menyerupai base64.
+                    if ($manualNis) {
+                        $nis = $manualNis;
+                    } else {
+                        return response()->json(['success' => false, 'message' => 'Token keamanan tidak valid.'], 403);
+                    }
                 }
             } else {
                 $nis = $manualNis;
