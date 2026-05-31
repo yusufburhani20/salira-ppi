@@ -53,9 +53,11 @@ class PresenceScannerController extends Controller
                 $parts = explode(':', $decoded);
                 list($decodedNis, $timestamp, $signature) = $parts;
 
-                // Validasi Signature untuk keamanan
-                $expectedSignature = hash_hmac('sha256', "{$decodedNis}:{$timestamp}", config('app.key'));
-                if ($signature === $expectedSignature) {
+                // Validasi Signature untuk keamanan (mendukung format panjang 64-karakter & format pendek 8-karakter)
+                $expectedSignatureLong = hash_hmac('sha256', "{$decodedNis}:{$timestamp}", config('app.key'));
+                $expectedSignatureShort = substr($expectedSignatureLong, 0, 8);
+
+                if ($signature === $expectedSignatureLong || $signature === $expectedSignatureShort) {
                     $nis = $decodedNis;
                 } else {
                     // Jika signature tidak cocok (karena APP_KEY berubah atau kartu dicetak di env berbeda),

@@ -152,11 +152,11 @@ class StudentController extends Controller
               ->where('class_members.is_active', true);
         })->where('status', 'active')->orderBy('name')->get();
 
-        // Siapkan token QR per siswa
+        // Siapkan token QR per siswa (menggunakan signature pendek 8 karakter agar pemindaian lebih cepat)
         $studentsWithTokens = $students->map(function ($student) {
             $timestamp = time();
-            // Sama dengan PortalController: NIS:Timestamp:HashedSignature
-            $signature = hash_hmac('sha256', "{$student->nis}:{$timestamp}", config('app.key'));
+            $fullSignature = hash_hmac('sha256', "{$student->nis}:{$timestamp}", config('app.key'));
+            $signature = substr($fullSignature, 0, 8);
             $qrToken = base64_encode("{$student->nis}:{$timestamp}:{$signature}");
             
             return array_merge($student->toArray(), [

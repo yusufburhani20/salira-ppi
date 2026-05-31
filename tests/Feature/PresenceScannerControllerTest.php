@@ -112,6 +112,31 @@ class PresenceScannerControllerTest extends TestCase
     }
 
     /**
+     * Test scanning using a valid 8-character short signature token.
+     */
+    public function test_scan_with_short_signature_succeeds(): void
+    {
+        $timestamp = time();
+        $fullSignature = hash_hmac('sha256', "S001:{$timestamp}", config('app.key'));
+        $signature = substr($fullSignature, 0, 8);
+        $qrToken = base64_encode("S001:{$timestamp}:{$signature}");
+
+        $response = $this->postJson(route('portal.attendance.scan'), [
+            'qr_token' => $qrToken,
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'success' => true,
+            'message' => 'Presensi berhasil dicatat!',
+            'data' => [
+                'student_name' => 'Budi Santoso',
+                'class_name' => 'X IPA 1',
+            ]
+        ]);
+    }
+
+    /**
      * Test scanning with an invalid signature in the token for a non-existent student.
      */
     public function test_scan_with_invalid_signature_fails(): void
