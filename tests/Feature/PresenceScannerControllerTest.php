@@ -112,12 +112,12 @@ class PresenceScannerControllerTest extends TestCase
     }
 
     /**
-     * Test scanning with an invalid signature in the token.
+     * Test scanning with an invalid signature in the token for a non-existent student.
      */
     public function test_scan_with_invalid_signature_fails(): void
     {
         $timestamp = time();
-        $qrToken = base64_encode("S001:{$timestamp}:invalid_signature");
+        $qrToken = base64_encode("S999:{$timestamp}:invalid_signature");
 
         $response = $this->postJson(route('portal.attendance.scan'), [
             'qr_token' => $qrToken,
@@ -127,6 +127,28 @@ class PresenceScannerControllerTest extends TestCase
         $response->assertJson([
             'success' => false,
             'message' => 'Token keamanan tidak valid.',
+        ]);
+    }
+
+    /**
+     * Test scanning with an invalid signature but for an existing student (signature discrepancy resilience).
+     */
+    public function test_scan_with_invalid_signature_but_existing_student_succeeds(): void
+    {
+        $timestamp = time();
+        $qrToken = base64_encode("S001:{$timestamp}:invalid_signature");
+
+        $response = $this->postJson(route('portal.attendance.scan'), [
+            'qr_token' => $qrToken,
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'success' => true,
+            'message' => 'Presensi berhasil dicatat!',
+            'data' => [
+                'student_name' => 'Budi Santoso',
+            ]
         ]);
     }
 

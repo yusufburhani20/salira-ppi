@@ -63,6 +63,7 @@ export default function Scanner() {
             })
             .catch(err => {
                 setError(err.response?.data?.message || 'Gagal memproses NIS');
+                setManualNis(''); // clear input
                 setIsProcessing(false);
                 setTimeout(() => setError(null), 3000);
             });

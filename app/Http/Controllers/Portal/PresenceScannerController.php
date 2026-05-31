@@ -58,12 +58,20 @@ class PresenceScannerController extends Controller
                 if ($signature === $expectedSignature) {
                     $nis = $decodedNis;
                 } else {
-                    // Jika signature tidak cocok tapi asalnya dikirim lewat kolom manual/scanner fisik,
-                    // ada kemungkinan itu NIS manual biasa yang kebetulan memiliki format menyerupai base64.
-                    if ($manualNis) {
-                        $nis = $manualNis;
+                    // Jika signature tidak cocok (karena APP_KEY berubah atau kartu dicetak di env berbeda),
+                    // periksa apakah NIS hasil dekripsi terdaftar sebagai siswa.
+                    // Jika terdaftar, kita gunakan NIS tersebut demi kegunaan (resilience).
+                    $studentExists = Student::where('nis', $decodedNis)->exists();
+                    if ($studentExists) {
+                        $nis = $decodedNis;
                     } else {
-                        return response()->json(['success' => false, 'message' => 'Token keamanan tidak valid.'], 403);
+                        // Jika bukan siswa terdaftar dan asalnya dikirim lewat kolom manual/scanner fisik,
+                        // ada kemungkinan itu NIS manual biasa yang kebetulan memiliki format menyerupai base64.
+                        if ($manualNis) {
+                            $nis = $manualNis;
+                        } else {
+                            return response()->json(['success' => false, 'message' => 'Token keamanan tidak valid.'], 403);
+                        }
                     }
                 }
             } else {
