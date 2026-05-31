@@ -14,16 +14,20 @@ class PermissionController extends Controller
 {
     public function index(Request $request)
     {
-        $permissions = $request->user()->permissionRequests()->latest()->get();
+        $permissions = $request->user()->permissionRequests()->with('addressedTo')->latest()->get();
         
         $types = [];
         foreach(PermissionType::cases() as $case) {
             $types[] = ['value' => $case->value, 'label' => $case->label()];
         }
 
+        // Ambil daftar Kepala Sekolah untuk pilihan ditujukan perizinan
+        $approvers = \App\Models\User::role('Kepala Sekolah')->get(['id', 'name']);
+
         return Inertia::render('User/Permissions/Index', [
             'permissions' => $permissions,
             'types' => $types,
+            'approvers' => $approvers,
         ]);
     }
 
@@ -37,6 +41,7 @@ class PermissionController extends Controller
             'attachment' => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:2048',
             'task_description' => 'nullable|string|max:500',
             'task_file' => 'nullable|file|mimes:doc,docx,pdf,jpg,jpeg,png|max:5120',
+            'addressed_to' => 'required|exists:users,id',
         ]);
 
         $path = null;
@@ -57,12 +62,19 @@ class PermissionController extends Controller
             'attachment_path' => $path,
             'task_description' => $validated['task_description'] ?? null,
             'task_file_path' => $taskPath,
+            'addressed_to' => $validated['addressed_to'],
         ]);
 
-        // Send Notification to Admins and Pimpinan
+        // Send Notification to selected Kepala Sekolah
         try {
-            $admins = \App\Models\User::role(['Super Admin', 'Kepala Sekolah'])->get();
-            \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\NewPermissionRequest($permission));
+            $targetUser = \App\Models\User::find($permission->addressed_to);
+            if ($targetUser) {
+                $targetUser->notify(new \App\Notifications\NewPermissionRequest($permission));
+            } else {
+                // Fallback to all Kepala Sekolah if target not found
+                $admins = \App\Models\User::role('Kepala Sekolah')->get();
+                \Illuminate\Support\Facades\Notification::send($admins, new \App\Notifications\NewPermissionRequest($permission));
+            }
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Gagal mengirim notif izin guru: ' . $e->getMessage());
         }

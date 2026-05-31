@@ -31,4 +31,9 @@ class PermissionRequest extends Model
     {
         return $this->belongsTo(User::class, 'approved_by');
     }
+
+    public function addressedTo()
+    {
+        return $this->belongsTo(User::class, 'addressed_to');
+    }
 }

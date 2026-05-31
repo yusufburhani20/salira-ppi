@@ -20,10 +20,19 @@ interface PermissionRequest {
     task_description: string | null;
     task_file_path: string | null;
     rejection_reason: string | null;
+    addressed_to?: {
+        id: number;
+        name: string;
+    } | null;
     created_at: string;
 }
 
-export default function PermissionIndex({ auth, permissions, types }: PageProps<{ permissions: PermissionRequest[], types: PermissionType[] }>) {
+interface Approver {
+    id: number;
+    name: string;
+}
+
+export default function PermissionIndex({ auth, permissions, types, approvers }: PageProps<{ permissions: PermissionRequest[], types: PermissionType[], approvers: Approver[] }>) {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     const { data, setData, post, delete: destroy, reset, processing, errors } = useForm({
@@ -34,6 +43,7 @@ export default function PermissionIndex({ auth, permissions, types }: PageProps<
         attachment: null as File | null,
         task_description: '',
         task_file: null as File | null,
+        addressed_to: '',
     });
 
     const openDialog = () => {
@@ -106,6 +116,7 @@ export default function PermissionIndex({ auth, permissions, types }: PageProps<
                                         <tr className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
                                             <th className="px-6 py-4 font-medium text-gray-900 dark:text-white">Jenis / Tipe</th>
                                             <th className="px-6 py-4 font-medium text-gray-900 dark:text-white">Tanggal Masih Berlaku</th>
+                                            <th className="px-6 py-4 font-medium text-gray-900 dark:text-white">Ditujukan Ke</th>
                                             <th className="px-6 py-4 font-medium text-gray-900 dark:text-white">Alasan</th>
                                             <th className="px-6 py-4 font-medium text-gray-900 dark:text-white">Status</th>
                                             <th className="px-6 py-4 font-medium text-gray-900 dark:text-white text-right">Aksi</th>
@@ -119,6 +130,9 @@ export default function PermissionIndex({ auth, permissions, types }: PageProps<
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-gray-600 dark:text-gray-300">
                                                     {req.start_date.split('T')[0]} s/d {req.end_date.split('T')[0]}
+                                                </td>
+                                                <td className="px-6 py-4 whitespace-nowrap text-gray-600 dark:text-gray-300">
+                                                    {req.addressed_to?.name || '-'}
                                                 </td>
                                                 <td className="px-6 py-4 text-gray-600 dark:text-gray-300 max-w-xs truncate" title={req.reason}>
                                                     {req.reason}
@@ -180,6 +194,22 @@ export default function PermissionIndex({ auth, permissions, types }: PageProps<
                                                 {types.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
                                             </select>
                                             {errors.type && <p className="text-red-500 text-xs mt-1">{errors.type}</p>}
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Tujukan Permohonan Kepada</label>
+                                            <select 
+                                                value={data.addressed_to} 
+                                                onChange={e => setData('addressed_to', e.target.value)} 
+                                                required
+                                                className="mt-1 block w-full rounded-md border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:border-primary focus:ring-primary shadow-sm text-sm"
+                                            >
+                                                <option value="">-- Pilih Kepala Sekolah --</option>
+                                                {approvers.map(app => (
+                                                    <option key={app.id} value={app.id}>{app.name}</option>
+                                                ))}
+                                            </select>
+                                            {errors.addressed_to && <p className="text-red-500 text-xs mt-1">{errors.addressed_to}</p>}
                                         </div>
 
                                         <div className="grid grid-cols-2 gap-4">
