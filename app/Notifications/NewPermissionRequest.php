@@ -10,7 +10,7 @@ use App\Models\PermissionRequest;
 use App\Models\Setting;
 use App\Services\TelegramService;
 
-class NewPermissionRequest extends Notification
+class NewPermissionRequest extends Notification implements ShouldQueue
 {
     use Queueable;
 

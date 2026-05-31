@@ -10,7 +10,7 @@ use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use App\Models\Setting;
 
-class PermissionStatusChanged extends Notification
+class PermissionStatusChanged extends Notification implements ShouldQueue
 {
     use Queueable;
 
