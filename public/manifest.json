@@ -1,0 +1,24 @@
+{
+  "name": "SALIRA - Absensi, Logistik & Inventaris",
+  "short_name": "SALIRA",
+  "description": "Sistem Absensi, Logistik, Inventaris, & Rekapitulasi Akademik",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#4f46e5",
+  "theme_color": "#4f46e5",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/images/icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/images/icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ]
+}
