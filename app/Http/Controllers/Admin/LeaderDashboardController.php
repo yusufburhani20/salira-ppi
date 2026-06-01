@@ -32,7 +32,7 @@ class LeaderDashboardController extends Controller
             $studentPresenceQuery->where('academic_class_id', $classId);
         }
         $studentPresence = $studentPresenceQuery
-            ->select('status', DB::raw('count(*) as total'))
+            ->select('status', DB::raw('count(distinct student_id) as total'))
             ->groupBy('status')
             ->get()
             ->keyBy('status');
@@ -75,7 +75,7 @@ class LeaderDashboardController extends Controller
             if ($classId) {
                 $countQuery->where('academic_class_id', $classId);
             }
-            $count = $countQuery->count();
+            $count = $countQuery->distinct()->count('student_id');
             
             $weeklyTrend[] = [
                 'date' => $date->format('d/m'),

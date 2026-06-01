@@ -25,7 +25,7 @@ export default function LeaderDashboard({ stats, activeUsers, lastLogins, invent
         setStartDate(start);
         setEndDate(end);
         setClassId(cid);
-        router.get(route('admin.dashboard.leader'), { start_date: start, end_date: end, academic_class_id: cid }, { 
+        router.get(route('admin.leader-dashboard'), { start_date: start, end_date: end, academic_class_id: cid }, { 
             preserveState: true,
             preserveScroll: true,
             only: ['stats', 'filters']
