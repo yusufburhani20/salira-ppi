@@ -89,7 +89,7 @@ export default function Register() {
                         name="role"
                         value={data.role}
                         onChange={(e) => setData('role', e.target.value)}
-                        className="mt-1 block w-full border-gray-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 focus:border-indigo-500 dark:focus:border-indigo-600 focus:ring-indigo-500 dark:focus:ring-indigo-600 rounded-md shadow-sm"
+                        className="mt-1 block w-full border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 text-slate-900 dark:text-slate-300 focus:border-blue-600 focus:ring focus:ring-blue-600 focus:ring-opacity-20 rounded-xl text-base py-3 px-4 shadow-sm transition-all"
                         required
                     >
                         <option value="Guru">Guru</option>

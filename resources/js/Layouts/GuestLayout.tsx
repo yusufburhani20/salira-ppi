@@ -1,11 +1,15 @@
-import ApplicationLogo from '@/Components/ApplicationLogo';
-import { Link } from '@inertiajs/react';
 import { PropsWithChildren } from 'react';
 
 export default function Guest({ children }: PropsWithChildren) {
     return (
-        <div className="flex min-h-screen flex-col items-center bg-gray-100 pt-6 sm:justify-center sm:pt-0 dark:bg-gray-900">
-            <div className="mt-6 w-full overflow-hidden bg-white px-6 py-4 shadow-md sm:max-w-md sm:rounded-lg dark:bg-gray-800">
+        <div className="flex min-h-screen flex-col items-center bg-slate-50 dark:bg-slate-900 justify-center p-4 font-sans relative overflow-hidden transition-colors duration-300">
+            {/* Background Gradient Ornaments */}
+            <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+                <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-500/10 dark:bg-blue-500/5 rounded-full blur-3xl"></div>
+                <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-indigo-500/10 dark:bg-indigo-500/5 rounded-full blur-3xl"></div>
+            </div>
+
+            <div className="w-full bg-white dark:bg-slate-800 p-8 sm:p-10 shadow-2xl shadow-blue-500/5 dark:shadow-none border border-white/20 dark:border-slate-700/50 sm:max-w-md rounded-[2rem] relative z-10 transition-colors duration-300">
                 {children}
             </div>
         </div>

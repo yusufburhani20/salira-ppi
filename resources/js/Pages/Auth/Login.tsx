@@ -37,8 +37,8 @@ export default function Login({
             </div>
 
             <div className="flex flex-col md:flex-row w-full max-w-4xl bg-white dark:bg-slate-800 rounded-[2rem] shadow-2xl shadow-blue-500/10 dark:shadow-none border border-white/20 dark:border-slate-700/50 h-auto md:h-[500px] relative z-10 transition-colors">
-                {/* Left Side - Welcome Panel */}
-                <div className="w-full md:w-1/2 bg-blue-600 p-10 md:p-14 flex flex-col justify-center items-center text-center text-white rounded-t-[2rem] md:rounded-tr-none md:rounded-l-[2rem] relative isolate overflow-hidden">
+                {/* Left Side - Welcome Panel (hidden on mobile) */}
+                <div className="hidden md:flex w-full md:w-1/2 bg-blue-600 p-10 md:p-14 flex flex-col justify-center items-center text-center text-white rounded-t-[2rem] md:rounded-tr-none md:rounded-l-[2rem] relative isolate overflow-hidden">
                     {/* Decorative blobs inside left panel */}
                     <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-400/20 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none" />
                     <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-400/20 rounded-full blur-3xl -ml-10 -mb-10 pointer-events-none" />
@@ -57,8 +57,18 @@ export default function Login({
                 </div>
 
                 {/* Right Side - Login Form */}
-                <div className="w-full md:w-1/2 p-10 md:p-14 flex flex-col justify-center bg-white dark:bg-slate-800 rounded-b-[2rem] md:rounded-bl-none md:rounded-r-[2rem] transition-colors">
-                    <h2 className="text-3xl font-bold text-slate-800 dark:text-white mb-8 transition-colors">Sign In</h2>
+                <div className="w-full md:w-1/2 p-10 md:p-14 flex flex-col justify-center bg-white dark:bg-slate-800 rounded-[2rem] md:rounded-l-none transition-colors">
+                    {/* Compact logo for mobile view only */}
+                    <div className="flex flex-col items-center md:hidden mb-6 text-center">
+                        <img src="/images/login-img.png" alt="SALIRA Logo" className="h-14 w-auto mb-2 drop-shadow-md" />
+                        <h1 className="text-2xl font-black text-blue-600 dark:text-blue-400 tracking-tight">SALIRA</h1>
+                        <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-relaxed">
+                            Absensi, Logistik & Inventaris
+                        </p>
+                    </div>
+
+                    <h2 className="text-3xl font-bold text-slate-800 dark:text-white mb-8 transition-colors hidden md:block">Sign In</h2>
+                    <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-6 transition-colors md:hidden text-center">Sign In</h2>
 
                     {status && (
                         <div className="mb-4 text-sm font-medium text-emerald-600 dark:text-emerald-400">
@@ -73,7 +83,7 @@ export default function Login({
                                 type="text"
                                 name="login"
                                 value={data.login}
-                                className="block w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 text-slate-900 dark:text-white focus:border-blue-600 focus:ring focus:ring-blue-600 focus:ring-opacity-20 px-4 py-3 placeholder-slate-400 dark:placeholder-slate-500 text-sm transition-all shadow-sm"
+                                className="block w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 text-slate-900 dark:text-white focus:border-blue-600 focus:ring focus:ring-blue-600 focus:ring-opacity-20 px-4 py-3 placeholder-slate-400 dark:placeholder-slate-500 text-base transition-all shadow-sm"
                                 autoComplete="username"
                                 placeholder="Email atau NIP"
                                 onChange={(e) => setData('login', e.target.value)}
@@ -88,7 +98,7 @@ export default function Login({
                                 type={showPassword ? 'text' : 'password'}
                                 name="password"
                                 value={data.password}
-                                className="block w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 text-slate-900 dark:text-white focus:border-blue-600 focus:ring focus:ring-blue-600 focus:ring-opacity-20 px-4 py-3 placeholder-slate-400 dark:placeholder-slate-500 text-sm transition-all shadow-sm"
+                                className="block w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/50 text-slate-900 dark:text-white focus:border-blue-600 focus:ring focus:ring-blue-600 focus:ring-opacity-20 px-4 py-3 placeholder-slate-400 dark:placeholder-slate-500 text-base transition-all shadow-sm"
                                 autoComplete="current-password"
                                 placeholder="Password"
                                 onChange={(e) => setData('password', e.target.value)}
