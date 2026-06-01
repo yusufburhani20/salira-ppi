@@ -284,7 +284,7 @@ export default function PortalLayout({ header, children }: PropsWithChildren<{ h
                             </Dropdown.Trigger>
                             <Dropdown.Content>
                                 <Dropdown.Link href={route('portal.profile.edit')}>Update Profil</Dropdown.Link>
-                                <Dropdown.Link href={route('portal.logout')} method="post" as="button">Keluar Portal</Dropdown.Link>
+                                <Dropdown.Link href={route('portal.logout')} method="post" as="button" replace>Keluar Portal</Dropdown.Link>
                             </Dropdown.Content>
                         </Dropdown>
                     </div>
