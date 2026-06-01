@@ -10,18 +10,36 @@ const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
 // ─── PWA Back-Button Guard ────────────────────────────────────────────────────
 // Problem: After logout (native form POST → full page reload to /login),
-// pressing the Android Back button navigates through the browser's history stack.
-// Old Inertia history entries (dashboard, jurnal-mengajar, etc.) are still there.
-// Inertia's popstate handler fires, renders those pages, and the user sees
-// an "access denied" screen or a flash of authenticated content before login.
+// pressing Back navigates through the old browser history stack. Inertia's
+// popstate fires, trying to render pages like /jurnal-mengajar, causing
+// "access denied" or error 500.
 //
-// Primary fix: router.on('before') intercepts ALL navigations including popstate.
-// If the target URL is an authenticated route and auth.user is null (logged out),
-// we cancel the Inertia navigation and do window.location.replace() to login.
-// This fires BEFORE Inertia renders anything — zero flicker.
+// Root-cause of previous fix failure:
+// Reading auth from `data-page` DOM attribute only has the INITIAL server-rendered
+// data (the login page). After Inertia SPA navigates (e.g. to dashboard), that
+// attribute is NOT updated by Inertia. So our guard always saw auth.user = null
+// and blocked ALL navigation to authenticated routes — causing error 500.
 //
-// Secondary fix: pageshow handler for bfcache snapshots.
+// Correct approach: Track auth state in a module-level variable, updated on
+// every Inertia 'navigate' event. This always reflects the CURRENT page state.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Module-level variable — always reflects the current Inertia page's auth user.
+// Initialized from the server-rendered page data (accurate at first load).
+let currentAuthUser: unknown = null;
+
+// Initialize from the initial server-rendered page data embedded in the DOM.
+// At the very first page load (e.g. /login after logout), this is correct.
 if (typeof window !== 'undefined') {
+    try {
+        const pageEl = document.getElementById('app');
+        const initialPage = pageEl?.dataset?.page ? JSON.parse(pageEl.dataset.page) : null;
+        currentAuthUser = initialPage?.props?.auth?.user ?? null;
+    } catch {
+        currentAuthUser = null;
+    }
+
+    // Secondary defense: reload bfcache snapshots
     window.addEventListener('pageshow', (event) => {
         if (event.persisted) {
             window.location.reload();
@@ -29,44 +47,40 @@ if (typeof window !== 'undefined') {
     });
 }
 
+// Keep currentAuthUser in sync with Inertia's actual current page state.
+// This fires on EVERY Inertia navigation — initial load, link clicks, popstate.
+router.on('navigate', (event) => {
+    currentAuthUser = (event.detail.page.props as any)?.auth?.user ?? null;
+});
+
 // ─── Auth-required URL detection ─────────────────────────────────────────────
-const AUTHENTICATED_PREFIXES = [
-    '/dashboard',
-    '/profile',
-    '/admin',
-    '/guru',
-    '/user',
-    '/jurnal',
-    '/agenda',
-    '/attendance',
-    '/report',
-    '/notification',
-    '/schedule',
-    '/academic',
-    '/student',
-    '/class',
-    '/subject',
-    '/score',
-    '/assessment',
-    '/permission',
-    '/telegram',
-    '/bill',
-    '/invoice',
-    '/portal/dashboard',
-    '/portal/bills',
-    '/portal/attendance',
-    '/portal/scores',
-    '/portal/id-card',
-    '/portal/profile',
-    '/portal/report',
-    '/portal/permissions',
-    '/portal/notifications',
+const PUBLIC_OR_GUEST_PATHS = [
+    '/login',
+    '/portal/login',
+    '/register',
+    '/forgot-password',
+    '/reset-password',
+    '/verify-email',
+    '/portal/attendance/scanner',
+    '/portal/attendance/scan',
+    '/',
 ];
 
 function isAuthenticatedRoute(url: string): boolean {
     try {
         const path = new URL(url, window.location.origin).pathname;
-        return AUTHENTICATED_PREFIXES.some((prefix) => path.startsWith(prefix));
+        
+        // Exclude static assets or direct file requests
+        if (path.includes('.') || path.startsWith('/build/') || path.startsWith('/vendor/')) {
+            return false;
+        }
+
+        // Check if the path matches or starts with reset-password token
+        if (path.startsWith('/reset-password/')) {
+            return false;
+        }
+
+        return !PUBLIC_OR_GUEST_PATHS.includes(path);
     } catch {
         return false;
     }
@@ -81,31 +95,20 @@ function getLoginUrlForRoute(url: string): string {
     }
 }
 
-// Primary PWA back-button guard: intercept BEFORE Inertia renders anything.
-// Reads the current auth state from the Inertia page data embedded in the DOM.
-// When the current page is the login page (auth.user === null) and the user
-// tries to navigate back to an authenticated URL, we block it immediately.
+// Primary PWA back-button guard.
+// Fires BEFORE Inertia renders anything for each navigation.
+// Uses currentAuthUser (module variable kept in sync by 'navigate' event).
 router.on('before', (event) => {
     const visit = event.detail.visit;
     const targetUrl = typeof visit.url === 'string'
         ? visit.url
         : (visit.url as URL | undefined)?.toString() ?? '';
 
-    if (!isAuthenticatedRoute(targetUrl)) return; // Public page — allow
+    // Only block navigation to authenticated routes when the user is NOT logged in
+    if (!isAuthenticatedRoute(targetUrl)) return;
 
-    // Read current auth state from the Inertia page data in the DOM
-    const pageEl = document.getElementById('app');
-    let authUser = null;
-    try {
-        const pageData = pageEl?.dataset?.page ? JSON.parse(pageEl.dataset.page) : null;
-        authUser = pageData?.props?.auth?.user ?? null;
-    } catch {
-        // If parse fails, treat as not authenticated (safe default)
-        authUser = null;
-    }
-
-    if (!authUser) {
-        // No user → navigating to auth route while logged out → block + redirect
+    if (!currentAuthUser) {
+        // Logged out → trying to go back to an authenticated page → block it
         event.preventDefault();
         window.location.replace(getLoginUrlForRoute(targetUrl));
     }

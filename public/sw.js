@@ -41,6 +41,22 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  const url = new URL(event.request.url);
+
+  // 1. Bypass Service Worker for Inertia AJAX requests.
+  // Inertia handles state, authentication, and redirects dynamically.
+  // Intercepting them in SW can corrupt headers and lead to 500 / auth errors on back button.
+  if (event.request.headers.has('X-Inertia')) {
+    return;
+  }
+
+  // 2. Bypass Service Worker for page navigations except the root cached page.
+  // Let the browser handle standard document redirects (like guest redirects to /login)
+  // natively, which ensures the address bar and session state are always in sync.
+  if (event.request.mode === 'navigate' && url.pathname !== '/') {
+    return;
+  }
+
   event.respondWith(
     fetch(event.request)
       .then((response) => {
