@@ -180,6 +180,19 @@ export default function Login({
                         >
                             Masuk ke Portal Siswa & Wali Murid →
                         </Link>
+
+                        {/* Mobile-only Registration Link */}
+                        <div className="mt-4 text-center md:hidden">
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                                Belum memiliki akun?{' '}
+                                <Link
+                                    href={route('register')}
+                                    className="text-blue-600 dark:text-blue-400 font-bold hover:underline"
+                                >
+                                    Daftar di sini
+                                </Link>
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
