@@ -288,7 +288,7 @@ Route::prefix('portal')->name('portal.')->group(function () {
     Route::get('/attendance/scanner', [\App\Http\Controllers\Portal\PresenceScannerController::class, 'index'])->name('attendance.scanner');
     Route::post('/attendance/scan', [\App\Http\Controllers\Portal\PresenceScannerController::class, 'scan'])->name('attendance.scan');
 
-    Route::middleware('auth:student')->group(function () {
+    Route::middleware(['auth:student', \App\Http\Middleware\PreventBackNavigation::class])->group(function () {
         Route::get('/dashboard', [\App\Http\Controllers\Portal\PortalController::class, 'dashboard'])->name('dashboard');
         Route::get('/bills', [\App\Http\Controllers\Portal\PortalController::class, 'bills'])->name('bills');
         Route::get('/attendance', [\App\Http\Controllers\Portal\PortalController::class, 'attendance'])->name('attendance');

@@ -38,6 +38,13 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \Spatie\Permission\Middleware\RoleMiddleware::class,
             'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
             'role_or_permission' => \Spatie\Permission\Middleware\RoleOrPermissionMiddleware::class,
+            'no_back' => \App\Http\Middleware\PreventBackNavigation::class,
+        ]);
+
+        // Apply no-store cache headers to all authenticated routes
+        // to prevent bfcache from caching pages after logout
+        $middleware->appendToGroup('auth', [
+            \App\Http\Middleware\PreventBackNavigation::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
