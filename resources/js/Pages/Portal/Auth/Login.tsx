@@ -63,7 +63,7 @@ export default function PortalLogin() {
                 <div className="w-full md:w-1/2 p-10 md:p-14 flex flex-col justify-center bg-white dark:bg-slate-800 transition-colors">
                     {/* Compact logo for mobile view only */}
                     <div className="flex flex-col items-center md:hidden mb-6 text-center">
-                        <img src="/images/login-img.png" alt="SALIRA Logo" className="h-14 w-auto mb-2 drop-shadow-md" />
+                        <img src="/images/Salira.png" alt="SALIRA Logo" className="h-14 w-auto mb-2 drop-shadow-md" />
                         <h1 className="text-2xl font-black text-blue-600 dark:text-blue-400 tracking-tight">PORTAL SALIRA</h1>
                         <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-relaxed">
                             Portal Siswa & Wali Murid

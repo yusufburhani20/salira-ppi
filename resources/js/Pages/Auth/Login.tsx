@@ -43,7 +43,7 @@ export default function Login({
                     <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-400/20 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none" />
                     <div className="absolute bottom-0 left-0 w-64 h-64 bg-blue-400/20 rounded-full blur-3xl -ml-10 -mb-10 pointer-events-none" />
 
-                    <img src="/images/login-img.png" alt="SALIRA Logo" className="h-20 w-auto mb-6 relative z-10 drop-shadow-xl" />
+                    <img src="/images/Salira.png" alt="SALIRA Logo" className="h-20 w-auto mb-6 relative z-10 drop-shadow-xl" />
                     <h1 className="text-3xl md:text-4xl font-black mb-3 relative z-10 tracking-tight">SALIRA</h1>
                     <p className="text-xs font-bold mb-10 max-w-[280px] leading-relaxed relative z-10 text-blue-100 uppercase tracking-widest">
                         Sistem Absensi, Logistik, Inventaris, <br /> & Rekapitulasi Akademik
@@ -60,7 +60,7 @@ export default function Login({
                 <div className="w-full md:w-1/2 p-10 md:p-14 flex flex-col justify-center bg-white dark:bg-slate-800 rounded-[2rem] md:rounded-l-none transition-colors">
                     {/* Compact logo for mobile view only */}
                     <div className="flex flex-col items-center md:hidden mb-6 text-center">
-                        <img src="/images/login-img.png" alt="SALIRA Logo" className="h-14 w-auto mb-2 drop-shadow-md" />
+                        <img src="/images/Salira.png" alt="SALIRA Logo" className="h-14 w-auto mb-2 drop-shadow-md" />
                         <h1 className="text-2xl font-black text-blue-600 dark:text-blue-400 tracking-tight">SALIRA</h1>
                         <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest leading-relaxed">
                             Absensi, Logistik & Inventaris

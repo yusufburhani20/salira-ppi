@@ -100,7 +100,7 @@ export default function PortalLayout({ header, children }: PropsWithChildren<{ h
                 {/* Logo Area */}
                 <div className={`flex h-16 items-center ${sidebarCollapsed ? 'justify-center' : 'justify-between px-5'} border-b border-slate-100 flex-shrink-0 bg-blue-600 overflow-hidden transition-all duration-300`}>
                     <Link href={route('portal.dashboard')} className="flex items-center gap-2" onClick={() => setSidebarOpen(false)}>
-                        <img src="/images/Salira.png" alt="SALIRA Logo" className="h-7 w-auto brightness-0 invert flex-shrink-0" />
+                        <img src="/images/Salira.png" alt="SALIRA Logo" className="h-7 w-auto flex-shrink-0" />
                         {!sidebarCollapsed && (
                             <span className="text-xl font-bold border-white text-white whitespace-nowrap">
                                 PORTAL
@@ -152,6 +152,21 @@ export default function PortalLayout({ header, children }: PropsWithChildren<{ h
                             </div>
                         </div>
                     ))}
+
+                    {/* Logout Button in Sidebar */}
+                    <div className="px-3 pt-4 mt-4 border-t border-slate-100 dark:border-slate-700/60">
+                        <Link
+                            href={route('portal.logout')}
+                            method="post"
+                            as="button"
+                            className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all text-left"
+                        >
+                            <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                            </svg>
+                            {!sidebarCollapsed && <span className="truncate">Keluar Aplikasi</span>}
+                        </Link>
+                    </div>
                 </nav>
             </aside>
 
