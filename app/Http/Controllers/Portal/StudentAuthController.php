@@ -56,6 +56,8 @@ class StudentAuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
+        Inertia::clearHistory();
+
         return redirect('/portal/login');
     }
 }

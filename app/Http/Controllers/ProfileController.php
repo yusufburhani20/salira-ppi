@@ -68,6 +68,8 @@ class ProfileController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
+        Inertia::clearHistory();
+
         return Redirect::to('/');
     }
 }
