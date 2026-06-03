@@ -61,13 +61,19 @@ class DashboardController extends Controller
             $diffInDays = 30;
         }
 
+        $presentCounts = StudentAttendance::where('status', 'hadir')
+            ->whereBetween('date', [$startDate->toDateString(), $endDate->toDateString()])
+            ->when($classId, fn($q) => $q->where('academic_class_id', $classId))
+            ->select(\Illuminate\Support\Facades\DB::raw('DATE(date) as date_only'), \Illuminate\Support\Facades\DB::raw('COUNT(DISTINCT student_id) as total'))
+            ->groupBy('date_only')
+            ->get()
+            ->pluck('total', 'date_only');
+
         $chartData = [];
         for ($i = $diffInDays; $i >= 0; $i--) {
             $date = (clone $endDate)->subDays($i);
-            $presentQuery = StudentAttendance::where('status', 'hadir')->whereDate('date', $date);
-            if ($classId) $presentQuery->where('academic_class_id', $classId);
-            
-            $presentCount = $presentQuery->distinct('student_id')->count();
+            $dateStr = $date->toDateString();
+            $presentCount = $presentCounts[$dateStr] ?? 0;
             $percentage = round(($presentCount / $totalStudents) * 100);
             
             $chartData[] = [
@@ -91,7 +97,7 @@ class DashboardController extends Controller
             $attRankingQuery->where('academic_class_id', $classId);
         }
 
-        $attendanceRanking = $attRankingQuery->get()->map(function($item) {
+        $attendanceRanking = $attRankingQuery->limit(5)->get()->map(function($item) {
             return [
                 'name' => $item->student->name ?? 'Unknown',
                 'value' => $item->total . ' Kehadiran',
@@ -112,7 +118,7 @@ class DashboardController extends Controller
                 ->where('daily_assessments.academic_class_id', $classId);
         }
 
-        $assessmentRanking = $scoreRankingQuery->get()->map(function($item) {
+        $assessmentRanking = $scoreRankingQuery->limit(5)->get()->map(function($item) {
             return [
                 'name' => $item->student->name ?? 'Unknown',
                 'value' => round($item->average, 1),

@@ -67,15 +67,19 @@ class LeaderDashboardController extends Controller
             $diffInDays = 30;
         }
 
+        $trendCounts = StudentAttendance::whereIn('status', ['hadir', 'tap'])
+            ->whereBetween('date', [$startDate->toDateString(), $endDate->toDateString()])
+            ->when($classId, fn($q) => $q->where('academic_class_id', $classId))
+            ->select(\Illuminate\Support\Facades\DB::raw('DATE(date) as date_only'), \Illuminate\Support\Facades\DB::raw('COUNT(DISTINCT student_id) as total'))
+            ->groupBy('date_only')
+            ->get()
+            ->pluck('total', 'date_only');
+
         $weeklyTrend = [];
         for ($i = $diffInDays; $i >= 0; $i--) {
             $date = (clone $endDate)->subDays($i);
-            $countQuery = StudentAttendance::whereDate('date', $date->toDateString())
-                ->whereIn('status', ['hadir', 'tap']);
-            if ($classId) {
-                $countQuery->where('academic_class_id', $classId);
-            }
-            $count = $countQuery->distinct()->count('student_id');
+            $dateStr = $date->toDateString();
+            $count = $trendCounts[$dateStr] ?? 0;
             
             $weeklyTrend[] = [
                 'date' => $date->format('d/m'),
