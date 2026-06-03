@@ -1,74 +1,142 @@
-const CACHE_NAME = 'salira-pwa-cache-v1';
-const ASSETS_TO_CACHE = [
-  '/',
+// ─── SALIRA Service Worker — Full PWA ────────────────────────────────────────
+// Strategi:
+//   • Aset statis (JS/CSS/image dari /build/) → Cache First (performa terbaik)
+//   • Font eksternal (bunny.net)              → Stale While Revalidate
+//   • Navigasi halaman                        → Network First + offline fallback
+//   • Inertia XHR & API calls                → Network Only (auth sensitive)
+// ─────────────────────────────────────────────────────────────────────────────
+
+const CACHE_VERSION = 'salira-pwa-v2';
+const STATIC_CACHE  = `${CACHE_VERSION}-static`;
+const FONT_CACHE    = `${CACHE_VERSION}-fonts`;
+
+// Aset yang selalu di-pre-cache saat install
+const PRECACHE_ASSETS = [
+  '/offline.html',
   '/favicon.ico',
   '/images/Salira.png',
   '/images/icon-192.png',
   '/images/icon-512.png',
-  '/manifest.json'
+  '/manifest.json',
 ];
 
-// Event Install - menyimpan aset statis utama ke dalam cache
+// ─── INSTALL ─────────────────────────────────────────────────────────────────
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
+    caches.open(STATIC_CACHE).then((cache) => {
+      return cache.addAll(PRECACHE_ASSETS);
     })
   );
+  // Aktifkan SW baru langsung tanpa tunggu tab lama ditutup
   self.skipWaiting();
 });
 
-// Event Activate - membersihkan cache versi lama jika ada
+// ─── ACTIVATE ────────────────────────────────────────────────────────────────
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
-        cacheNames.map((cache) => {
-          if (cache !== CACHE_NAME) {
-            return caches.delete(cache);
-          }
-        })
+        cacheNames
+          .filter((name) => !name.startsWith(CACHE_VERSION))
+          .map((name) => {
+            console.log('[PWA] Menghapus cache lama:', name);
+            return caches.delete(name);
+          })
       );
     })
   );
+  // Ambil kendali semua tab yang sudah terbuka tanpa perlu refresh
   self.clients.claim();
 });
 
-// Event Fetch - Memprioritaskan Jaringan, jika gagal/offline mengambil dari Cache
+// ─── FETCH ───────────────────────────────────────────────────────────────────
 self.addEventListener('fetch', (event) => {
-  // Hanya proses request bermetode GET dan yang berasal dari domain yang sama
-  if (event.request.method !== 'GET' || !event.request.url.startsWith(self.location.origin)) {
+  const { request } = event;
+  const url = new URL(request.url);
+
+  // ① Hanya tangani GET request dari origin yang sama atau font bunny.net
+  if (request.method !== 'GET') return;
+
+  const isSameOrigin = url.origin === self.location.origin;
+  const isBunnyFont  = url.hostname === 'fonts.bunny.net';
+
+  if (!isSameOrigin && !isBunnyFont) return;
+
+  // ② Bypass total untuk Inertia XHR — biarkan browser & Inertia handle sendiri
+  if (request.headers.has('X-Inertia')) return;
+
+  // ③ Font → Stale While Revalidate
+  if (isBunnyFont) {
+    event.respondWith(staleWhileRevalidate(request, FONT_CACHE));
     return;
   }
 
-  const url = new URL(event.request.url);
-
-  // 1. Bypass Service Worker for Inertia AJAX requests.
-  // Inertia handles state, authentication, and redirects dynamically.
-  // Intercepting them in SW can corrupt headers and lead to 500 / auth errors on back button.
-  if (event.request.headers.has('X-Inertia')) {
+  // ④ Aset statis dari Vite build (/build/...) → Cache First
+  if (url.pathname.startsWith('/build/') || url.pathname.startsWith('/images/') || url.pathname === '/favicon.ico') {
+    event.respondWith(cacheFirst(request, STATIC_CACHE));
     return;
   }
 
-  // 2. Bypass Service Worker for page navigations except the root cached page.
-  // Let the browser handle standard document redirects (like guest redirects to /login)
-  // natively, which ensures the address bar and session state are always in sync.
-  if (event.request.mode === 'navigate' && url.pathname !== '/') {
+  // ⑤ Navigasi halaman (buka URL di browser) → Network First + offline fallback
+  if (request.mode === 'navigate') {
+    event.respondWith(networkFirstWithOfflineFallback(request));
     return;
   }
 
-  event.respondWith(
-    fetch(event.request)
-      .then((response) => {
-        return response;
-      })
-      .catch(() => {
-        // Jika offline atau jaringan gagal, cari kecocokan di cache
-        return caches.match(event.request).then((cachedResponse) => {
-          if (cachedResponse) {
-            return cachedResponse;
-          }
-        });
-      })
-  );
+  // ⑥ Semua lainnya (API calls, dll) → Network Only
+  // Biarkan pass-through, tidak di-intercept
 });
+
+// ─── STRATEGY: Cache First ───────────────────────────────────────────────────
+// Cocok untuk aset yang jarang berubah (JS/CSS dengan hash, gambar)
+async function cacheFirst(request, cacheName) {
+  const cachedResponse = await caches.match(request);
+  if (cachedResponse) return cachedResponse;
+
+  try {
+    const networkResponse = await fetch(request);
+    if (networkResponse.ok) {
+      const cache = await caches.open(cacheName);
+      cache.put(request, networkResponse.clone());
+    }
+    return networkResponse;
+  } catch {
+    // Tidak ada cache, tidak ada jaringan → browser handle error
+    return new Response('Aset tidak tersedia offline.', { status: 503 });
+  }
+}
+
+// ─── STRATEGY: Stale While Revalidate ────────────────────────────────────────
+// Sajikan dari cache segera, perbarui cache di background
+async function staleWhileRevalidate(request, cacheName) {
+  const cache = await caches.open(cacheName);
+  const cachedResponse = await cache.match(request);
+
+  const fetchPromise = fetch(request).then((networkResponse) => {
+    if (networkResponse.ok) {
+      cache.put(request, networkResponse.clone());
+    }
+    return networkResponse;
+  }).catch(() => null);
+
+  return cachedResponse || fetchPromise;
+}
+
+// ─── STRATEGY: Network First + Offline Fallback ───────────────────────────────
+// Coba jaringan dulu. Kalau gagal → tampilkan /offline.html
+async function networkFirstWithOfflineFallback(request) {
+  try {
+    const networkResponse = await fetch(request);
+    return networkResponse;
+  } catch {
+    // Jaringan gagal → coba cache dulu
+    const cachedPage = await caches.match(request);
+    if (cachedPage) return cachedPage;
+
+    // Tidak ada cache → tampilkan halaman offline
+    const offlinePage = await caches.match('/offline.html');
+    return offlinePage || new Response('<h1>Anda sedang offline</h1>', {
+      headers: { 'Content-Type': 'text/html' },
+    });
+  }
+}

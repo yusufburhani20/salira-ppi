@@ -11,18 +11,30 @@
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
-        <!-- PWA Meta & manifest -->
-        <meta name="theme-color" content="#4f46e5">
+        <!-- PWA Manifest -->
         <link rel="manifest" href="/manifest.json">
+
+        <!-- PWA Theme & Color -->
+        <meta name="theme-color" content="#2563eb">
+        <meta name="msapplication-TileColor" content="#2563eb">
+        <meta name="msapplication-TileImage" content="/images/icon-192.png">
+
+        <!-- PWA iOS (Apple) -->
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="default">
+        <meta name="apple-mobile-web-app-title" content="SALIRA">
         <link rel="apple-touch-icon" href="/images/icon-192.png">
+
+        <!-- PWA Android -->
+        <meta name="mobile-web-app-capable" content="yes">
 
         <!-- Registrasi Service Worker PWA -->
         <script>
             if ('serviceWorker' in navigator) {
                 window.addEventListener('load', () => {
                     navigator.serviceWorker.register('/sw.js')
-                        .then(reg => console.log('Service Worker PWA berhasil didaftarkan:', reg.scope))
-                        .catch(err => console.log('Pendaftaran Service Worker PWA gagal:', err));
+                        .then(reg => console.log('[PWA] SW registered:', reg.scope))
+                        .catch(err => console.warn('[PWA] SW registration failed:', err));
                 });
             }
         </script>

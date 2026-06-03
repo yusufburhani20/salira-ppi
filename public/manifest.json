@@ -3,10 +3,13 @@
   "short_name": "SALIRA",
   "description": "Sistem Absensi, Logistik, Inventaris, & Rekapitulasi Akademik",
   "start_url": "/",
+  "scope": "/",
+  "lang": "id",
   "display": "standalone",
-  "background_color": "#4f46e5",
-  "theme_color": "#4f46e5",
+  "background_color": "#2563eb",
+  "theme_color": "#2563eb",
   "orientation": "portrait-primary",
+  "categories": ["education", "productivity"],
   "icons": [
     {
       "src": "/images/icon-192.png",

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Offline — SALIRA</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f8fafc;
+      font-family: 'Figtree', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      color: #1e293b;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Background decoration */
+    .bg-blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(80px);
+      pointer-events: none;
+    }
+    .bg-blob-1 {
+      width: 500px; height: 500px;
+      background: rgba(37, 99, 235, 0.08);
+      top: -150px; left: -150px;
+    }
+    .bg-blob-2 {
+      width: 400px; height: 400px;
+      background: rgba(139, 92, 246, 0.06);
+      bottom: -100px; right: -100px;
+    }
+
+    .card {
+      position: relative;
+      z-index: 10;
+      background: #ffffff;
+      border: 1px solid rgba(226, 232, 240, 0.8);
+      border-radius: 28px;
+      padding: 56px 48px;
+      max-width: 420px;
+      width: 90%;
+      text-align: center;
+      box-shadow: 0 8px 40px rgba(0, 0, 0, 0.06);
+    }
+
+    .logo {
+      width: 72px;
+      height: 72px;
+      object-fit: contain;
+      margin-bottom: 24px;
+    }
+
+    .icon-wifi {
+      width: 64px;
+      height: 64px;
+      margin: 0 auto 28px;
+      background: linear-gradient(135deg, #dbeafe, #ede9fe);
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .icon-wifi svg {
+      width: 32px;
+      height: 32px;
+      color: #2563eb;
+      stroke: #2563eb;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #1e293b;
+      margin-bottom: 12px;
+      letter-spacing: -0.02em;
+    }
+
+    p {
+      font-size: 0.925rem;
+      color: #64748b;
+      line-height: 1.65;
+      margin-bottom: 36px;
+    }
+
+    .btn {
+      display: inline-block;
+      background: #2563eb;
+      color: #ffffff;
+      font-weight: 700;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 14px 36px;
+      border-radius: 14px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+      box-shadow: 0 4px 16px rgba(37, 99, 235, 0.3);
+      text-decoration: none;
+    }
+    .btn:hover {
+      background: #1d4ed8;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+    }
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .divider {
+      width: 40px;
+      height: 3px;
+      background: linear-gradient(90deg, #2563eb, #7c3aed);
+      border-radius: 99px;
+      margin: 0 auto 28px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 28px;
+      font-size: 0.75rem;
+      color: #94a3b8;
+      font-weight: 500;
+    }
+    .badge::before {
+      content: '';
+      display: inline-block;
+      width: 6px; height: 6px;
+      background: #f59e0b;
+      border-radius: 50%;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body { background: #0f172a; color: #e2e8f0; }
+      .card {
+        background: #1e293b;
+        border-color: rgba(51, 65, 85, 0.6);
+        box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3);
+      }
+      h1 { color: #f1f5f9; }
+      p { color: #94a3b8; }
+      .bg-blob-1 { background: rgba(37, 99, 235, 0.05); }
+      .bg-blob-2 { background: rgba(139, 92, 246, 0.04); }
+    }
+
+    @media (max-width: 480px) {
+      .card { padding: 40px 28px; border-radius: 24px; }
+      h1 { font-size: 1.3rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="bg-blob bg-blob-1"></div>
+  <div class="bg-blob bg-blob-2"></div>
+
+  <div class="card">
+    <img src="/images/Salira.png" alt="SALIRA Logo" class="logo" />
+
+    <div class="icon-wifi">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round"
+          d="M3 3l18 18M8.288 8.375A7.493 7.493 0 0112 7.5c1.786 0 3.423.623 4.712 1.657m1.695 2.088A7.455 7.455 0 0119.5 12c0 3.314-2.16 6.118-5.186 7.11m-.814.89a3 3 0 01-2.999 0M12 12h.01" />
+      </svg>
+    </div>
+
+    <div class="divider"></div>
+
+    <h1>Anda Sedang Offline</h1>
+    <p>
+      Koneksi internet tidak tersedia.<br>
+      Pastikan perangkat Anda terhubung ke jaringan, lalu coba lagi.
+    </p>
+
+    <button class="btn" onclick="window.location.reload()">
+      Coba Lagi
+    </button>
+
+    <div class="badge">Koneksi terputus</div>
+  </div>
+</body>
+</html>
