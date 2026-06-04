@@ -67,19 +67,31 @@ export default function PrintCards({ academicClass, students, settings }: any) {
                                             </div>
                                             {settings.school_logo && <img src={settings.school_logo} className="card-h-logo" alt="Logo" />}
                                         </div>
-                                        <div className="mt-auto">
-                                            <p className="card-h-label">Nama Lengkap</p>
-                                            <h4 className="card-h-name">{student.name}</h4>
-                                        </div>
-                                        <div className="flex gap-4 mt-2">
-                                            <div>
-                                                <p className="card-h-label">NIS</p>
-                                                <p className="card-h-nis">{student.nis}</p>
+                                        
+                                        <div className="flex justify-between items-end mt-auto gap-2">
+                                            <div className="flex-1 min-w-0">
+                                                <div>
+                                                    <p className="card-h-label">Nama Lengkap</p>
+                                                    <h4 className="card-h-name">{student.name}</h4>
+                                                </div>
+                                                <div className="flex gap-4 mt-2">
+                                                    <div>
+                                                        <p className="card-h-label">NIS</p>
+                                                        <p className="card-h-nis">{student.nis}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="card-h-label">Status</p>
+                                                        <span className="card-h-status">Active</span>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <p className="card-h-label">Status</p>
-                                                <span className="card-h-status">Active</span>
-                                            </div>
+                                            {student.photo_url && (
+                                                <img 
+                                                    src={student.photo_url} 
+                                                    className="w-[42px] h-[42px] rounded-lg object-cover border border-white/20 shadow-md mr-1 flex-shrink-0" 
+                                                    alt="Foto" 
+                                                />
+                                            )}
                                         </div>
                                     </div>
                                 </div>
@@ -97,11 +109,22 @@ export default function PrintCards({ academicClass, students, settings }: any) {
                                         <h3 className="card-v-school">{settings.school_name}</h3>
                                     </div>
                                     <div className="card-v-body">
-                                        <div className="card-qr-box mb-2">
-                                            <QRCodeSVG value={student.qr_token} size={60} style={{ width: '100%', height: '100%' }} />
-                                        </div>
+                                        {student.photo_url ? (
+                                            <img 
+                                                src={student.photo_url} 
+                                                className="w-[50px] h-[50px] rounded-full object-cover border-2 border-white/20 shadow-md mb-2 flex-shrink-0" 
+                                                alt="Foto" 
+                                            />
+                                        ) : (
+                                            <div className="w-[50px] h-[50px] rounded-full bg-white/10 border-2 border-dashed border-white/20 flex items-center justify-center text-white text-xs font-bold mb-2 flex-shrink-0">
+                                                {student.name.charAt(0)}
+                                            </div>
+                                        )}
                                         <h4 className="card-v-name">{student.name}</h4>
                                         <p className="card-v-nis">{student.nis}</p>
+                                        <div className="card-qr-box my-1.5">
+                                            <QRCodeSVG value={student.qr_token} size={42} style={{ width: '100%', height: '100%' }} />
+                                        </div>
                                         <div className="card-v-divider" />
                                         <p className="card-v-footer-text">Valid ID Card<br />SALIRA Academic Portal</p>
                                     </div>

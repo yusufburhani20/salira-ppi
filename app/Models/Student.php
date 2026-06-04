@@ -17,7 +17,12 @@ class Student extends Authenticatable
         'gender' => Gender::class,
         'status' => StudentStatus::class,
     ];
-    protected $appends = ['academic_class', 'academic_class_id'];
+    protected $appends = ['academic_class', 'academic_class_id', 'photo_url'];
+
+    public function getPhotoUrlAttribute()
+    {
+        return $this->photo ? asset('storage/' . $this->photo) : null;
+    }
 
     public function getAcademicClassAttribute()
     {

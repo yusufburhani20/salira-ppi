@@ -12,6 +12,7 @@ use Inertia\Inertia;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Enums\Gender;
 use App\Enums\StudentStatus;
+use Illuminate\Support\Facades\Storage;
 
 class StudentController extends Controller
 {
@@ -55,9 +56,15 @@ class StudentController extends Controller
             'parent_email'      => 'nullable|email|max:255',
             'parent_telegram_id' => 'nullable|string|max:100',
             'academic_class_id' => 'nullable|exists:academic_classes,id',
+            'photo'             => 'nullable|image|mimes:jpeg,png,jpg,webp|max:1024',
         ]);
 
-        $studentData = \Illuminate\Support\Arr::except($validated, ['academic_class_id']);
+        $studentData = \Illuminate\Support\Arr::except($validated, ['academic_class_id', 'photo']);
+        
+        if ($request->hasFile('photo')) {
+            $studentData['photo'] = $this->processAndStorePhoto($request->file('photo'));
+        }
+
         $student = Student::create($studentData);
 
         if (!empty($validated['academic_class_id'])) {
@@ -82,9 +89,23 @@ class StudentController extends Controller
             'parent_email'      => 'nullable|email|max:255',
             'parent_telegram_id' => 'nullable|string|max:100',
             'academic_class_id' => 'nullable|exists:academic_classes,id',
+            'photo'             => 'nullable|image|mimes:jpeg,png,jpg,webp|max:1024',
         ]);
 
-        $studentData = \Illuminate\Support\Arr::except($validated, ['academic_class_id']);
+        $studentData = \Illuminate\Support\Arr::except($validated, ['academic_class_id', 'photo']);
+        
+        if ($request->hasFile('photo')) {
+            if ($student->photo) {
+                Storage::delete('public/' . $student->photo);
+            }
+            $studentData['photo'] = $this->processAndStorePhoto($request->file('photo'));
+        } elseif ($request->boolean('delete_photo')) {
+            if ($student->photo) {
+                Storage::delete('public/' . $student->photo);
+            }
+            $studentData['photo'] = null;
+        }
+
         $student->update($studentData);
 
         if ($request->has('academic_class_id')) {
@@ -100,6 +121,9 @@ class StudentController extends Controller
 
     public function destroy(Student $student)
     {
+        if ($student->photo) {
+            Storage::delete('public/' . $student->photo);
+        }
         $student->delete();
         return redirect()->back()->with('success', 'Data siswa berhasil dihapus.');
     }
@@ -209,4 +233,60 @@ class StudentController extends Controller
             'settings' => $settings,
         ]);
     }
+
+    private function processAndStorePhoto($file)
+    {
+        $imageContent = file_get_contents($file->getRealPath());
+        $srcImage = @imagecreatefromstring($imageContent);
+        
+        if (!$srcImage) {
+            return $file->store('students/photos', 'public');
+        }
+
+        $width = imagesx($srcImage);
+        $height = imagesy($srcImage);
+        
+        $targetSize = 300;
+        
+        $minDim = min($width, $height);
+        $cropX = (int)(($width - $minDim) / 2);
+        $cropY = (int)(($height - $minDim) / 2);
+        
+        $dstImage = imagecreatetruecolor($targetSize, $targetSize);
+        
+        // Setup transparency support for PNG/WebP (if they are converted)
+        imagealphablending($dstImage, false);
+        imagesavealpha($dstImage, true);
+        
+        imagecopyresampled(
+            $dstImage, $srcImage,
+            0, 0, $cropX, $cropY,
+            $targetSize, $targetSize, $minDim, $minDim
+        );
+
+        $filename = uniqid('student_') . '.webp';
+        $tempPath = tempnam(sys_get_temp_dir(), 'student_photo');
+        
+        $success = false;
+        if (function_exists('imagewebp')) {
+            $success = imagewebp($dstImage, $tempPath, 75);
+        } else {
+            $filename = uniqid('student_') . '.jpg';
+            $success = imagejpeg($dstImage, $tempPath, 75);
+        }
+        
+        if ($success) {
+            $storedPath = 'students/photos/' . $filename;
+            Storage::disk('public')->put($storedPath, file_get_contents($tempPath));
+            @unlink($tempPath);
+        } else {
+            $storedPath = $file->store('students/photos', 'public');
+        }
+
+        imagedestroy($srcImage);
+        imagedestroy($dstImage);
+
+        return $storedPath;
+    }
 }
+

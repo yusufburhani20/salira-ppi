@@ -46,24 +46,40 @@ export default function StudentIndex({ students, filters, classes, canManage }: 
     const importRef = useRef<HTMLInputElement>(null);
 
     const { data, setData, post, put, processing, errors, reset } = useForm({
+        _method: 'POST' as string,
         nisn: '', nis: '', name: '', gender: 'L' as string, status: 'active' as string,
         birth_place: '', birth_date: '', parent_name: '', parent_phone: '',
         parent_email: '', parent_telegram_id: '',
         academic_class_id: '' as string,
+        photo: null as File | null,
+        delete_photo: false as boolean,
     });
 
     const importForm = useForm({ file: null as File | null });
 
-    const openCreate = () => { reset(); setEditTarget(null); setShowForm(true); };
+    const openCreate = () => {
+        reset();
+        setEditTarget(null);
+        setData(d => ({
+            ...d,
+            _method: 'POST',
+            photo: null,
+            delete_photo: false,
+        }));
+        setShowForm(true);
+    };
     const openEdit = (s: any) => {
         setEditTarget(s);
         setData({
+            _method: 'PUT',
             nisn: s.nisn ?? '', nis: s.nis ?? '', name: s.name ?? '',
             gender: s.gender ?? 'L', status: s.status ?? 'active',
             birth_place: s.birth_place ?? '', birth_date: s.birth_date ? String(s.birth_date).split('T')[0] : '',
             parent_name: s.parent_name ?? '', parent_phone: s.parent_phone ?? '',
             parent_email: s.parent_email ?? '', parent_telegram_id: s.parent_telegram_id ?? '',
             academic_class_id: s.academic_class_id ? String(s.academic_class_id) : '',
+            photo: null,
+            delete_photo: false,
         });
         setShowForm(true);
     };
@@ -73,7 +89,7 @@ export default function StudentIndex({ students, filters, classes, canManage }: 
         e.preventDefault();
         const opts = { onSuccess: () => { setShowForm(false); reset(); } };
         editTarget
-            ? put(route('admin.students.update', editTarget.id), opts)
+            ? post(route('admin.students.update', editTarget.id), opts)
             : post(route('admin.students.store'), opts);
     };
 
@@ -178,8 +194,12 @@ export default function StudentIndex({ students, filters, classes, canManage }: 
                                 <tr key={s.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
                                     <td className="px-5 py-3.5">
                                         <div className="flex items-center gap-3">
-                                            <div className="w-9 h-9 rounded-full bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-sm flex-shrink-0">
-                                                {s.name.charAt(0)}
+                                            <div className="w-9 h-9 rounded-full bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-sm flex-shrink-0 overflow-hidden">
+                                                {s.photo_url ? (
+                                                    <img src={s.photo_url} alt={s.name} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    s.name.charAt(0)
+                                                )}
                                             </div>
                                             <div>
                                                 <p className="font-semibold text-slate-800 dark:text-slate-100">{s.name}</p>
@@ -248,7 +268,54 @@ export default function StudentIndex({ students, filters, classes, canManage }: 
 
             {/* ── Form Modal ── */}
             <Modal show={showForm} onClose={() => setShowForm(false)} title={editTarget ? 'Edit Data Siswa' : 'Tambah Siswa Baru'}>
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-4" encType="multipart/form-data">
+                    {/* Upload Foto Siswa */}
+                    <div className="bg-slate-50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-700/60 rounded-xl p-4 flex gap-4 items-center">
+                        <div className="shrink-0 relative">
+                            {data.photo ? (
+                                <img src={URL.createObjectURL(data.photo)} className="w-16 h-16 rounded-xl object-cover border border-slate-300 dark:border-slate-600 shadow-sm" alt="Preview" />
+                            ) : (editTarget && editTarget.photo_url && !data.delete_photo) ? (
+                                <img src={editTarget.photo_url} className="w-16 h-16 rounded-xl object-cover border border-slate-300 dark:border-slate-600 shadow-sm" alt="Current" />
+                            ) : (
+                                <div className="w-16 h-16 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 flex items-center justify-center text-slate-400 text-[10px] font-semibold bg-white dark:bg-slate-800">
+                                    Tanpa Foto
+                                </div>
+                            )}
+                        </div>
+                        <div className="flex-1 space-y-1">
+                            <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Foto Profil Siswa</label>
+                            <input 
+                                type="file" 
+                                accept="image/*" 
+                                onChange={e => {
+                                    const file = e.target.files?.[0] || null;
+                                    setData(d => ({ ...d, photo: file, delete_photo: false }));
+                                }} 
+                                className="block w-full text-xs text-slate-500
+                                    file:mr-3 file:py-1.5 file:px-3
+                                    file:rounded-lg file:border-0
+                                    file:text-xs file:font-semibold
+                                    file:bg-indigo-50 file:text-indigo-700
+                                    dark:file:bg-indigo-950/40 dark:file:text-indigo-300
+                                    hover:file:bg-indigo-100 dark:hover:file:bg-indigo-900/40 cursor-pointer"
+                            />
+                            {errors.photo && <p className="text-xs text-red-500 mt-1">{errors.photo}</p>}
+                            <div className="text-[10px] text-slate-400 leading-relaxed">
+                                <span className="font-semibold text-slate-500 dark:text-slate-300">Ketentuan:</span> Maksimal 1 MB (PNG, JPG, JPEG, WebP). Gambar akan di-crop 1:1, di-resize ke 300x300px, dan dikompresi otomatis.
+                            </div>
+                            {((data.photo) || (editTarget && editTarget.photo_url && !data.delete_photo)) && (
+                                <button 
+                                    type="button" 
+                                    onClick={() => setData(d => ({ ...d, photo: null, delete_photo: true }))}
+                                    className="text-[10px] font-semibold text-red-500 hover:text-red-600 hover:underline pt-1 flex items-center gap-0.5"
+                                >
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                    Hapus Foto
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
                     <div className="grid grid-cols-2 gap-4">
                         <Field label="NISN *" error={errors.nisn}>
                             <input className={ic} value={data.nisn} onChange={e => setData('nisn', e.target.value)} placeholder="Nomor NISN" />
