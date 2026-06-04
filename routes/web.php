@@ -25,7 +25,6 @@ Route::middleware('auth')->group(function () {
         Route::get('/students/export', [\App\Http\Controllers\Admin\StudentController::class, 'export'])->name('students.export');
         Route::get('/students/template', [\App\Http\Controllers\Admin\StudentController::class, 'template'])->name('students.template');
         Route::get('/students/print-cards/{academic_class_id}', [\App\Http\Controllers\Admin\StudentController::class, 'printCards'])->name('students.print-cards');
-        Route::get('/students/{student}/print-card', [\App\Http\Controllers\Admin\StudentController::class, 'printSingleCard'])->name('students.print-single-card');
         
         // Classes (read-only for pimpinan can be restricted similar to students if needed in the future, for now they don't see it per matrix, so it moves to Group B)
     });
@@ -34,6 +33,7 @@ Route::middleware('auth')->group(function () {
     // Manajemen Data Operasional
     Route::middleware(['role:Super Admin|Staff/TU'])->prefix('admin')->name('admin.')->group(function () {
         // Students CRUD
+        Route::get('/students/{student}/print-card', [\App\Http\Controllers\Admin\StudentController::class, 'printSingleCard'])->name('students.print-single-card');
         Route::post('/students', [\App\Http\Controllers\Admin\StudentController::class, 'store'])->name('students.store');
         Route::put('/students/{student}', [\App\Http\Controllers\Admin\StudentController::class, 'update'])->name('students.update');
         Route::delete('/students/{student}', [\App\Http\Controllers\Admin\StudentController::class, 'destroy'])->name('students.destroy');
