@@ -109,6 +109,7 @@ class ClassAgendaController extends Controller
         return Inertia::render('Teacher/Agendas/Create', [
             'classes' => $classes,
             'subjects' => Subject::with('academicClasses:id')->orderBy('name')->get(),
+            'lesson_hours' => json_decode(\App\Models\Setting::get('lesson_hours', '[]'), true),
         ]);
     }
 
@@ -173,6 +174,25 @@ class ClassAgendaController extends Controller
         return response()->json($students);
     }
 
+    public function getBookedPeriods(Request $request)
+    {
+        $request->validate([
+            'academic_class_id' => 'required|exists:academic_classes,id',
+            'date' => 'required|date',
+            'exclude_agenda_id' => 'nullable|integer',
+        ]);
+
+        $query = ClassAgenda::with(['teacher:id,name', 'subject:id,name'])
+            ->where('academic_class_id', $request->academic_class_id)
+            ->whereDate('date', $request->date);
+
+        if ($request->filled('exclude_agenda_id')) {
+            $query->where('id', '!=', $request->exclude_agenda_id);
+        }
+
+        return response()->json($query->get());
+    }
+
     public function store(Request $request)
     {
         $request->validate([
@@ -190,6 +210,23 @@ class ClassAgendaController extends Controller
         ]);
 
         $subjectName = Subject::find($request->subject_id)->name;
+
+        // Double-booking validation
+        $existingAgendas = ClassAgenda::where('academic_class_id', $request->academic_class_id)
+            ->whereDate('date', $request->date)
+            ->get();
+        
+        $newSlots = $this->extractSlotLabels($request->lesson_period);
+        foreach ($existingAgendas as $existingAgenda) {
+            $existingSlots = $this->extractSlotLabels($existingAgenda->lesson_period);
+            $overlap = array_intersect($newSlots, $existingSlots);
+            if (!empty($overlap)) {
+                $overlapSlots = implode(', ', $overlap);
+                return back()->withErrors([
+                    'lesson_period' => "Jam Pelajaran ({$overlapSlots}) sudah diisi di kelas ini pada tanggal tersebut."
+                ])->withInput();
+            }
+        }
 
         DB::transaction(function() use ($request, $subjectName) {
             $agenda = ClassAgenda::create([
@@ -268,6 +305,7 @@ class ClassAgendaController extends Controller
             'agenda' => $agenda,
             'classes' => $classes,
             'subjects' => Subject::with('academicClasses:id')->orderBy('name')->get(),
+            'lesson_hours' => json_decode(\App\Models\Setting::get('lesson_hours', '[]'), true),
         ]);
     }
 
@@ -314,6 +352,24 @@ class ClassAgendaController extends Controller
         ]);
 
         $subjectName = Subject::find($request->subject_id)->name;
+
+        // Double-booking validation (excluding current agenda)
+        $existingAgendas = ClassAgenda::where('academic_class_id', $request->academic_class_id)
+            ->whereDate('date', $request->date)
+            ->where('id', '!=', $agenda->id)
+            ->get();
+        
+        $newSlots = $this->extractSlotLabels($request->lesson_period);
+        foreach ($existingAgendas as $existingAgenda) {
+            $existingSlots = $this->extractSlotLabels($existingAgenda->lesson_period);
+            $overlap = array_intersect($newSlots, $existingSlots);
+            if (!empty($overlap)) {
+                $overlapSlots = implode(', ', $overlap);
+                return back()->withErrors([
+                    'lesson_period' => "Jam Pelajaran ({$overlapSlots}) sudah diisi di kelas ini pada tanggal tersebut."
+                ])->withInput();
+            }
+        }
 
         DB::transaction(function() use ($request, $agenda, $subjectName) {
             $agenda->update([
@@ -598,5 +654,16 @@ class ClassAgendaController extends Controller
             'subject' => $subjectName,
             'range' => $start->format('d M Y') . ' - ' . $end->format('d M Y')
         ];
+    }
+
+    private function extractSlotLabels($lessonPeriod)
+    {
+        if (empty($lessonPeriod)) {
+            return [];
+        }
+        $parts = explode('(', $lessonPeriod);
+        $labelsPart = $parts[0];
+        $labels = explode(',', $labelsPart);
+        return array_map('trim', $labels);
     }
 }

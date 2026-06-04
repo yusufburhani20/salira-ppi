@@ -23,6 +23,7 @@ class SettingController extends Controller
                 'school_favicon'           => Setting::get('school_favicon') ? Storage::url(Setting::get('school_favicon')) : null,
                 'github_username'          => Setting::get('github_username', ''),
                 'github_token'             => Setting::get('github_token', ''),
+                'lesson_hours'             => json_decode(Setting::get('lesson_hours', '[]'), true),
             ]
         ]);
     }
@@ -39,6 +40,7 @@ class SettingController extends Controller
             'school_favicon'     => 'nullable|image|mimes:ico,png,jpg,jpeg,svg|max:1024',
             'github_username'    => 'nullable|string|max:100',
             'github_token'       => 'nullable|string|max:255',
+            'lesson_hours'       => 'nullable|array',
         ]);
 
         Setting::set('school_name', $request->school_name);
@@ -48,6 +50,7 @@ class SettingController extends Controller
         Setting::set('report_location', $request->report_location);
         Setting::set('github_username', $request->github_username);
         Setting::set('github_token', $request->github_token);
+        Setting::set('lesson_hours', json_encode($request->input('lesson_hours', [])));
 
         if ($request->hasFile('school_logo')) {
             // Delete old logo

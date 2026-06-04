@@ -2,7 +2,7 @@ import { PageProps } from '@/types';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm, Link } from '@inertiajs/react';
 import React, { useState, useEffect, useCallback } from 'react';
-import { PhotoIcon, BuildingOfficeIcon } from '@heroicons/react/24/outline';
+import { PhotoIcon, BuildingOfficeIcon, ClockIcon, TrashIcon, PlusIcon } from '@heroicons/react/24/outline';
 
 interface Settings {
     school_name: string;
@@ -18,6 +18,7 @@ interface Settings {
     midtrans_fee_type: 'none' | 'fixed' | 'percent';
     midtrans_fee_value: string;
     midtrans_fee_label: string;
+    lesson_hours?: Array<{ label: string; start: string; end: string }>;
 }
 
 export default function SettingIndex({ auth, settings }: PageProps<{ settings: Settings }>) {
@@ -34,6 +35,7 @@ export default function SettingIndex({ auth, settings }: PageProps<{ settings: S
         school_favicon: null as File | null,
         github_username: settings.github_username || '',
         github_token: settings.github_token || '',
+        lesson_hours: settings.lesson_hours || [] as Array<{ label: string; start: string; end: string }>,
     });
 
     const [isUpdating, setIsUpdating] = useState(false);
@@ -252,6 +254,93 @@ export default function SettingIndex({ auth, settings }: PageProps<{ settings: S
                                                 </div>
                                             </div>
                                         </div>
+                                    </div>
+                                </div>
+
+                                {/* Master Jam Pelajaran Section */}
+                                <div className="pt-8 mt-8 border-t dark:border-gray-700">
+                                    <h3 className="text-lg font-bold flex items-center gap-2 mb-6 text-slate-800 dark:text-slate-200">
+                                        <ClockIcon className="w-5 h-5 text-indigo-500" />
+                                        Master Jam Pelajaran
+                                    </h3>
+                                    
+                                    <div className="space-y-4">
+                                        <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-xl border border-slate-100 dark:border-slate-800 text-xs text-slate-500 mb-4">
+                                            Tip: Buatlah daftar slot jam pelajaran yang digunakan di sekolah Anda secara berurutan. Slot ini akan dipilih oleh guru saat mengisi jurnal mengajar harian.
+                                        </div>
+
+                                        {data.lesson_hours.map((hour, idx) => (
+                                            <div key={idx} className="flex flex-col md:flex-row gap-4 items-end bg-gray-50/50 dark:bg-gray-900/30 p-4 rounded-2xl border border-gray-100 dark:border-gray-800 relative group transition-all">
+                                                <div className="flex-1 space-y-1">
+                                                    <label className="text-xs font-bold text-gray-500 dark:text-gray-400">Nama / Label Slot</label>
+                                                    <input 
+                                                        type="text" 
+                                                        value={hour.label} 
+                                                        onChange={e => {
+                                                            const updated = [...data.lesson_hours];
+                                                            updated[idx].label = e.target.value;
+                                                            setData('lesson_hours', updated);
+                                                        }}
+                                                        className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                                                        placeholder="Contoh: Jam ke-1 / Istirahat"
+                                                        required
+                                                    />
+                                                </div>
+                                                <div className="w-full md:w-32 space-y-1">
+                                                    <label className="text-xs font-bold text-gray-500 dark:text-gray-400">Mulai</label>
+                                                    <input 
+                                                        type="time" 
+                                                        value={hour.start} 
+                                                        onChange={e => {
+                                                            const updated = [...data.lesson_hours];
+                                                            updated[idx].start = e.target.value;
+                                                            setData('lesson_hours', updated);
+                                                        }}
+                                                        className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                                                        required
+                                                    />
+                                                </div>
+                                                <div className="w-full md:w-32 space-y-1">
+                                                    <label className="text-xs font-bold text-gray-500 dark:text-gray-400">Selesai</label>
+                                                    <input 
+                                                        type="time" 
+                                                        value={hour.end} 
+                                                        onChange={e => {
+                                                            const updated = [...data.lesson_hours];
+                                                            updated[idx].end = e.target.value;
+                                                            setData('lesson_hours', updated);
+                                                        }}
+                                                        className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                                                        required
+                                                    />
+                                                </div>
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const updated = data.lesson_hours.filter((_, i) => i !== idx);
+                                                        setData('lesson_hours', updated);
+                                                    }}
+                                                    className="p-3 bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-950/20 dark:text-red-400 dark:hover:bg-red-950/40 rounded-xl transition-colors md:self-end"
+                                                    title="Hapus Slot"
+                                                >
+                                                    <TrashIcon className="w-5 h-5" />
+                                                </button>
+                                            </div>
+                                        ))}
+
+                                        <button 
+                                            type="button"
+                                            onClick={() => {
+                                                setData('lesson_hours', [
+                                                    ...data.lesson_hours,
+                                                    { label: `Jam ke-${data.lesson_hours.length + 1}`, start: '07:00', end: '07:45' }
+                                                ]);
+                                            }}
+                                            className="w-full py-3 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/20 dark:hover:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 rounded-xl font-bold text-sm flex items-center justify-center gap-2 border border-dashed border-indigo-200 dark:border-indigo-800 transition-colors"
+                                        >
+                                            <PlusIcon className="w-5 h-5" />
+                                            Tambah Jam Pelajaran
+                                        </button>
                                     </div>
                                 </div>
 

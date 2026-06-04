@@ -20,7 +20,7 @@ interface Attendance {
     notes?: string;
 }
 
-export default function AgendaEdit({ agenda, classes, subjects = [] }: { agenda: any, classes: any[], subjects: any[] }) {
+export default function AgendaEdit({ agenda, classes, subjects = [], lesson_hours = [] }: { agenda: any, classes: any[], subjects: any[], lesson_hours: any[] }) {
     const { data, setData, put, processing, errors } = useForm({
         academic_class_id: agenda.academic_class_id || '',
         subject_id: agenda.subject_id || '',
@@ -44,6 +44,76 @@ export default function AgendaEdit({ agenda, classes, subjects = [] }: { agenda:
 
     const [students, setStudents] = useState<Student[]>([]);
     const [loadingStudents, setLoadingStudents] = useState(false);
+
+    const [bookedPeriods, setBookedPeriods] = useState<any[]>([]);
+    const [selectedSlots, setSelectedSlots] = useState<string[]>(() => {
+        if (!agenda.lesson_period) return [];
+        const parts = agenda.lesson_period.split('(');
+        const labelsPart = parts[0];
+        return labelsPart.split(',').map((lbl: string) => lbl.trim()).filter(Boolean);
+    });
+
+    useEffect(() => {
+        if (data.academic_class_id && data.date) {
+            axios.get(route('teacher.agendas.booked-periods'), {
+                params: {
+                    academic_class_id: data.academic_class_id,
+                    date: data.date,
+                    exclude_agenda_id: agenda.id
+                }
+            })
+                .then(res => {
+                    setBookedPeriods(res.data);
+                })
+                .catch(err => {
+                    console.error("Failed to fetch booked periods", err);
+                });
+        } else {
+            setBookedPeriods([]);
+        }
+    }, [data.academic_class_id, data.date]);
+
+    useEffect(() => {
+        if (selectedSlots.length === 0) {
+            setData('lesson_period', '');
+            return;
+        }
+
+        const sortedSlots = [...selectedSlots].sort((a, b) => {
+            const idxA = lesson_hours.findIndex((h: any) => h.label === a);
+            const idxB = lesson_hours.findIndex((h: any) => h.label === b);
+            return idxA - idxB;
+        });
+
+        const times = sortedSlots.map(label => {
+            const hour = lesson_hours.find((h: any) => h.label === label);
+            return hour ? { start: hour.start, end: hour.end } : null;
+        }).filter(Boolean);
+
+        let timeRangeStr = '';
+        if (times.length > 0) {
+            const starts = times.map(t => t!.start).sort();
+            const ends = times.map(t => t!.end).sort();
+            const startTime = starts[0];
+            const endTime = ends[ends.length - 1];
+            timeRangeStr = ` (${startTime} - ${endTime})`;
+        }
+
+        setData('lesson_period', sortedSlots.join(', ') + timeRangeStr);
+    }, [selectedSlots, lesson_hours]);
+
+    const getSlotBookingInfo = (label: string) => {
+        for (const agendaItem of bookedPeriods) {
+            if (!agendaItem.lesson_period) continue;
+            const parts = agendaItem.lesson_period.split('(');
+            const labelsPart = parts[0];
+            const labels = labelsPart.split(',').map((lbl: string) => lbl.trim());
+            if (labels.includes(label)) {
+                return agendaItem;
+            }
+        }
+        return null;
+    };
 
     useEffect(() => {
         if (data.academic_class_id) {
@@ -140,19 +210,76 @@ export default function AgendaEdit({ agenda, classes, subjects = [] }: { agenda:
                                 {errors.subject_id && <p className="text-red-500 text-xs mt-1">{errors.subject_id}</p>}
                             </div>
 
-                            {/* Lesson Period */}
-                            <div className="space-y-1">
-                                <label className="text-xs font-bold text-gray-500 uppercase tracking-widest px-1">Jam Ke-</label>
-                                <input 
-                                    type="text" 
-                                    placeholder="Contoh: 1-2"
-                                    className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-indigo-500 focus:border-indigo-500"
-                                    value={data.lesson_period}
-                                    onChange={e => setData('lesson_period', e.target.value)}
-                                    required
-                                />
-                                {errors.lesson_period && <p className="text-red-500 text-xs mt-1">{errors.lesson_period}</p>}
-                            </div>
+                             {/* Lesson Period */}
+                             {lesson_hours && lesson_hours.length > 0 ? (
+                                 <div className="md:col-span-2 space-y-2">
+                                     <label className="text-xs font-bold text-gray-500 uppercase tracking-widest px-1">Jam Pelajaran</label>
+                                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                                         {lesson_hours.map((hour: any, idx: number) => {
+                                             const booking = getSlotBookingInfo(hour.label);
+                                             const isBooked = !!booking;
+                                             const isSelected = selectedSlots.includes(hour.label);
+                                             
+                                             return (
+                                                 <div 
+                                                     key={idx}
+                                                     onClick={() => {
+                                                         if (isBooked) return;
+                                                         if (isSelected) {
+                                                             setSelectedSlots(selectedSlots.filter(s => s !== hour.label));
+                                                         } else {
+                                                             setSelectedSlots([...selectedSlots, hour.label]);
+                                                         }
+                                                     }}
+                                                     className={`p-4 rounded-xl border transition-all cursor-pointer select-none flex flex-col justify-between h-20 ${
+                                                         isBooked 
+                                                         ? 'bg-gray-100 dark:bg-gray-800/40 border-gray-200 dark:border-gray-800 cursor-not-allowed opacity-60' 
+                                                         : isSelected 
+                                                         ? 'bg-indigo-50 dark:bg-indigo-950/30 border-indigo-500 text-indigo-700 dark:text-indigo-400 ring-2 ring-indigo-500/20' 
+                                                         : 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 hover:border-indigo-400'
+                                                     }`}
+                                                 >
+                                                     <div className="flex justify-between items-start">
+                                                         <span className="text-xs font-bold">{hour.label}</span>
+                                                         {isBooked ? (
+                                                             <span className="text-[8px] bg-red-100 text-red-800 dark:bg-red-950/40 dark:text-red-400 px-1.5 py-0.5 rounded font-black uppercase">Terisi</span>
+                                                         ) : (
+                                                             <input 
+                                                                 type="checkbox" 
+                                                                 checked={isSelected}
+                                                                 readOnly
+                                                                 className="rounded border-gray-300 dark:border-gray-700 text-indigo-600 focus:ring-indigo-500"
+                                                             />
+                                                         )}
+                                                     </div>
+                                                     <div className="flex flex-col mt-1">
+                                                         <span className="text-[10px] text-gray-400 font-mono">{hour.start} - {hour.end}</span>
+                                                         {isBooked && booking && (
+                                                             <span className="text-[9px] text-red-500 truncate mt-0.5" title={`${booking.teacher?.name} - ${booking.subject?.name}`}>
+                                                                 {booking.teacher?.name} ({booking.subject?.name})
+                                                             </span>
+                                                         )}
+                                                     </div>
+                                                 </div>
+                                             );
+                                         })}
+                                     </div>
+                                     {errors.lesson_period && <p className="text-red-500 text-xs mt-1">{errors.lesson_period}</p>}
+                                 </div>
+                             ) : (
+                                 <div className="space-y-1">
+                                     <label className="text-xs font-bold text-gray-500 uppercase tracking-widest px-1">Jam Ke-</label>
+                                     <input 
+                                         type="text" 
+                                         placeholder="Contoh: 1-2"
+                                         className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-indigo-500 focus:border-indigo-500"
+                                         value={data.lesson_period}
+                                         onChange={e => setData('lesson_period', e.target.value)}
+                                         required
+                                     />
+                                     {errors.lesson_period && <p className="text-red-500 text-xs mt-1">{errors.lesson_period}</p>}
+                                 </div>
+                             )}
 
                             {/* Topic */}
                             <div className="space-y-1">

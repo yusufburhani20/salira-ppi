@@ -227,6 +227,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/agendas', [\App\Http\Controllers\Teacher\ClassAgendaController::class, 'index'])->name('agendas.index');
         Route::get('/agendas/create', [\App\Http\Controllers\Teacher\ClassAgendaController::class, 'create'])->name('agendas.create');
         Route::get('/agendas/students/{classId}', [\App\Http\Controllers\Teacher\ClassAgendaController::class, 'getStudents'])->name('agendas.students');
+        Route::get('/agendas/booked-periods', [\App\Http\Controllers\Teacher\ClassAgendaController::class, 'getBookedPeriods'])->name('agendas.booked-periods');
         Route::get('/agendas/{id}', [\App\Http\Controllers\Teacher\ClassAgendaController::class, 'show'])->name('agendas.show');
         Route::get('/agendas/{id}/edit', [\App\Http\Controllers\Teacher\ClassAgendaController::class, 'edit'])->name('agendas.edit');
         Route::post('/agendas', [\App\Http\Controllers\Teacher\ClassAgendaController::class, 'store'])->name('agendas.store');
