@@ -176,4 +176,37 @@ class StudentController extends Controller
             'settings' => $settings,
         ]);
     }
+
+    public function printSingleCard(Student $student)
+    {
+        $student->load('academicClasses');
+
+        // Siapkan token QR per siswa (menggunakan signature pendek 8 karakter agar pemindaian lebih cepat)
+        $timestamp = time();
+        $fullSignature = hash_hmac('sha256', "{$student->nis}:{$timestamp}", config('app.key'));
+        $signature = substr($fullSignature, 0, 8);
+        $qrToken = base64_encode("{$student->nis}:{$timestamp}:{$signature}");
+
+        $studentData = array_merge($student->toArray(), [
+            'qr_token' => $qrToken
+        ]);
+
+        $settings = [
+            'school_name' => \App\Models\Setting::get('school_name', 'SALIRA ACADEMY'),
+            'school_logo' => \App\Models\Setting::get('school_logo') ? '/storage/' . \App\Models\Setting::get('school_logo') : null,
+            'school_address' => \App\Models\Setting::get('school_address', 'Alamat Sekolah'),
+        ];
+
+        // academicClass could be the student's current class, or a fallback if they don't have one
+        $academicClass = $student->academic_class ?: (object)[
+            'id' => null,
+            'name' => 'Tanpa Kelas',
+        ];
+
+        return Inertia::render('Admin/Students/PrintCards', [
+            'academicClass' => $academicClass,
+            'students' => [$studentData],
+            'settings' => $settings,
+        ]);
+    }
 }
