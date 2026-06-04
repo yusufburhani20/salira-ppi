@@ -109,7 +109,7 @@ class ClassAgendaController extends Controller
         return Inertia::render('Teacher/Agendas/Create', [
             'classes' => $classes,
             'subjects' => Subject::with('academicClasses:id')->orderBy('name')->get(),
-            'lesson_hours' => json_decode(\App\Models\Setting::get('lesson_hours', '[]'), true),
+            'lesson_hours' => json_decode(\App\Models\Setting::get('lesson_hours_by_day', '{}'), true),
         ]);
     }
 
@@ -305,7 +305,7 @@ class ClassAgendaController extends Controller
             'agenda' => $agenda,
             'classes' => $classes,
             'subjects' => Subject::with('academicClasses:id')->orderBy('name')->get(),
-            'lesson_hours' => json_decode(\App\Models\Setting::get('lesson_hours', '[]'), true),
+            'lesson_hours' => json_decode(\App\Models\Setting::get('lesson_hours_by_day', '{}'), true),
         ]);
     }
 

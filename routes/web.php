@@ -66,6 +66,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/subjects/template', [\App\Http\Controllers\Admin\SubjectController::class, 'template'])->name('subjects.template');
         Route::post('/subjects/import', [\App\Http\Controllers\Admin\SubjectController::class, 'import'])->name('subjects.import');
 
+        // Lesson Hours
+        Route::get('/lesson-hours', [\App\Http\Controllers\Admin\LessonHourController::class, 'index'])->name('lesson-hours.index');
+        Route::post('/lesson-hours', [\App\Http\Controllers\Admin\LessonHourController::class, 'update'])->name('lesson-hours.update');
+
         // Inventory Management
         Route::prefix('inventory')->name('inventory.')->group(function () {
             Route::get('/', [\App\Http\Controllers\Admin\InventoryController::class, 'index'])->name('index');

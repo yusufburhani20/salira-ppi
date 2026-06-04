@@ -15,7 +15,7 @@ interface Student {
     nisn: string;
 }
 
-export default function AgendaCreate({ classes, subjects = [], lesson_hours = [] }: { classes: any[], subjects: any[], lesson_hours: any[] }) {
+export default function AgendaCreate({ classes, subjects = [], lesson_hours = [] }: { classes: any[], subjects: any[], lesson_hours: any }) {
     const { data, setData, post, processing, errors } = useForm({
         academic_class_id: '',
         subject_id: '',
@@ -35,9 +35,25 @@ export default function AgendaCreate({ classes, subjects = [], lesson_hours = []
     
     const [bookedPeriods, setBookedPeriods] = useState<any[]>([]);
     const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
+    const [slotsForDay, setSlotsForDay] = useState<any[]>([]);
+    const [isManualPeriod, setIsManualPeriod] = useState<boolean>(false);
+
+    const daysEng = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 
     useEffect(() => {
         setSelectedSlots([]);
+        setIsManualPeriod(false);
+        if (data.date) {
+            const dateObj = new Date(data.date + 'T00:00:00');
+            const dayName = daysEng[dateObj.getDay()];
+            const daySlots = lesson_hours[dayName] || [];
+            setSlotsForDay(daySlots);
+        } else {
+            setSlotsForDay([]);
+        }
+    }, [data.date, lesson_hours]);
+
+    useEffect(() => {
         if (data.academic_class_id && data.date) {
             axios.get(route('teacher.agendas.booked-periods'), {
                 params: {
@@ -57,19 +73,21 @@ export default function AgendaCreate({ classes, subjects = [], lesson_hours = []
     }, [data.academic_class_id, data.date]);
 
     useEffect(() => {
+        if (isManualPeriod) return;
+
         if (selectedSlots.length === 0) {
             setData('lesson_period', '');
             return;
         }
 
         const sortedSlots = [...selectedSlots].sort((a, b) => {
-            const idxA = lesson_hours.findIndex((h: any) => h.label === a);
-            const idxB = lesson_hours.findIndex((h: any) => h.label === b);
+            const idxA = slotsForDay.findIndex((h: any) => h.label === a);
+            const idxB = slotsForDay.findIndex((h: any) => h.label === b);
             return idxA - idxB;
         });
 
         const times = sortedSlots.map(label => {
-            const hour = lesson_hours.find((h: any) => h.label === label);
+            const hour = slotsForDay.find((h: any) => h.label === label);
             return hour ? { start: hour.start, end: hour.end } : null;
         }).filter(Boolean);
 
@@ -83,7 +101,7 @@ export default function AgendaCreate({ classes, subjects = [], lesson_hours = []
         }
 
         setData('lesson_period', sortedSlots.join(', ') + timeRangeStr);
-    }, [selectedSlots, lesson_hours]);
+    }, [selectedSlots, slotsForDay, isManualPeriod]);
 
     const getSlotBookingInfo = (label: string) => {
         for (const agenda of bookedPeriods) {
@@ -196,11 +214,61 @@ export default function AgendaCreate({ classes, subjects = [], lesson_hours = []
                             </div>
 
                              {/* Lesson Period */}
-                             {lesson_hours && lesson_hours.length > 0 ? (
+                             {isManualPeriod ? (
+                                 <div className="space-y-1">
+                                     <div className="flex justify-between items-center px-1">
+                                         <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Jam Ke- (Input Manual)</label>
+                                         <button 
+                                             type="button" 
+                                             onClick={() => setIsManualPeriod(false)}
+                                             className="text-xs font-bold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300"
+                                         >
+                                             Kembali ke Pilihan Jam
+                                         </button>
+                                     </div>
+                                     <input 
+                                         type="text" 
+                                         placeholder="Contoh: 1-2"
+                                         className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-indigo-500 focus:border-indigo-500"
+                                         value={data.lesson_period}
+                                         onChange={e => setData('lesson_period', e.target.value)}
+                                         required
+                                     />
+                                     {errors.lesson_period && <p className="text-red-500 text-xs mt-1">{errors.lesson_period}</p>}
+                                 </div>
+                             ) : slotsForDay.length === 0 ? (
+                                 <div className="md:col-span-2 p-6 bg-amber-50/50 dark:bg-amber-950/10 border border-amber-200 dark:border-amber-900/60 rounded-2xl text-center space-y-2">
+                                     <svg className="w-8 h-8 text-amber-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                                     <h4 className="text-sm font-bold text-amber-800 dark:text-amber-400">Jadwal Jam Pelajaran Kosong / Hari Libur</h4>
+                                     <p className="text-xs text-amber-700 dark:text-amber-500">Hari yang dipilih tidak memiliki konfigurasi jam pelajaran aktif.</p>
+                                     <button
+                                         type="button"
+                                         onClick={() => {
+                                             setData('lesson_period', '');
+                                             setIsManualPeriod(true);
+                                         }}
+                                         className="text-xs font-bold text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 underline"
+                                     >
+                                         Klik di sini untuk menulis jam pelajaran secara manual
+                                     </button>
+                                 </div>
+                             ) : (
                                  <div className="md:col-span-2 space-y-2">
-                                     <label className="text-xs font-bold text-gray-500 uppercase tracking-widest px-1">Jam Pelajaran</label>
+                                     <div className="flex justify-between items-center px-1">
+                                         <label className="text-xs font-bold text-gray-500 uppercase tracking-widest">Jam Pelajaran</label>
+                                         <button 
+                                             type="button" 
+                                             onClick={() => {
+                                                 setData('lesson_period', '');
+                                                 setIsManualPeriod(true);
+                                             }}
+                                             className="text-xs font-bold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white"
+                                         >
+                                             Input Manual
+                                         </button>
+                                     </div>
                                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-                                         {lesson_hours.map((hour: any, idx: number) => {
+                                         {slotsForDay.map((hour: any, idx: number) => {
                                              const booking = getSlotBookingInfo(hour.label);
                                              const isBooked = !!booking;
                                              const isSelected = selectedSlots.includes(hour.label);
@@ -249,19 +317,6 @@ export default function AgendaCreate({ classes, subjects = [], lesson_hours = []
                                              );
                                          })}
                                      </div>
-                                     {errors.lesson_period && <p className="text-red-500 text-xs mt-1">{errors.lesson_period}</p>}
-                                 </div>
-                             ) : (
-                                 <div className="space-y-1">
-                                     <label className="text-xs font-bold text-gray-500 uppercase tracking-widest px-1">Jam Ke-</label>
-                                     <input 
-                                         type="text" 
-                                         placeholder="Contoh: 1-2"
-                                         className="w-full rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-indigo-500 focus:border-indigo-500"
-                                         value={data.lesson_period}
-                                         onChange={e => setData('lesson_period', e.target.value)}
-                                         required
-                                     />
                                      {errors.lesson_period && <p className="text-red-500 text-xs mt-1">{errors.lesson_period}</p>}
                                  </div>
                              )}
