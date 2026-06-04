@@ -38,6 +38,7 @@ Route::middleware('auth')->group(function () {
         Route::put('/students/{student}', [\App\Http\Controllers\Admin\StudentController::class, 'update'])->name('students.update');
         Route::delete('/students/{student}', [\App\Http\Controllers\Admin\StudentController::class, 'destroy'])->name('students.destroy');
         Route::post('/students/import', [\App\Http\Controllers\Admin\StudentController::class, 'import'])->name('students.import');
+        Route::post('/students/import-photos', [\App\Http\Controllers\Admin\StudentController::class, 'importPhotos'])->name('students.import-photos');
 
         // Classes
         Route::get('/classes', [\App\Http\Controllers\Admin\AcademicClassController::class, 'index'])->name('classes.index');

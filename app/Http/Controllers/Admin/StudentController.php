@@ -236,11 +236,16 @@ class StudentController extends Controller
 
     private function processAndStorePhoto($file)
     {
-        $imageContent = file_get_contents($file->getRealPath());
-        $srcImage = @imagecreatefromstring($imageContent);
+        $path = is_string($file) ? $file : $file->getRealPath();
+        $imageContent = @file_get_contents($path);
         
+        if (!$imageContent) {
+            return is_string($file) ? null : $file->store('students/photos', 'public');
+        }
+
+        $srcImage = @imagecreatefromstring($imageContent);
         if (!$srcImage) {
-            return $file->store('students/photos', 'public');
+            return is_string($file) ? null : $file->store('students/photos', 'public');
         }
 
         $width = imagesx($srcImage);
@@ -280,13 +285,119 @@ class StudentController extends Controller
             Storage::disk('public')->put($storedPath, file_get_contents($tempPath));
             @unlink($tempPath);
         } else {
-            $storedPath = $file->store('students/photos', 'public');
+            if (is_string($file)) {
+                $filename = uniqid('student_') . '.' . pathinfo($file, PATHINFO_EXTENSION);
+                $storedPath = 'students/photos/' . $filename;
+                Storage::disk('public')->put($storedPath, file_get_contents($file));
+            } else {
+                $storedPath = $file->store('students/photos', 'public');
+            }
         }
 
         imagedestroy($srcImage);
         imagedestroy($dstImage);
 
         return $storedPath;
+    }
+
+    public function importPhotos(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:zip|max:20480', // max 20MB
+        ]);
+
+        $zipFile = $request->file('file');
+        $zip = new \ZipArchive();
+
+        if ($zip->open($zipFile->getRealPath()) !== true) {
+            return redirect()->back()->with('error', 'Gagal membuka file ZIP.');
+        }
+
+        // Create temporary directory
+        $tempDirName = 'zip_photos_' . uniqid();
+        $tempPath = storage_path('app/temp/' . $tempDirName);
+        if (!file_exists($tempPath)) {
+            mkdir($tempPath, 0777, true);
+        }
+
+        $zip->extractTo($tempPath);
+        $zip->close();
+
+        $successCount = 0;
+        $skippedCount = 0;
+
+        $files = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($tempPath, \RecursiveDirectoryIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::LEAVES_ONLY
+        );
+
+        foreach ($files as $file) {
+            if ($file->isDir()) {
+                continue;
+            }
+
+            $filePath = $file->getRealPath();
+            $filename = $file->getFilename();
+
+            // Skip hidden/system files or __MACOSX folders
+            if (str_starts_with($filename, '.') || str_contains($filePath, '__MACOSX')) {
+                continue;
+            }
+
+            $studentIdentifier = pathinfo($filename, PATHINFO_FILENAME);
+
+            // Search by NISN or NIS
+            $student = Student::where('nisn', $studentIdentifier)
+                ->orWhere('nis', $studentIdentifier)
+                ->first();
+
+            if ($student) {
+                $photoPath = $this->processAndStorePhoto($filePath);
+                if ($photoPath) {
+                    if ($student->photo) {
+                        Storage::delete('public/' . $student->photo);
+                    }
+                    $student->update(['photo' => $photoPath]);
+                    $successCount++;
+                } else {
+                    $skippedCount++;
+                }
+            } else {
+                $skippedCount++;
+            }
+        }
+
+        // Cleanup
+        $this->deleteDirectory($tempPath);
+
+        return redirect()->back()->with(
+            'success', 
+            "Upload foto masal selesai! {$successCount} foto siswa berhasil diperbarui. " . 
+            ($skippedCount > 0 ? "{$skippedCount} file dilewati karena NISN/NIS tidak cocok." : "")
+        );
+    }
+
+    private function deleteDirectory($dir)
+    {
+        if (!file_exists($dir)) {
+            return true;
+        }
+
+        if (!is_dir($dir)) {
+            return unlink($dir);
+        }
+
+        foreach (scandir($dir) as $item) {
+            if ($item == '.' || $item == '..') {
+                continue;
+            }
+
+            if (!$this->deleteDirectory($dir . '/' . $item)) {
+                return false;
+            }
+        }
+
+        return rmdir($dir);
     }
 }
 

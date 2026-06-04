@@ -39,11 +39,13 @@ export default function StudentIndex({ students, filters, classes, canManage }: 
     const [showForm, setShowForm]         = useState(false);
     const [showDelete, setShowDelete]     = useState(false);
     const [showImport, setShowImport]     = useState(false);
+    const [showImportPhotos, setShowImportPhotos] = useState(false);
     const [showPrintModal, setShowPrintModal] = useState(false);
     const [printSelectedClass, setPrintSelectedClass] = useState<string>('');
     const [editTarget, setEditTarget]     = useState<any>(null);
     const [deleteTarget, setDeleteTarget] = useState<any>(null);
     const importRef = useRef<HTMLInputElement>(null);
+    const importPhotosRef = useRef<HTMLInputElement>(null);
 
     const { data, setData, post, put, processing, errors, reset } = useForm({
         _method: 'POST' as string,
@@ -56,6 +58,18 @@ export default function StudentIndex({ students, filters, classes, canManage }: 
     });
 
     const importForm = useForm({ file: null as File | null });
+    const importPhotosForm = useForm({ file: null as File | null });
+
+    const handleImportPhotos = (e: FormEvent) => {
+        e.preventDefault();
+        importPhotosForm.post(route('admin.students.import-photos'), {
+            onSuccess: () => {
+                setShowImportPhotos(false);
+                importPhotosForm.reset();
+                if (importPhotosRef.current) importPhotosRef.current.value = '';
+            }
+        });
+    };
 
     const openCreate = () => {
         reset();
@@ -146,6 +160,14 @@ export default function StudentIndex({ students, filters, classes, canManage }: 
                             className="flex items-center gap-1.5 px-3 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-xl text-sm font-medium transition-colors">
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
                             Import
+                        </button>
+                    )}
+                    {/* Import Foto */}
+                    {canManage && (
+                        <button onClick={() => setShowImportPhotos(true)}
+                            className="flex items-center gap-1.5 px-3 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 rounded-xl text-sm font-medium transition-colors">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                            Import Foto
                         </button>
                     )}
                     {/* Export */}
@@ -418,6 +440,39 @@ export default function StudentIndex({ students, filters, classes, canManage }: 
                             <button type="button" onClick={() => setShowImport(false)} className="flex-1 px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">Batal</button>
                             <button type="submit" disabled={importForm.processing} className="flex-1 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors disabled:opacity-60">
                                 {importForm.processing ? 'Mengimpor...' : 'Import Sekarang'}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </Modal>
+
+            {/* ── Import Foto Masal Modal ── */}
+            <Modal show={showImportPhotos} onClose={() => setShowImportPhotos(false)} title="Upload Foto Masal (ZIP)">
+                <div className="space-y-4">
+                    <div className="bg-indigo-50 dark:bg-indigo-500/10 rounded-xl p-4 text-sm text-indigo-700 dark:text-indigo-300">
+                        <p className="font-semibold mb-1">Petunjuk Upload Foto Masal:</p>
+                        <ul className="list-disc list-inside space-y-1 text-xs leading-relaxed">
+                            <li>Kumpulkan semua foto siswa ke dalam satu folder lalu kompres menjadi file <strong>ZIP (.zip)</strong>.</li>
+                            <li>Ubah nama file foto masing-masing siswa menjadi <strong>NISN</strong> atau <strong>NIS</strong> mereka (contoh: <code className="font-mono bg-indigo-100 dark:bg-indigo-900/60 px-1 rounded">1234567890.jpg</code> atau <code className="font-mono bg-indigo-100 dark:bg-indigo-900/60 px-1 rounded">2122001.png</code>).</li>
+                            <li>Format file foto yang didukung di dalam ZIP: <strong>PNG, JPG, JPEG, WebP</strong>.</li>
+                            <li>Sistem akan otomatis mencocokkan nama file dengan NISN/NIS siswa di database, memotong (crop) 1:1, mengecilkan ukuran ke 300x300px, dan melakukan kompresi otomatis untuk menghemat ruang server.</li>
+                            <li>Batas ukuran file ZIP maksimal adalah <strong>20 MB</strong>.</li>
+                        </ul>
+                    </div>
+                    <form onSubmit={handleImportPhotos} className="space-y-4">
+                        <Field label="Pilih File ZIP" error={importPhotosForm.errors.file}>
+                            <input
+                                ref={importPhotosRef}
+                                type="file"
+                                accept=".zip"
+                                onChange={e => importPhotosForm.setData('file', e.target.files?.[0] ?? null)}
+                                className="w-full text-sm text-slate-600 dark:text-slate-400 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 dark:file:bg-indigo-500/10 dark:file:text-indigo-400 hover:file:bg-indigo-100 cursor-pointer"
+                            />
+                        </Field>
+                        <div className="flex gap-3">
+                            <button type="button" onClick={() => setShowImportPhotos(false)} className="flex-1 px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">Batal</button>
+                            <button type="submit" disabled={importPhotosForm.processing} className="flex-1 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold transition-colors disabled:opacity-60">
+                                {importPhotosForm.processing ? 'Memproses ZIP...' : 'Upload Sekarang'}
                             </button>
                         </div>
                     </form>
