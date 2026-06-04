@@ -6,9 +6,12 @@ use App\Models\Attendance;
 use App\Models\StudentAttendance;
 use App\Models\StudentConsultation;
 use App\Models\InventoryItem;
+use App\Models\InventoryBarcode;
 use App\Models\Student;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Carbon\Carbon;
 
@@ -33,12 +36,16 @@ class DashboardController extends Controller
         $consultationQuery = StudentConsultation::where('follow_up_status', '!=', 'completed');
         if ($classId) $consultationQuery->where('class_id', $classId);
 
-        $stats = [
-            'students_present' => (clone $studentsQuery)->where('status', 'hadir')->distinct('student_id')->count(),
-            'students_permit' => (clone $studentsQuery)->whereIn('status', ['izin', 'sakit'])->distinct('student_id')->count(),
-            'consultations_pending' => $consultationQuery->count(),
-            'items_borrowed' => InventoryItem::where('status', 'dipinjam')->count(),
-        ];
+        // Cache stats selama 5 menit — data absensi tidak berubah setiap detik
+        $statsCacheKey = 'dashboard_stats_' . $today->toDateString() . '_class_' . ($classId ?: 'all');
+        $stats = Cache::remember($statsCacheKey, 300, function () use ($studentsQuery, $consultationQuery) {
+            return [
+                'students_present'      => (clone $studentsQuery)->where('status', 'hadir')->distinct('student_id')->count(),
+                'students_permit'       => (clone $studentsQuery)->whereIn('status', ['izin', 'sakit'])->distinct('student_id')->count(),
+                'consultations_pending' => $consultationQuery->count(),
+                'items_borrowed'        => InventoryItem::where('status', 'dipinjam')->count(),
+            ];
+        });
 
         // 2. Attendance Chart (Custom Range or Last 7 Days)
         $totalStudents = $classId 
@@ -143,13 +150,18 @@ class DashboardController extends Controller
         $todayAttendance = Attendance::where('user_id', $request->user()->id)
             ->whereDate('date', $today)->first();
 
-        // 5. Inventory Summary
+        // 5. Inventory Summary — 1 query GROUP BY, bukan 5 query terpisah
+        $invGrouped = Cache::remember('inventory_stats', 300, function () {
+            return InventoryBarcode::select('status', DB::raw('count(*) as total'))
+                ->groupBy('status')
+                ->pluck('total', 'status');
+        });
         $inventoryStats = [
-            'total' => \App\Models\InventoryBarcode::count(),
-            'tersedia' => \App\Models\InventoryBarcode::where('status', 'tersedia')->count(),
-            'dipinjam' => \App\Models\InventoryBarcode::where('status', 'dipinjam')->count(),
-            'perbaikan' => \App\Models\InventoryBarcode::where('status', 'perbaikan')->count(),
-            'dihapus' => \App\Models\InventoryBarcode::where('status', 'dihapus')->count(),
+            'total'     => $invGrouped->sum(),
+            'tersedia'  => $invGrouped->get('tersedia', 0),
+            'dipinjam'  => $invGrouped->get('dipinjam', 0),
+            'perbaikan' => $invGrouped->get('perbaikan', 0),
+            'dihapus'   => $invGrouped->get('dihapus', 0),
         ];
 
         return Inertia::render('Dashboard', [

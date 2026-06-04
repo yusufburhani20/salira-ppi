@@ -8,7 +8,9 @@ use App\Models\Attendance;
 use App\Models\Student;
 use App\Models\User;
 use App\Models\Bill;
+use App\Models\InventoryBarcode;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
@@ -20,22 +22,27 @@ class LeaderDashboardController extends Controller
         
         $classId = $request->academic_class_id;
         
-        // 1. Statistik Kehadiran Siswa Hari Ini
-        $totalStudentsQuery = Student::query();
-        if ($classId) {
-            $totalStudentsQuery->whereHas('academicClasses', fn($q) => $q->where('academic_classes.id', $classId)->where('class_members.is_active', true));
-        }
-        $totalStudents = $totalStudentsQuery->count();
+        // 1. Statistik Kehadiran Siswa Hari Ini (cached 5 menit)
+        $statsCacheKey = 'leader_stats_' . $today . '_class_' . ($classId ?: 'all');
+        [$totalStudents, $studentPresence] = Cache::remember($statsCacheKey, 300, function () use ($today, $classId) {
+            $totalStudentsQuery = Student::query();
+            if ($classId) {
+                $totalStudentsQuery->whereHas('academicClasses', fn($q) => $q->where('academic_classes.id', $classId)->where('class_members.is_active', true));
+            }
+            $total = $totalStudentsQuery->count();
 
-        $studentPresenceQuery = StudentAttendance::whereDate('date', $today);
-        if ($classId) {
-            $studentPresenceQuery->where('academic_class_id', $classId);
-        }
-        $studentPresence = $studentPresenceQuery
-            ->select('status', DB::raw('count(distinct student_id) as total'))
-            ->groupBy('status')
-            ->get()
-            ->keyBy('status');
+            $presenceQuery = StudentAttendance::whereDate('date', $today);
+            if ($classId) {
+                $presenceQuery->where('academic_class_id', $classId);
+            }
+            $presence = $presenceQuery
+                ->select('status', DB::raw('count(distinct student_id) as total'))
+                ->groupBy('status')
+                ->get()
+                ->keyBy('status');
+
+            return [$total, $presence];
+        });
 
         // 2. Statistik Kehadiran Guru Hari Ini
         $totalTeachers = User::role(['Guru', 'Wali Kelas'])->count();
@@ -101,13 +108,18 @@ class LeaderDashboardController extends Controller
                 return $user;
             });
 
-        // 6. Inventory Summary
+        // 6. Inventory Summary — 1 query GROUP BY, bukan 5 query terpisah
+        $invGrouped = Cache::remember('inventory_stats', 300, function () {
+            return InventoryBarcode::select('status', DB::raw('count(*) as total'))
+                ->groupBy('status')
+                ->pluck('total', 'status');
+        });
         $inventoryStats = [
-            'total' => \App\Models\InventoryBarcode::count(),
-            'tersedia' => \App\Models\InventoryBarcode::where('status', 'tersedia')->count(),
-            'dipinjam' => \App\Models\InventoryBarcode::where('status', 'dipinjam')->count(),
-            'perbaikan' => \App\Models\InventoryBarcode::where('status', 'perbaikan')->count(),
-            'dihapus' => \App\Models\InventoryBarcode::where('status', 'dihapus')->count(),
+            'total'     => $invGrouped->sum(),
+            'tersedia'  => $invGrouped->get('tersedia', 0),
+            'dipinjam'  => $invGrouped->get('dipinjam', 0),
+            'perbaikan' => $invGrouped->get('perbaikan', 0),
+            'dihapus'   => $invGrouped->get('dihapus', 0),
         ];
 
         return Inertia::render('Admin/Dashboard/Leader', [
