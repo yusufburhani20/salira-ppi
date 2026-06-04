@@ -31,6 +31,10 @@ const DAYS = [
 export default function LessonHourIndex({ auth, lesson_hours }: PageProps) {
     const [activeDay, setActiveDay] = useState<string>('monday');
     const [showCopyDropdown, setShowCopyDropdown] = useState<boolean>(false);
+    const [showGenerator, setShowGenerator] = useState<boolean>(false);
+    const [genStartTime, setGenStartTime] = useState<string>('07:30');
+    const [genDuration, setGenDuration] = useState<number>(35);
+    const [genCount, setGenCount] = useState<number>(8);
 
     // Initialize map with all days empty if missing
     const initialMap: LessonHoursMap = {};
@@ -44,6 +48,26 @@ export default function LessonHourIndex({ auth, lesson_hours }: PageProps) {
 
     const currentSlots = data.lesson_hours[activeDay] || [];
 
+    const timeToMinutes = (timeStr: string): number => {
+        const [h, m] = timeStr.split(':').map(Number);
+        return (h || 0) * 60 + (m || 0);
+    };
+
+    const minutesToTime = (mins: number): string => {
+        const h = Math.floor(mins / 60) % 24;
+        const m = mins % 60;
+        return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    };
+
+    const addMinutesToTime = (timeStr: string, minsToAdd: number): string => {
+        return minutesToTime(timeToMinutes(timeStr) + minsToAdd);
+    };
+
+    const getMinutesDiff = (startStr: string, endStr: string): number => {
+        const diff = timeToMinutes(endStr) - timeToMinutes(startStr);
+        return diff > 0 ? diff : 35;
+    };
+
     const updateActiveDaySlots = (updatedSlots: LessonHourSlot[]) => {
         setData('lesson_hours', {
             ...data.lesson_hours,
@@ -53,12 +77,54 @@ export default function LessonHourIndex({ auth, lesson_hours }: PageProps) {
 
     const addSlot = () => {
         const slots = [...currentSlots];
-        slots.push({
-            label: `Jam ke-${slots.length + 1}`,
-            start: '07:00',
-            end: '07:45'
-        });
+        if (slots.length === 0) {
+            slots.push({
+                label: 'Jam ke-1',
+                start: '07:30',
+                end: '08:05'
+            });
+        } else {
+            const lastSlot = slots[slots.length - 1];
+            const duration = getMinutesDiff(lastSlot.start, lastSlot.end);
+            const nextStart = lastSlot.end;
+            const nextEnd = addMinutesToTime(nextStart, duration);
+            
+            let nextLabel = `Jam ke-${slots.length + 1}`;
+            const match = lastSlot.label.match(/Jam ke-(\d+)/i);
+            if (match) {
+                const nextNum = parseInt(match[1], 10) + 1;
+                nextLabel = `Jam ke-${nextNum}`;
+            }
+
+            slots.push({
+                label: nextLabel,
+                start: nextStart,
+                end: nextEnd
+            });
+        }
         updateActiveDaySlots(slots);
+    };
+
+    const generateBulkSlots = () => {
+        if (!genStartTime || genDuration <= 0 || genCount <= 0) return;
+        
+        const newSlots: LessonHourSlot[] = [];
+        let currentStart = genStartTime;
+        
+        for (let i = 0; i < genCount; i++) {
+            const label = `Jam ke-${i + 1}`;
+            const end = addMinutesToTime(currentStart, genDuration);
+            newSlots.push({
+                label,
+                start: currentStart,
+                end
+            });
+            currentStart = end;
+        }
+        
+        if (confirm(`Apakah Anda yakin ingin menimpa jadwal hari ${getDayLabel(activeDay)} dengan ${genCount} jam pelajaran otomatis berdurasi ${genDuration} menit?`)) {
+            updateActiveDaySlots(newSlots);
+        }
     };
 
     const editSlot = (idx: number, field: keyof LessonHourSlot, value: string) => {
@@ -178,6 +244,62 @@ export default function LessonHourIndex({ auth, lesson_hours }: PageProps) {
                             </div>
 
                             <div className="p-6 space-y-4">
+                                {/* Generator Section */}
+                                <div className="p-4 bg-indigo-50/50 dark:bg-indigo-950/10 border border-indigo-100 dark:border-indigo-900/40 rounded-2xl">
+                                    <div className="flex justify-between items-center cursor-pointer" onClick={() => setShowGenerator(!showGenerator)}>
+                                        <div className="flex items-center gap-2">
+                                            <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                                            <span className="text-sm font-bold text-indigo-950 dark:text-indigo-400">Generator Jam Pelajaran Otomatis</span>
+                                        </div>
+                                        <span className="text-xs text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-300 font-bold">
+                                            {showGenerator ? 'Sembunyikan' : 'Buka Generator'}
+                                        </span>
+                                    </div>
+                                    
+                                    {showGenerator && (
+                                        <div className="mt-4 grid grid-cols-1 sm:grid-cols-4 gap-4 items-end">
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-black uppercase text-indigo-700 dark:text-indigo-500 tracking-wider">Jam Mulai</label>
+                                                <input 
+                                                    type="time" 
+                                                    value={genStartTime}
+                                                    onChange={e => setGenStartTime(e.target.value)}
+                                                    className="w-full rounded-xl border-indigo-200 dark:border-indigo-900/60 dark:bg-gray-900 dark:text-white focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-black uppercase text-indigo-700 dark:text-indigo-500 tracking-wider">Durasi (Menit)</label>
+                                                <input 
+                                                    type="number" 
+                                                    min={5}
+                                                    max={180}
+                                                    value={genDuration}
+                                                    onChange={e => setGenDuration(Number(e.target.value))}
+                                                    className="w-full rounded-xl border-indigo-200 dark:border-indigo-900/60 dark:bg-gray-900 dark:text-white focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <label className="text-[10px] font-black uppercase text-indigo-700 dark:text-indigo-500 tracking-wider">Jumlah Jam</label>
+                                                <input 
+                                                    type="number" 
+                                                    min={1}
+                                                    max={20}
+                                                    value={genCount}
+                                                    onChange={e => setGenCount(Number(e.target.value))}
+                                                    className="w-full rounded-xl border-indigo-200 dark:border-indigo-900/60 dark:bg-gray-900 dark:text-white focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                                                />
+                                            </div>
+                                            <button
+                                                type="button"
+                                                onClick={generateBulkSlots}
+                                                className="w-full sm:w-auto h-11 px-6 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-md shadow-indigo-500/10 active:scale-95 flex items-center justify-center gap-2"
+                                            >
+                                                Generate
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+
                                 {currentSlots.length === 0 ? (
                                     <div className="text-center py-12 bg-slate-50 dark:bg-slate-900/30 rounded-2xl border-2 border-dashed border-slate-100 dark:border-slate-800">
                                         <ClockIcon className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
