@@ -154,14 +154,15 @@ class DashboardController extends Controller
         $invGrouped = Cache::remember('inventory_stats', 300, function () {
             return InventoryBarcode::select('status', DB::raw('count(*) as total'))
                 ->groupBy('status')
-                ->pluck('total', 'status');
+                ->pluck('total', 'status')
+                ->toArray();
         });
         $inventoryStats = [
-            'total'     => $invGrouped->sum(),
-            'tersedia'  => $invGrouped->get('tersedia', 0),
-            'dipinjam'  => $invGrouped->get('dipinjam', 0),
-            'perbaikan' => $invGrouped->get('perbaikan', 0),
-            'dihapus'   => $invGrouped->get('dihapus', 0),
+            'total'     => array_sum($invGrouped),
+            'tersedia'  => $invGrouped['tersedia'] ?? 0,
+            'dipinjam'  => $invGrouped['dipinjam'] ?? 0,
+            'perbaikan' => $invGrouped['perbaikan'] ?? 0,
+            'dihapus'   => $invGrouped['dihapus'] ?? 0,
         ];
 
         return Inertia::render('Dashboard', [

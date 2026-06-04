@@ -45,8 +45,10 @@ class Setting extends Model
      */
     public static function all($columns = ['*'])
     {
-        return Cache::remember(self::CACHE_KEY . '_collection', self::CACHE_TTL, function () {
-            return parent::all();
+        $items = Cache::remember(self::CACHE_KEY . '_collection_array', self::CACHE_TTL, function () {
+            return parent::all()->toArray();
         });
+
+        return Setting::hydrate($items);
     }
 }

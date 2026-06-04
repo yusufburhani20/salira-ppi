@@ -38,8 +38,8 @@ class LeaderDashboardController extends Controller
             $presence = $presenceQuery
                 ->select('status', DB::raw('count(distinct student_id) as total'))
                 ->groupBy('status')
-                ->get()
-                ->keyBy('status');
+                ->pluck('total', 'status')
+                ->toArray();
 
             return [$total, $presence];
         });
@@ -112,24 +112,25 @@ class LeaderDashboardController extends Controller
         $invGrouped = Cache::remember('inventory_stats', 300, function () {
             return InventoryBarcode::select('status', DB::raw('count(*) as total'))
                 ->groupBy('status')
-                ->pluck('total', 'status');
+                ->pluck('total', 'status')
+                ->toArray();
         });
         $inventoryStats = [
-            'total'     => $invGrouped->sum(),
-            'tersedia'  => $invGrouped->get('tersedia', 0),
-            'dipinjam'  => $invGrouped->get('dipinjam', 0),
-            'perbaikan' => $invGrouped->get('perbaikan', 0),
-            'dihapus'   => $invGrouped->get('dihapus', 0),
+            'total'     => array_sum($invGrouped),
+            'tersedia'  => $invGrouped['tersedia'] ?? 0,
+            'dipinjam'  => $invGrouped['dipinjam'] ?? 0,
+            'perbaikan' => $invGrouped['perbaikan'] ?? 0,
+            'dihapus'   => $invGrouped['dihapus'] ?? 0,
         ];
 
         return Inertia::render('Admin/Dashboard/Leader', [
             'stats' => [
                 'students' => [
                     'total' => $totalStudents,
-                    'present' => ($studentPresence['hadir']?->total ?? 0) + ($studentPresence['tap']?->total ?? 0),
-                    'absent' => $studentPresence['alpha']?->total ?? 0,
-                    'sick' => $studentPresence['sakit']?->total ?? 0,
-                    'permission' => $studentPresence['izin']?->total ?? 0,
+                    'present' => ($studentPresence['hadir'] ?? 0) + ($studentPresence['tap'] ?? 0),
+                    'absent' => $studentPresence['alpha'] ?? 0,
+                    'sick' => $studentPresence['sakit'] ?? 0,
+                    'permission' => $studentPresence['izin'] ?? 0,
                 ],
                 'teachers' => [
                     'total' => $totalTeachers,
