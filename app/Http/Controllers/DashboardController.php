@@ -84,7 +84,12 @@ class DashboardController extends Controller
         $allAttendances = StudentAttendance::whereBetween('date', [$startDate->toDateString(), $endDate->toDateString()])
             ->when($classId, fn($q) => $q->where('academic_class_id', $classId))
             ->get()
-            ->groupBy(['date', 'student_id']);
+            ->groupBy([
+                function ($val) {
+                    return Carbon::parse($val->date)->format('Y-m-d');
+                },
+                'student_id'
+            ]);
 
         $presentCounts = [];
         foreach ($allAttendances as $dateStr => $students) {
