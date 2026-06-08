@@ -3,7 +3,7 @@ const qrcode = require('qrcode-terminal');
 const express = require('express');
 const bodyParser = require('body-parser');
 
-const app = express();
+const app = report = express();
 const port = process.env.PORT || 3000;
 
 let currentQR = null;
@@ -28,7 +28,7 @@ const client = new Client({
     puppeteer: {
         headless: true,
         args: [
-            '--no-sandbox', 
+            '--no-sandbox',
             '--disable-setuid-sandbox',
             '--disable-dev-shm-usage', // Help with memory issues in Docker/Linux
             '--disable-accelerated-2d-canvas',
@@ -67,7 +67,7 @@ client.on('disconnected', (reason) => {
     console.log('WhatsApp Client was DISCONNECTED', reason);
     currentQR = null;
     currentState = 'disconnected';
-    
+
     // Attempt re-initialization after a delay if it wasn't a manual logout
     if (reason !== 'NAVIGATION') {
         console.log('Attempting to re-initialize client in 5 seconds...');
@@ -91,16 +91,16 @@ app.post('/send-message', async (req, res) => {
 
     try {
         // Format phone number to WhatsApp ID
-        let formattedPhone = String(phone).replace(/\D/g, ''); 
+        let formattedPhone = String(phone).replace(/\D/g, '');
         if (formattedPhone.startsWith('0')) {
             formattedPhone = '62' + formattedPhone.slice(1);
         }
-        
+
         const chatId = formattedPhone + '@c.us';
-        
+
         // Check registration
         const isRegistered = await client.isRegisteredUser(chatId);
-        
+
         if (!isRegistered) {
             return res.status(404).json({ status: 'error', message: 'The number is not registered on WhatsApp' });
         }
@@ -117,7 +117,7 @@ const startTime = Date.now();
 
 app.get('/status', (req, res) => {
     const memUsage = process.memoryUsage();
-    res.json({ 
+    res.json({
         status: currentState,
         qr: currentQR,
         uptime: Math.floor((Date.now() - startTime) / 1000),
@@ -134,29 +134,57 @@ app.post('/restart', async (req, res) => {
         console.log('Restarting WhatsApp Client...');
         currentState = 'disconnected';
         currentQR = null;
-        
+
         try {
             await client.destroy();
         } catch (e) {
             console.log('Client already destroyed or not initialized');
         }
-        
-        const fs = require('fs');
-        if (fs.existsSync('./sessions')) {
-            try {
-                fs.rmSync('./sessions', { recursive: true, force: true });
-            } catch (e) {
-                console.error('Error removing sessions:', e);
+
+        // Deliberate delay of 2 seconds to ensure browser processes exit fully
+        setTimeout(() => {
+            const fs = require('fs');
+            if (fs.existsSync('./sessions')) {
+                try {
+                    fs.rmSync('./sessions', { recursive: true, force: true });
+                    console.log('Sessions folder removed.');
+                } catch (e) {
+                    console.error('Error removing sessions:', e);
+                }
             }
-        }
-        
-        client.initialize().catch(err => console.error('Restart init failed:', err));
+
+            client.initialize().catch(err => console.error('Restart init failed:', err));
+        }, 2000);
+
         res.json({ status: 'success', message: 'Client restarting' });
     } catch (error) {
         console.error('Error restarting:', error);
         res.status(500).json({ status: 'error', message: error.message });
     }
 });
+
+// =================================================================
+// PENANGANAN SHUTDOWN BERSIH (Pencegahan Chromium Zombie & Lock File)
+// =================================================================
+const shutdownCleanly = async (signal) => {
+    console.log(`Received ${signal}. Shutting down WhatsApp Client cleanly...`);
+    currentState = 'disconnected';
+    currentQR = null;
+    try {
+        if (client) {
+            await client.destroy();
+            console.log('WhatsApp Client destroyed successfully.');
+        }
+    } catch (e) {
+        console.error('Error during clean shutdown destroy:', e);
+    }
+    process.exit(0);
+};
+
+// Tangkap sinyal dari PM2 / OS
+process.on('SIGINT', () => shutdownCleanly('SIGINT'));
+process.on('SIGTERM', () => shutdownCleanly('SIGTERM'));
+// =================================================================
 
 // Initial start
 client.initialize().catch(err => {
