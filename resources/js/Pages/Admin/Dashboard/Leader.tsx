@@ -306,9 +306,9 @@ export default function LeaderDashboard({ stats, activeUsers, lastLogins, invent
                         </div>
                         <div className="flex-1 p-5 flex flex-col justify-center gap-4">
                             <BreakdownItem label="Hadir/Tap" value={stats.students.present} colorClass="bg-emerald-500" />
-                            <BreakdownItem label="Sakit" value={stats.students.sick} colorClass="bg-rose-400" />
-                            <BreakdownItem label="Izin" value={stats.students.permission} colorClass="bg-amber-400" />
-                            <BreakdownItem label="Alpha" value={stats.students.absent} colorClass="bg-slate-400" />
+                            <BreakdownItem label="Sakit" value={stats.students.sick} colorClass="bg-yellow-500" />
+                            <BreakdownItem label="Izin" value={stats.students.permission} colorClass="bg-blue-500" />
+                            <BreakdownItem label="Alpha" value={stats.students.absent} colorClass="bg-red-500" />
 
 
                             <div className="pt-4 mt-2 border-t border-slate-100 dark:border-slate-700/50">
