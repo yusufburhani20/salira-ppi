@@ -124,7 +124,7 @@ export default function AgendaCreate({ classes, subjects = [], lesson_hours = []
                     const initialAttendance = res.data.map((s: any) => ({
                         student_id: s.id,
                         status: s.current_status || 'hadir',
-                        notes: ''
+                        notes: s.notes || ''
                     }));
                     setData('attendance', initialAttendance);
                     setLoadingStudents(false);

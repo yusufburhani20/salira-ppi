@@ -309,7 +309,6 @@ export default function LeaderDashboard({ stats, activeUsers, lastLogins, invent
                             <BreakdownItem label="Sakit" value={stats.students.sick} colorClass="bg-rose-400" />
                             <BreakdownItem label="Izin" value={stats.students.permission} colorClass="bg-amber-400" />
                             <BreakdownItem label="Alpha" value={stats.students.absent} colorClass="bg-slate-400" />
-                            <BreakdownItem label="Belum Absen" value={Math.max(0, stats.students.total - (stats.students.present + stats.students.sick + stats.students.permission + stats.students.absent))} colorClass="bg-sky-400" />
 
 
                             <div className="pt-4 mt-2 border-t border-slate-100 dark:border-slate-700/50">

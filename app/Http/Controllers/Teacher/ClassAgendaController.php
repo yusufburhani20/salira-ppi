@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 use App\Notifications\PortalNotification;
 use App\Models\Student;
 use App\Enums\AttendanceStatus;
+use Illuminate\Support\Facades\Cache;
 
 use Barryvdh\DomPDF\Facade\Pdf;
 use Maatwebsite\Excel\Facades\Excel;
@@ -134,6 +135,7 @@ class ClassAgendaController extends Controller
                     return array_merge($student->toArray(), [
                         'current_status' => $existing ? ($existing->status->value ?? $existing->status) : 'hadir',
                         'attendance_id'  => $existing?->id,
+                        'notes'          => $existing?->notes ?? '',
                     ]);
                 });
                 return response()->json($students);
@@ -159,6 +161,7 @@ class ClassAgendaController extends Controller
                     return array_merge($student->toArray(), [
                         'current_status' => $existing ? ($existing->status->value ?? $existing->status) : 'hadir',
                         'attendance_id'  => null, // Selalu null agar membuat record baru
+                        'notes'          => $existing?->notes ?? '',
                     ]);
                 });
                 return response()->json($students);
@@ -186,14 +189,17 @@ class ClassAgendaController extends Controller
             if ($tapRecord) {
                 // Gunakan status dari record scanner/izin harian yang ada
                 $status = $tapRecord->status->value ?? $tapRecord->status;
+                $notes = $tapRecord->notes ?? '';
             } else {
                 // Jika tidak ada record: default alpha jika scanning aktif, jika tidak default hadir
                 $status = $hasTapping ? 'alpha' : 'hadir';
+                $notes = '';
             }
 
             return array_merge($student->toArray(), [
                 'current_status' => $status,
                 'attendance_id'  => null, // Selalu null agar membuat record baru
+                'notes'          => $notes,
             ]);
         });
 
@@ -296,6 +302,14 @@ class ClassAgendaController extends Controller
             }
         });
 
+        // Clear Dashboard Cache
+        $today = Carbon::parse($request->date)->toDateString();
+        $classId = $request->academic_class_id;
+        Cache::forget("leader_stats_{$today}_class_all");
+        Cache::forget("leader_stats_{$today}_class_{$classId}");
+        Cache::forget("dashboard_stats_{$today}_class_all");
+        Cache::forget("dashboard_stats_{$today}_class_{$classId}");
+
         return redirect()->route('teacher.agendas.index')->with('success', 'Jurnal dan Absensi berhasil disimpan.');
     }
 
@@ -386,6 +400,9 @@ class ClassAgendaController extends Controller
             }
         }
 
+        $oldDate = Carbon::parse($agenda->date)->toDateString();
+        $oldClassId = $agenda->academic_class_id;
+
         DB::transaction(function() use ($request, $agenda, $subjectName) {
             $agenda->update([
                 'academic_class_id' => $request->academic_class_id,
@@ -418,6 +435,22 @@ class ClassAgendaController extends Controller
             }
         });
 
+        // Clear Dashboard Cache for old date/class
+        Cache::forget("leader_stats_{$oldDate}_class_all");
+        Cache::forget("leader_stats_{$oldDate}_class_{$oldClassId}");
+        Cache::forget("dashboard_stats_{$oldDate}_class_all");
+        Cache::forget("dashboard_stats_{$oldDate}_class_{$oldClassId}");
+
+        // Clear Dashboard Cache for new date/class if they changed
+        $newDate = Carbon::parse($request->date)->toDateString();
+        $newClassId = $request->academic_class_id;
+        if ($oldDate !== $newDate || $oldClassId !== $newClassId) {
+            Cache::forget("leader_stats_{$newDate}_class_all");
+            Cache::forget("leader_stats_{$newDate}_class_{$newClassId}");
+            Cache::forget("dashboard_stats_{$newDate}_class_all");
+            Cache::forget("dashboard_stats_{$newDate}_class_{$newClassId}");
+        }
+
         return redirect()->route('teacher.agendas.index')->with('success', 'Jurnal dan Absensi berhasil diperbarui.');
     }
 
@@ -429,7 +462,15 @@ class ClassAgendaController extends Controller
             abort(403);
         }
 
+        $today = Carbon::parse($agenda->date)->toDateString();
+        $classId = $agenda->academic_class_id;
+
         $agenda->delete();
+
+        Cache::forget("leader_stats_{$today}_class_all");
+        Cache::forget("leader_stats_{$today}_class_{$classId}");
+        Cache::forget("dashboard_stats_{$today}_class_all");
+        Cache::forget("dashboard_stats_{$today}_class_{$classId}");
 
         return redirect()->route('teacher.agendas.index')
             ->with('success', 'Jurnal mengajar berhasil dihapus.');

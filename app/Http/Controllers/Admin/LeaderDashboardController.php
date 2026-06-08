@@ -149,8 +149,8 @@ class LeaderDashboardController extends Controller
             'stats' => [
                 'students' => [
                     'total' => $totalStudents,
-                    'present' => ($studentPresence['hadir'] ?? 0) + ($studentPresence['tap'] ?? 0),
-                    'absent' => $studentPresence['alpha'] ?? 0,
+                    'present' => ($studentPresence['hadir'] ?? 0) + ($studentPresence['terlambat'] ?? 0),
+                    'absent' => $totalStudents - (($studentPresence['hadir'] ?? 0) + ($studentPresence['terlambat'] ?? 0) + ($studentPresence['sakit'] ?? 0) + ($studentPresence['izin'] ?? 0)),
                     'sick' => $studentPresence['sakit'] ?? 0,
                     'permission' => $studentPresence['izin'] ?? 0,
                 ],

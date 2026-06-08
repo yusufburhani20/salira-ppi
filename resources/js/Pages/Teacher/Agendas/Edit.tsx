@@ -160,7 +160,7 @@ export default function AgendaEdit({ agenda, classes, subjects = [], lesson_hour
                     const initialAttendance = currentStudents.map((s: any) => ({
                         student_id: s.id,
                         status: s.current_status || 'hadir',
-                        notes: ''
+                        notes: s.notes || ''
                     }));
                     
                     setData('attendance', initialAttendance);
