@@ -37,4 +37,45 @@ class StudentAttendance extends Model
     {
         return $this->belongsTo(ClassAgenda::class, 'class_agenda_id');
     }
+
+    public static function getDailyStatusFromAttendances($dayEntries)
+    {
+        if ($dayEntries->isEmpty()) {
+            return '-';
+        }
+
+        $totalCount = $dayEntries->count();
+        $alphaCount = $dayEntries->filter(function($entry) {
+            $val = $entry->status->value ?? $entry->status;
+            return strtolower($val) === 'alpha';
+        })->count();
+
+        if ($alphaCount >= 3 || ($alphaCount === $totalCount && $totalCount > 0)) {
+            return 'alpha';
+        }
+
+        $nonAlphaEntries = $dayEntries->filter(function($entry) {
+            $val = $entry->status->value ?? $entry->status;
+            return strtolower($val) !== 'alpha';
+        });
+
+        if ($nonAlphaEntries->isEmpty()) {
+            return 'alpha';
+        }
+
+        // Priority: sakit > izin > terlambat > hadir
+        $priority = ['sakit', 'izin', 'terlambat', 'hadir'];
+        foreach ($priority as $pStatus) {
+            if ($nonAlphaEntries->contains(function($entry) use ($pStatus) {
+                $val = $entry->status->value ?? $entry->status;
+                return strtolower($val) === $pStatus;
+            })) {
+                return $pStatus;
+            }
+        }
+
+        $firstStatus = $nonAlphaEntries->first()->status;
+        return $firstStatus->value ?? $firstStatus;
+    }
 }
+

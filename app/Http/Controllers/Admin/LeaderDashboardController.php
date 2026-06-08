@@ -35,11 +35,16 @@ class LeaderDashboardController extends Controller
             if ($classId) {
                 $presenceQuery->where('academic_class_id', $classId);
             }
-            $presence = $presenceQuery
-                ->select('status', DB::raw('count(distinct student_id) as total'))
-                ->groupBy('status')
-                ->pluck('total', 'status')
-                ->toArray();
+            
+            $todayAttendances = $presenceQuery->get()->groupBy('student_id');
+            
+            $presence = ['hadir' => 0, 'sakit' => 0, 'izin' => 0, 'alpha' => 0, 'terlambat' => 0];
+            foreach ($todayAttendances as $studentId => $dayEntries) {
+                $status = \App\Models\StudentAttendance::getDailyStatusFromAttendances($dayEntries);
+                if (array_key_exists($status, $presence)) {
+                    $presence[$status]++;
+                }
+            }
 
             return [$total, $presence];
         });
@@ -48,6 +53,9 @@ class LeaderDashboardController extends Controller
         $totalTeachers = User::role(['Guru', 'Wali Kelas'])->count();
         $teacherPresenceCount = Attendance::whereDate('date', $today)
             ->whereNotNull('check_in')
+            ->whereHas('user', function($query) {
+                $query->role(['Guru', 'Wali Kelas']);
+            })
             ->count();
 
         // 3. Ringkasan Keuangan (Bulan Ini)
@@ -74,13 +82,22 @@ class LeaderDashboardController extends Controller
             $diffInDays = 30;
         }
 
-        $trendCounts = StudentAttendance::whereIn('status', ['hadir', 'tap'])
-            ->whereBetween('date', [$startDate->toDateString(), $endDate->toDateString()])
+        $allAttendances = StudentAttendance::whereBetween('date', [$startDate->toDateString(), $endDate->toDateString()])
             ->when($classId, fn($q) => $q->where('academic_class_id', $classId))
-            ->select(\Illuminate\Support\Facades\DB::raw('DATE(date) as date_only'), \Illuminate\Support\Facades\DB::raw('COUNT(DISTINCT student_id) as total'))
-            ->groupBy('date_only')
             ->get()
-            ->pluck('total', 'date_only');
+            ->groupBy(['date', 'student_id']);
+
+        $trendCounts = [];
+        foreach ($allAttendances as $dateStr => $students) {
+            $presentToday = 0;
+            foreach ($students as $studentId => $dayEntries) {
+                $dailyStatus = \App\Models\StudentAttendance::getDailyStatusFromAttendances($dayEntries);
+                if ($dailyStatus === 'hadir' || $dailyStatus === 'terlambat') {
+                    $presentToday++;
+                }
+            }
+            $trendCounts[$dateStr] = $presentToday;
+        }
 
         $weeklyTrend = [];
         for ($i = $diffInDays; $i >= 0; $i--) {

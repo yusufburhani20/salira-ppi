@@ -106,23 +106,31 @@ class RecapController extends Controller
             
             $daily = [];
             foreach ($dates as $date) {
-                $att = $studentAtts->filter(function($item) use ($date) {
+                $dayEntries = $studentAtts->filter(function($item) use ($date) {
                     return Carbon::parse($item->date)->format('Y-m-d') === $date;
-                })->first();
-                $daily[$date] = $att ? $att->status->value : '-';
+                });
+                $daily[$date] = $dayEntries->isNotEmpty() 
+                    ? \App\Models\StudentAttendance::getDailyStatusFromAttendances($dayEntries) 
+                    : '-';
+            }
+
+            $groupedByDate = $studentAtts->groupBy(function($item) {
+                return Carbon::parse($item->date)->format('Y-m-d');
+            });
+
+            $summary = ['hadir' => 0, 'sakit' => 0, 'izin' => 0, 'alpha' => 0, 'terlambat' => 0];
+            foreach ($groupedByDate as $dateStr => $dayEntries) {
+                $status = \App\Models\StudentAttendance::getDailyStatusFromAttendances($dayEntries);
+                if (array_key_exists($status, $summary)) {
+                    $summary[$status]++;
+                }
             }
 
             $report[] = [
                 'id' => $student->id,
                 'name' => $student->name,
                 'daily' => $daily,
-                'summary' => [
-                    'hadir' => $studentAtts->where('status.value', 'hadir')->count(),
-                    'sakit' => $studentAtts->where('status.value', 'sakit')->count(),
-                    'izin' => $studentAtts->where('status.value', 'izin')->count(),
-                    'alpha' => $studentAtts->where('status.value', 'alpha')->count(),
-                    'terlambat' => $studentAtts->where('status.value', 'terlambat')->count(),
-                ]
+                'summary' => $summary
             ];
         }
 
@@ -174,23 +182,31 @@ class RecapController extends Controller
             
             $daily = [];
             foreach ($dates as $date) {
-                $att = $studentAtts->filter(function($item) use ($date) {
+                $dayEntries = $studentAtts->filter(function($item) use ($date) {
                     return Carbon::parse($item->date)->format('Y-m-d') === $date;
-                })->first();
-                $daily[$date] = $att ? $att->status->value : '-';
+                });
+                $daily[$date] = $dayEntries->isNotEmpty() 
+                    ? \App\Models\StudentAttendance::getDailyStatusFromAttendances($dayEntries) 
+                    : '-';
+            }
+
+            $groupedByDate = $studentAtts->groupBy(function($item) {
+                return Carbon::parse($item->date)->format('Y-m-d');
+            });
+
+            $summary = ['hadir' => 0, 'sakit' => 0, 'izin' => 0, 'alpha' => 0, 'terlambat' => 0];
+            foreach ($groupedByDate as $dateStr => $dayEntries) {
+                $status = \App\Models\StudentAttendance::getDailyStatusFromAttendances($dayEntries);
+                if (array_key_exists($status, $summary)) {
+                    $summary[$status]++;
+                }
             }
 
             $report[] = [
                 'id' => $student->id,
                 'name' => $student->name,
                 'daily' => $daily,
-                'summary' => [
-                    'hadir' => $studentAtts->where('status.value', 'hadir')->count(),
-                    'sakit' => $studentAtts->where('status.value', 'sakit')->count(),
-                    'izin' => $studentAtts->where('status.value', 'izin')->count(),
-                    'alpha' => $studentAtts->where('status.value', 'alpha')->count(),
-                    'terlambat' => $studentAtts->where('status.value', 'terlambat')->count(),
-                ]
+                'summary' => $summary
             ];
         }
 

@@ -39,9 +39,22 @@ class DashboardController extends Controller
         // Cache stats selama 5 menit — data absensi tidak berubah setiap detik
         $statsCacheKey = 'dashboard_stats_' . $today->toDateString() . '_class_' . ($classId ?: 'all');
         $stats = Cache::remember($statsCacheKey, 300, function () use ($studentsQuery, $consultationQuery) {
+            $todayAttendances = (clone $studentsQuery)->get()->groupBy('student_id');
+            
+            $presentCount = 0;
+            $permitCount = 0;
+            foreach ($todayAttendances as $studentId => $dayEntries) {
+                $status = \App\Models\StudentAttendance::getDailyStatusFromAttendances($dayEntries);
+                if ($status === 'hadir' || $status === 'terlambat') {
+                    $presentCount++;
+                } elseif ($status === 'izin' || $status === 'sakit') {
+                    $permitCount++;
+                }
+            }
+
             return [
-                'students_present'      => (clone $studentsQuery)->where('status', 'hadir')->distinct('student_id')->count(),
-                'students_permit'       => (clone $studentsQuery)->whereIn('status', ['izin', 'sakit'])->distinct('student_id')->count(),
+                'students_present'      => $presentCount,
+                'students_permit'       => $permitCount,
                 'consultations_pending' => $consultationQuery->count(),
                 'items_borrowed'        => InventoryItem::where('status', 'dipinjam')->count(),
             ];
@@ -68,13 +81,22 @@ class DashboardController extends Controller
             $diffInDays = 30;
         }
 
-        $presentCounts = StudentAttendance::where('status', 'hadir')
-            ->whereBetween('date', [$startDate->toDateString(), $endDate->toDateString()])
+        $allAttendances = StudentAttendance::whereBetween('date', [$startDate->toDateString(), $endDate->toDateString()])
             ->when($classId, fn($q) => $q->where('academic_class_id', $classId))
-            ->select(\Illuminate\Support\Facades\DB::raw('DATE(date) as date_only'), \Illuminate\Support\Facades\DB::raw('COUNT(DISTINCT student_id) as total'))
-            ->groupBy('date_only')
             ->get()
-            ->pluck('total', 'date_only');
+            ->groupBy(['date', 'student_id']);
+
+        $presentCounts = [];
+        foreach ($allAttendances as $dateStr => $students) {
+            $presentToday = 0;
+            foreach ($students as $studentId => $dayEntries) {
+                $dailyStatus = \App\Models\StudentAttendance::getDailyStatusFromAttendances($dayEntries);
+                if ($dailyStatus === 'hadir' || $dailyStatus === 'terlambat') {
+                    $presentToday++;
+                }
+            }
+            $presentCounts[$dateStr] = $presentToday;
+        }
 
         $chartData = [];
         for ($i = $diffInDays; $i >= 0; $i--) {

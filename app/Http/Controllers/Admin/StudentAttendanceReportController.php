@@ -86,17 +86,11 @@ class StudentAttendanceReportController extends Controller
                 });
 
                 if ($dayEntries->isNotEmpty()) {
-                    $worstStatus = 'hadir';
-                    $highestPriorityIndex = 5;
-                    foreach ($dayEntries as $entry) {
-                        $idx = array_search($entry->status->value, $priority);
-                        if ($idx !== false && $idx < $highestPriorityIndex) {
-                            $highestPriorityIndex = $idx;
-                            $worstStatus = $entry->status->value;
-                        }
-                    }
+                    $worstStatus = \App\Models\StudentAttendance::getDailyStatusFromAttendances($dayEntries);
                     $studentData['days'][$d] = $worstStatus;
-                    $studentData['summary'][$worstStatus]++;
+                    if (array_key_exists($worstStatus, $studentData['summary'])) {
+                        $studentData['summary'][$worstStatus]++;
+                    }
                 }
             }
             $report[] = $studentData;

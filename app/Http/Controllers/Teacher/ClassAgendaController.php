@@ -140,7 +140,32 @@ class ClassAgendaController extends Controller
             }
         }
 
-        // === PRIORITAS 2: Cek apakah ada aktivitas tapping hari ini di kelas ini ===
+        // === PRIORITAS 2: Cek jika ada agenda sebelumnya di hari yang sama ===
+        $prevAgendaQuery = ClassAgenda::where('academic_class_id', $classId)
+            ->whereDate('date', $date);
+        if ($agendaId) {
+            $prevAgendaQuery->where('id', '<', $agendaId);
+        }
+        $prevAgenda = $prevAgendaQuery->latest('id')->first();
+
+        if ($prevAgenda) {
+            $prevAttendances = StudentAttendance::where('class_agenda_id', $prevAgenda->id)
+                ->get()
+                ->keyBy('student_id');
+
+            if ($prevAttendances->isNotEmpty()) {
+                $students = $class->students->map(function ($student) use ($prevAttendances) {
+                    $existing = $prevAttendances->get($student->id);
+                    return array_merge($student->toArray(), [
+                        'current_status' => $existing ? ($existing->status->value ?? $existing->status) : 'hadir',
+                        'attendance_id'  => null, // Selalu null agar membuat record baru
+                    ]);
+                });
+                return response()->json($students);
+            }
+        }
+
+        // === PRIORITAS 3: Cek apakah ada aktivitas tapping/izin harian hari ini di kelas ini ===
         // Record tap memiliki schedule_id = null dan class_agenda_id = null
         $tapRecords = StudentAttendance::whereIn('student_id', $class->students->pluck('id'))
             ->whereDate('date', $date)
@@ -149,25 +174,26 @@ class ClassAgendaController extends Controller
             ->get()
             ->keyBy('student_id');
 
-        // === PRIORITAS 3: Jika TIDAK ADA tap sama sekali di kelas ini → semua default Hadir ===
-        $hasTapping = $tapRecords->isNotEmpty();
+        // Check if there are any check-in/hadir records (representing active scanning)
+        $hasTapping = $tapRecords->contains(function ($record) {
+            $statusStr = $record->status->value ?? $record->status;
+            return strtolower($statusStr) === 'hadir';
+        });
 
         $students = $class->students->map(function ($student) use ($tapRecords, $hasTapping) {
             $tapRecord = $tapRecords->get($student->id);
 
-            if ($hasTapping) {
-                // Ada aktivitas tap: siswa yang tap = Hadir, yang tidak tap = Alpha
-                $status        = $tapRecord ? ($tapRecord->status->value ?? $tapRecord->status) : 'alpha';
-                $attendance_id = $tapRecord?->id;
+            if ($tapRecord) {
+                // Gunakan status dari record scanner/izin harian yang ada
+                $status = $tapRecord->status->value ?? $tapRecord->status;
             } else {
-                // Tidak ada tap sama sekali → fallback semua Hadir
-                $status        = 'hadir';
-                $attendance_id = null;
+                // Jika tidak ada record: default alpha jika scanning aktif, jika tidak default hadir
+                $status = $hasTapping ? 'alpha' : 'hadir';
             }
 
             return array_merge($student->toArray(), [
                 'current_status' => $status,
-                'attendance_id'  => $attendance_id,
+                'attendance_id'  => null, // Selalu null agar membuat record baru
             ]);
         });
 
@@ -199,7 +225,7 @@ class ClassAgendaController extends Controller
             'academic_class_id' => 'required|exists:academic_classes,id',
             'subject_id' => 'required|exists:subjects,id',
             'subject' => 'nullable|string|max:255',
-            'lesson_period' => 'required|string|max:50',
+            'lesson_period' => 'required|string|max:255',
             'date' => 'required|date',
             'topic' => 'required|string|max:255',
             'activities' => 'required|string',
@@ -245,27 +271,16 @@ class ClassAgendaController extends Controller
             ]);
 
             foreach ($request->attendance as $att) {
-                if (!empty($att['id'])) {
-                    // Update existing QR attendance
-                    StudentAttendance::where('id', $att['id'])->update([
-                        'academic_class_id' => $request->academic_class_id,
-                        'class_agenda_id' => $agenda->id,
-                        'recorded_by' => Auth::id(),
-                        'status' => $att['status'],
-                        'notes' => $att['notes'] ?? null,
-                    ]);
-                } else {
-                    // Create new attendance
-                    StudentAttendance::create([
-                        'academic_class_id' => $request->academic_class_id,
-                        'class_agenda_id' => $agenda->id,
-                        'student_id' => $att['student_id'],
-                        'recorded_by' => Auth::id(),
-                        'date' => $request->date,
-                        'status' => $att['status'],
-                        'notes' => $att['notes'] ?? null,
-                    ]);
-                }
+                // Selalu buat record presensi baru untuk agenda kelas ini
+                StudentAttendance::create([
+                    'academic_class_id' => $request->academic_class_id,
+                    'class_agenda_id' => $agenda->id,
+                    'student_id' => $att['student_id'],
+                    'recorded_by' => Auth::id(),
+                    'date' => $request->date,
+                    'status' => $att['status'],
+                    'notes' => $att['notes'] ?? null,
+                ]);
 
                 // Notify if NOT present
                 if (in_array(strtolower($att['status']), ['sakit', 'izin', 'alpha', 'absent', 'permission', 'sick'])) {
@@ -341,7 +356,7 @@ class ClassAgendaController extends Controller
             'academic_class_id' => 'required|exists:academic_classes,id',
             'subject_id' => 'required|exists:subjects,id',
             'subject' => 'nullable|string|max:255',
-            'lesson_period' => 'required|string|max:50',
+            'lesson_period' => 'required|string|max:255',
             'date' => 'required|date',
             'topic' => 'required|string|max:255',
             'activities' => 'required|string',
@@ -621,23 +636,31 @@ class ClassAgendaController extends Controller
             
             $daily = [];
             foreach ($dates as $date) {
-                $att = $studentAtts->filter(function($item) use ($date) {
+                $dayEntries = $studentAtts->filter(function($item) use ($date) {
                     return Carbon::parse($item->date)->format('Y-m-d') === $date;
-                })->first();
-                $daily[$date] = $att ? ($att->status->value ?? $att->status) : '-';
+                });
+                $daily[$date] = $dayEntries->isNotEmpty() 
+                    ? \App\Models\StudentAttendance::getDailyStatusFromAttendances($dayEntries) 
+                    : '-';
+            }
+
+            $groupedByDate = $studentAtts->groupBy(function($item) {
+                return Carbon::parse($item->date)->format('Y-m-d');
+            });
+
+            $summary = ['hadir' => 0, 'sakit' => 0, 'izin' => 0, 'alpha' => 0, 'terlambat' => 0];
+            foreach ($groupedByDate as $dateStr => $dayEntries) {
+                $status = \App\Models\StudentAttendance::getDailyStatusFromAttendances($dayEntries);
+                if (array_key_exists($status, $summary)) {
+                    $summary[$status]++;
+                }
             }
 
             $report[] = [
                 'id' => $student->id,
                 'name' => $student->name,
                 'daily' => $daily,
-                'summary' => [
-                    'hadir' => $studentAtts->where('status', AttendanceStatus::hadir)->count(),
-                    'sakit' => $studentAtts->where('status', AttendanceStatus::sakit)->count(),
-                    'izin' => $studentAtts->where('status', AttendanceStatus::izin)->count(),
-                    'alpha' => $studentAtts->where('status', AttendanceStatus::alpha)->count(),
-                    'terlambat' => $studentAtts->where('status', AttendanceStatus::terlambat)->count(),
-                ]
+                'summary' => $summary
             ];
         }
 
