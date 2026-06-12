@@ -3,7 +3,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm, router } from '@inertiajs/react';
 import React, { useState, useEffect, Fragment } from 'react';
 import { Tab } from '@headlessui/react';
-import { Cog6ToothIcon, DevicePhoneMobileIcon, EnvelopeIcon, PaperAirplaneIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
+import { Cog6ToothIcon, DevicePhoneMobileIcon, EnvelopeIcon, PaperAirplaneIcon, CheckCircleIcon, XCircleIcon, BellIcon } from '@heroicons/react/24/outline';
 import { QRCodeCanvas } from 'qrcode.react';
 import axios from 'axios';
 
@@ -21,29 +21,40 @@ export default function NotificationSettings({ auth, settings, bot_username }: P
         notif_channel_email: settings.notif_channel_email as boolean,
         notif_channel_telegram: settings.notif_channel_telegram as boolean,
         notif_channel_whatsapp: settings.notif_channel_whatsapp as boolean,
+        notif_channel_webpush: settings.notif_channel_webpush as boolean,
         notif_bill_generated_email: settings.notif_bill_generated_email as boolean,
         notif_bill_generated_telegram: settings.notif_bill_generated_telegram as boolean,
         notif_bill_generated_whatsapp: settings.notif_bill_generated_whatsapp as boolean,
+        notif_bill_generated_webpush: settings.notif_bill_generated_webpush as boolean,
         notif_bill_paid_email: settings.notif_bill_paid_email as boolean,
         notif_bill_paid_telegram: settings.notif_bill_paid_telegram as boolean,
         notif_bill_paid_whatsapp: settings.notif_bill_paid_whatsapp as boolean,
+        notif_bill_paid_webpush: settings.notif_bill_paid_webpush as boolean,
         notif_absence_email: settings.notif_absence_email as boolean,
         notif_absence_telegram: settings.notif_absence_telegram as boolean,
         notif_absence_whatsapp: settings.notif_absence_whatsapp as boolean,
+        notif_absence_webpush: settings.notif_absence_webpush as boolean,
         notif_permission_req_email: settings.notif_permission_req_email as boolean,
         notif_permission_req_telegram: settings.notif_permission_req_telegram as boolean,
         notif_permission_req_whatsapp: settings.notif_permission_req_whatsapp as boolean,
+        notif_permission_req_webpush: settings.notif_permission_req_webpush as boolean,
         notif_permission_status_email: settings.notif_permission_status_email as boolean,
         notif_permission_status_telegram: settings.notif_permission_status_telegram as boolean,
         notif_permission_status_whatsapp: settings.notif_permission_status_whatsapp as boolean,
+        notif_permission_status_webpush: settings.notif_permission_status_webpush as boolean,
         notif_announcement_email: settings.notif_announcement_email as boolean,
         notif_announcement_telegram: settings.notif_announcement_telegram as boolean,
         notif_announcement_whatsapp: settings.notif_announcement_whatsapp as boolean,
+        notif_announcement_webpush: settings.notif_announcement_webpush as boolean,
         notif_student_report_email: settings.notif_student_report_email as boolean,
         notif_student_report_telegram: settings.notif_student_report_telegram as boolean,
         notif_student_report_whatsapp: settings.notif_student_report_whatsapp as boolean,
+        notif_student_report_webpush: settings.notif_student_report_webpush as boolean,
         attendance_alert_enabled: settings.attendance_alert_enabled as boolean,
         attendance_alert_time: settings.attendance_alert_time as string,
+        user_attendance_reminder_enabled: settings.user_attendance_reminder_enabled as boolean,
+        user_attendance_reminder_time_in: settings.user_attendance_reminder_time_in as string,
+        user_attendance_reminder_time_out: settings.user_attendance_reminder_time_out as string,
     });
 
     // Form for Templates
@@ -155,7 +166,7 @@ export default function NotificationSettings({ auth, settings, bot_username }: P
                             <Tab.Panels className="mt-2">
                                 {/* TAB 1: Koneksi & Master Switch */}
                                 <Tab.Panel className="p-6">
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                                         {/* Email Card */}
                                         <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-200 dark:border-gray-700 flex flex-col items-center text-center">
                                             <EnvelopeIcon className="w-12 h-12 text-blue-500 mb-4" />
@@ -167,7 +178,7 @@ export default function NotificationSettings({ auth, settings, bot_username }: P
                                             </label>
                                             <p className="text-xs text-gray-500">Konfigurasi di file .env (MAIL_HOST dll)</p>
                                         </div>
-
+ 
                                         {/* Telegram Card */}
                                         <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-200 dark:border-gray-700 flex flex-col items-center text-center">
                                             <PaperAirplaneIcon className="w-12 h-12 text-sky-500 mb-4" />
@@ -179,12 +190,12 @@ export default function NotificationSettings({ auth, settings, bot_username }: P
                                             </label>
                                             <p className="text-xs text-gray-500">Bot aktif: @{bot_username}</p>
                                         </div>
-
+ 
                                         {/* WhatsApp Card */}
                                         <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-200 dark:border-gray-700 flex flex-col items-center text-center">
                                             <DevicePhoneMobileIcon className="w-12 h-12 text-[#25D366] mb-4" />
                                             <h3 className="text-lg font-bold mb-2">WhatsApp Gateway</h3>
-                                            <label className="relative inline-flex items-center cursor-pointer mb-4">
+                                            <label className="relative inline-flex inline-flex items-center cursor-pointer mb-4">
                                                 <input type="checkbox" checked={matrixData.notif_channel_whatsapp} onChange={(e) => setMatrixData('notif_channel_whatsapp', e.target.checked)} className="sr-only peer" />
                                                 <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 dark:peer-focus:ring-green-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-[#25D366]"></div>
                                                 <span className="ml-3 text-sm font-medium text-gray-900 dark:text-gray-300">{matrixData.notif_channel_whatsapp ? 'Aktif' : 'Nonaktif'}</span>
@@ -193,6 +204,18 @@ export default function NotificationSettings({ auth, settings, bot_username }: P
                                                 Status: 
                                                 <span className={`capitalize ${waStatus === 'connected' ? 'text-green-500' : 'text-red-500'}`}>{waStatus}</span>
                                             </div>
+                                        </div>
+
+                                        {/* Web Push Card */}
+                                        <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-gray-200 dark:border-gray-700 flex flex-col items-center text-center">
+                                            <BellIcon className="w-12 h-12 text-indigo-500 mb-4" />
+                                            <h3 className="text-lg font-bold mb-2">Push Notifikasi</h3>
+                                            <label className="relative inline-flex items-center cursor-pointer mb-4">
+                                                <input type="checkbox" checked={matrixData.notif_channel_webpush} onChange={(e) => setMatrixData('notif_channel_webpush', e.target.checked)} className="sr-only peer" />
+                                                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 dark:peer-focus:ring-indigo-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
+                                                <span className="ml-3 text-sm font-medium text-gray-900 dark:text-gray-300">{matrixData.notif_channel_webpush ? 'Aktif' : 'Nonaktif'}</span>
+                                            </label>
+                                            <p className="text-xs text-gray-500">Push Notifikasi Web (PWA)</p>
                                         </div>
                                     </div>
 
@@ -216,7 +239,7 @@ export default function NotificationSettings({ auth, settings, bot_username }: P
                                                 />
                                             </div>
                                         </div>
-
+ 
                                         {matrixData.attendance_alert_enabled && (
                                             <div className="pt-4 mt-4 border-t border-slate-200 dark:border-slate-700 flex items-center gap-4">
                                                 <label className="block font-bold text-slate-700 dark:text-slate-300 text-sm">Jam Pengiriman Notifikasi:</label>
@@ -227,6 +250,52 @@ export default function NotificationSettings({ auth, settings, bot_username }: P
                                                     className="rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white font-bold text-sm"
                                                 />
                                                 <p className="text-[10px] text-slate-400">Sistem akan memindai siswa yang belum hadir pada jam ini.</p>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Staff Push Notification Attendance Reminders Card */}
+                                    <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-3xl border border-gray-200 dark:border-gray-700 mb-8">
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <div className="p-2 bg-indigo-100 dark:bg-indigo-500/20 rounded-lg">
+                                                    <BellIcon className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-bold text-slate-800 dark:text-slate-200">Pengingat Absensi Guru & Pegawai (Web Push)</h4>
+                                                    <p className="text-xs text-slate-500">Kirim pengingat check-in (pagi) dan check-out (sore) ke Guru/Pegawai yang belum absensi.</p>
+                                                </div>
+                                            </div>
+                                            <div className="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2"
+                                                onClick={() => setMatrixData('user_attendance_reminder_enabled', !matrixData.user_attendance_reminder_enabled)}
+                                                style={{ backgroundColor: matrixData.user_attendance_reminder_enabled ? '#4f46e5' : '#d1d5db' }}
+                                            >
+                                                <span className="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                                                    style={{ transform: matrixData.user_attendance_reminder_enabled ? 'translateX(20px)' : 'translateX(0px)' }}
+                                                />
+                                            </div>
+                                        </div>
+ 
+                                        {matrixData.user_attendance_reminder_enabled && (
+                                            <div className="pt-4 mt-4 border-t border-slate-200 dark:border-slate-700 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <div className="flex items-center gap-3">
+                                                    <label className="block font-bold text-slate-700 dark:text-slate-300 text-sm whitespace-nowrap">Jam Check-in (Pagi):</label>
+                                                    <input 
+                                                        type="time"
+                                                        value={matrixData.user_attendance_reminder_time_in}
+                                                        onChange={e => setMatrixData('user_attendance_reminder_time_in', e.target.value)}
+                                                        className="rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white font-bold text-sm"
+                                                    />
+                                                </div>
+                                                <div className="flex items-center gap-3">
+                                                    <label className="block font-bold text-slate-700 dark:text-slate-300 text-sm whitespace-nowrap">Jam Check-out (Sore):</label>
+                                                    <input 
+                                                        type="time"
+                                                        value={matrixData.user_attendance_reminder_time_out}
+                                                        onChange={e => setMatrixData('user_attendance_reminder_time_out', e.target.value)}
+                                                        className="rounded-xl border-gray-200 dark:border-gray-700 dark:bg-gray-900 dark:text-white font-bold text-sm"
+                                                    />
+                                                </div>
                                             </div>
                                         )}
                                     </div>
@@ -356,6 +425,7 @@ export default function NotificationSettings({ auth, settings, bot_username }: P
                                                     <th className="p-4 font-semibold text-center text-blue-600 dark:text-blue-400">Email</th>
                                                     <th className="p-4 font-semibold text-center text-sky-600 dark:text-sky-400">Telegram</th>
                                                     <th className="p-4 font-semibold text-center text-green-600 dark:text-green-400">WhatsApp</th>
+                                                    <th className="p-4 font-semibold text-center text-indigo-600 dark:text-indigo-400">Web Push</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -370,6 +440,9 @@ export default function NotificationSettings({ auth, settings, bot_username }: P
                                                         </td>
                                                         <td className="p-4 text-center">
                                                             <input type="checkbox" checked={matrixData[`notif_${type.key}_whatsapp` as keyof typeof matrixData] as boolean} onChange={e => setMatrixData(`notif_${type.key}_whatsapp` as keyof typeof matrixData, e.target.checked)} className="w-5 h-5 text-green-600 rounded border-gray-300 focus:ring-green-500" />
+                                                        </td>
+                                                        <td className="p-4 text-center">
+                                                            <input type="checkbox" checked={matrixData[`notif_${type.key}_webpush` as keyof typeof matrixData] as boolean} onChange={e => setMatrixData(`notif_${type.key}_webpush` as keyof typeof matrixData, e.target.checked)} className="w-5 h-5 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500" />
                                                         </td>
                                                     </tr>
                                                 ))}

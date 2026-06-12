@@ -18,35 +18,43 @@ class NotificationSettingController extends Controller
             'notif_channel_email' => Setting::get('notif_channel_email', '1') === '1',
             'notif_channel_telegram' => Setting::get('notif_channel_telegram', '1') === '1',
             'notif_channel_whatsapp' => Setting::get('notif_channel_whatsapp', '1') === '1',
+            'notif_channel_webpush' => Setting::get('notif_channel_webpush', '1') === '1',
             
             // Matrix Toggles
             'notif_bill_generated_email' => Setting::get('notif_bill_generated_email', '1') === '1',
             'notif_bill_generated_telegram' => Setting::get('notif_bill_generated_telegram', '1') === '1',
             'notif_bill_generated_whatsapp' => Setting::get('notif_bill_generated_whatsapp', '1') === '1',
+            'notif_bill_generated_webpush' => Setting::get('notif_bill_generated_webpush', '1') === '1',
             
             'notif_bill_paid_email' => Setting::get('notif_bill_paid_email', '1') === '1',
             'notif_bill_paid_telegram' => Setting::get('notif_bill_paid_telegram', '1') === '1',
             'notif_bill_paid_whatsapp' => Setting::get('notif_bill_paid_whatsapp', '1') === '1',
+            'notif_bill_paid_webpush' => Setting::get('notif_bill_paid_webpush', '1') === '1',
             
             'notif_absence_email' => Setting::get('notif_absence_email', '1') === '1',
             'notif_absence_telegram' => Setting::get('notif_absence_telegram', '1') === '1',
             'notif_absence_whatsapp' => Setting::get('notif_absence_whatsapp', '1') === '1',
+            'notif_absence_webpush' => Setting::get('notif_absence_webpush', '1') === '1',
             
             'notif_permission_req_email' => Setting::get('notif_permission_req_email', '1') === '1',
             'notif_permission_req_telegram' => Setting::get('notif_permission_req_telegram', '0') === '1', // Default off for Telegram initially
             'notif_permission_req_whatsapp' => Setting::get('notif_permission_req_whatsapp', '1') === '1',
+            'notif_permission_req_webpush' => Setting::get('notif_permission_req_webpush', '1') === '1',
             
             'notif_permission_status_email' => Setting::get('notif_permission_status_email', '1') === '1',
             'notif_permission_status_telegram' => Setting::get('notif_permission_status_telegram', '1') === '1',
             'notif_permission_status_whatsapp' => Setting::get('notif_permission_status_whatsapp', '1') === '1',
+            'notif_permission_status_webpush' => Setting::get('notif_permission_status_webpush', '1') === '1',
 
             'notif_announcement_email' => Setting::get('notif_announcement_email', '1') === '1',
             'notif_announcement_telegram' => Setting::get('notif_announcement_telegram', '1') === '1',
             'notif_announcement_whatsapp' => Setting::get('notif_announcement_whatsapp', '1') === '1',
+            'notif_announcement_webpush' => Setting::get('notif_announcement_webpush', '1') === '1',
 
             'notif_student_report_email' => Setting::get('notif_student_report_email', '1') === '1',
             'notif_student_report_telegram' => Setting::get('notif_student_report_telegram', '1') === '1',
             'notif_student_report_whatsapp' => Setting::get('notif_student_report_whatsapp', '1') === '1',
+            'notif_student_report_webpush' => Setting::get('notif_student_report_webpush', '1') === '1',
 
             // WhatsApp Templates
             'tpl_wa_bill_generated' => Setting::get('tpl_wa_bill_generated', "⚠️ *TAGIHAN BARU SALIRA*\n\nBapak/Ibu wali dari *[NAMA_SISWA]*,\nTagihan *[NAMA_TAGIHAN]* sebesar *[NOMINAL]* telah diterbitkan.\n\nHarap segera melakukan pembayaran melalui tautan web di bawah ini:\n[LINK_INVOICE]\n\nTerima kasih."),
@@ -69,6 +77,11 @@ class NotificationSettingController extends Controller
             // Attendance Alert Settings
             'attendance_alert_enabled' => Setting::get('attendance_alert_enabled', '0') === '1',
             'attendance_alert_time' => Setting::get('attendance_alert_time', '08:00'),
+
+            // User Attendance Reminder Settings
+            'user_attendance_reminder_enabled' => Setting::get('user_attendance_reminder_enabled', '1') === '1',
+            'user_attendance_reminder_time_in' => Setting::get('user_attendance_reminder_time_in', '07:30'),
+            'user_attendance_reminder_time_out' => Setting::get('user_attendance_reminder_time_out', '15:00'),
         ];
 
         return Inertia::render('Admin/Settings/Notifications/Index', [
@@ -80,15 +93,15 @@ class NotificationSettingController extends Controller
     public function updateMatrix(Request $request)
     {
         $keys = [
-            'notif_channel_email', 'notif_channel_telegram', 'notif_channel_whatsapp',
-            'notif_bill_generated_email', 'notif_bill_generated_telegram', 'notif_bill_generated_whatsapp',
-            'notif_bill_paid_email', 'notif_bill_paid_telegram', 'notif_bill_paid_whatsapp',
-            'notif_absence_email', 'notif_absence_telegram', 'notif_absence_whatsapp',
-            'notif_permission_req_email', 'notif_permission_req_telegram', 'notif_permission_req_whatsapp',
-            'notif_permission_status_email', 'notif_permission_status_telegram', 'notif_permission_status_whatsapp',
-            'notif_announcement_email', 'notif_announcement_telegram', 'notif_announcement_whatsapp',
-            'notif_student_report_email', 'notif_student_report_telegram', 'notif_student_report_whatsapp',
-            'attendance_alert_enabled',
+            'notif_channel_email', 'notif_channel_telegram', 'notif_channel_whatsapp', 'notif_channel_webpush',
+            'notif_bill_generated_email', 'notif_bill_generated_telegram', 'notif_bill_generated_whatsapp', 'notif_bill_generated_webpush',
+            'notif_bill_paid_email', 'notif_bill_paid_telegram', 'notif_bill_paid_whatsapp', 'notif_bill_paid_webpush',
+            'notif_absence_email', 'notif_absence_telegram', 'notif_absence_whatsapp', 'notif_absence_webpush',
+            'notif_permission_req_email', 'notif_permission_req_telegram', 'notif_permission_req_whatsapp', 'notif_permission_req_webpush',
+            'notif_permission_status_email', 'notif_permission_status_telegram', 'notif_permission_status_whatsapp', 'notif_permission_status_webpush',
+            'notif_announcement_email', 'notif_announcement_telegram', 'notif_announcement_whatsapp', 'notif_announcement_webpush',
+            'notif_student_report_email', 'notif_student_report_telegram', 'notif_student_report_whatsapp', 'notif_student_report_webpush',
+            'attendance_alert_enabled', 'user_attendance_reminder_enabled',
         ];
 
         foreach ($keys as $key) {
@@ -99,6 +112,14 @@ class NotificationSettingController extends Controller
 
         if ($request->has('attendance_alert_time')) {
             Setting::set('attendance_alert_time', $request->attendance_alert_time);
+        }
+
+        if ($request->has('user_attendance_reminder_time_in')) {
+            Setting::set('user_attendance_reminder_time_in', $request->user_attendance_reminder_time_in);
+        }
+
+        if ($request->has('user_attendance_reminder_time_out')) {
+            Setting::set('user_attendance_reminder_time_out', $request->user_attendance_reminder_time_out);
         }
 
         return back()->with('success', 'Pengaturan matriks notifikasi berhasil disimpan.');

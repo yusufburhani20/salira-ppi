@@ -30,7 +30,11 @@ class PortalNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['database', \App\Notifications\Channels\WebPushChannel::class];
+        $channels = ['database'];
+        if (\App\Models\Setting::get('notif_channel_webpush', '1') === '1') {
+            $channels[] = \App\Notifications\Channels\WebPushChannel::class;
+        }
+        return $channels;
     }
 
     /**

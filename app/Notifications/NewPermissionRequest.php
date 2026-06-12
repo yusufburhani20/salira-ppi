@@ -46,7 +46,9 @@ class NewPermissionRequest extends Notification implements ShouldQueue
             }
         }
 
-        $channels[] = \App\Notifications\Channels\WebPushChannel::class;
+        if (Setting::get('notif_channel_webpush', '1') === '1' && Setting::get('notif_permission_req_webpush', '1') === '1') {
+            $channels[] = \App\Notifications\Channels\WebPushChannel::class;
+        }
 
         return $channels;
     }

@@ -27,7 +27,11 @@ class UserAttendanceReminder extends Notification implements ShouldQueue
      */
     public function via(object $notifiable): array
     {
-        return ['database', \App\Notifications\Channels\WebPushChannel::class];
+        $channels = ['database'];
+        if (\App\Models\Setting::get('notif_channel_webpush', '1') === '1' && \App\Models\Setting::get('user_attendance_reminder_enabled', '1') === '1') {
+            $channels[] = \App\Notifications\Channels\WebPushChannel::class;
+        }
+        return $channels;
     }
 
     /**
