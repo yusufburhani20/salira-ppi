@@ -5,6 +5,7 @@ import { Link, usePage } from '@inertiajs/react';
 import { PropsWithChildren, ReactNode, useState, useEffect } from 'react';
 import ThemeToggle from '@/Components/ThemeToggle';
 import SystemClock from '@/Components/SystemClock';
+import usePWA from '@/hooks/usePWA';
 
 export default function Authenticated({
     header,
@@ -14,6 +15,17 @@ export default function Authenticated({
     const flash = props.flash as any;
     const user = props.auth.user as any; 
     const [sidebarOpen, setSidebarOpen] = useState(false);
+
+    const { vapid_public_key } = props as any;
+    const {
+        isOnline,
+        isInstallable,
+        installApp,
+        isSubscribed,
+        subscriptionLoading,
+        subscribe,
+        unsubscribe
+    } = usePWA(vapid_public_key);
     
     // Sidebar collapse state (Desktop)
     const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
@@ -393,6 +405,15 @@ export default function Authenticated({
 
                 {/* Footer User Profile */}
                 <div className="border-t border-slate-100 dark:border-slate-700/60 p-4 flex-shrink-0">
+                    {isInstallable && (
+                        <button
+                            onClick={installApp}
+                            className="flex items-center gap-3 px-3 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all w-full justify-center shadow-lg shadow-indigo-500/20 mb-3"
+                        >
+                            <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                            <span>Instal Aplikasi SALIRA</span>
+                        </button>
+                    )}
                     <div className="flex items-center gap-3 px-2 py-1.5">
                         {user.avatar_url ? (
                             <img src={user.avatar_url} alt="User Avatar" className="w-8 h-8 rounded-full object-cover flex-shrink-0 border border-slate-200 dark:border-slate-600" />
@@ -456,6 +477,28 @@ export default function Authenticated({
                     <div className="flex-1 lg:flex-none" />
 
                     <div className="flex items-center gap-2">
+                        {!subscriptionLoading && (
+                            <button
+                                onClick={isSubscribed ? unsubscribe : subscribe}
+                                className={`p-2 rounded-lg transition-all hover:scale-105 active:scale-95 flex items-center justify-center ${
+                                    isSubscribed 
+                                        ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/30 hover:bg-indigo-100 dark:hover:bg-indigo-950/60 border border-indigo-100 dark:border-indigo-900/50' 
+                                        : 'text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-transparent'
+                                }`}
+                                title={isSubscribed ? "Matikan Notifikasi Push" : "Aktifkan Notifikasi Push"}
+                            >
+                                {isSubscribed ? (
+                                    <svg className="w-5 h-5 animate-swing" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z" />
+                                    </svg>
+                                ) : (
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                    </svg>
+                                )}
+                            </button>
+                        )}
+
                         <Dropdown>
                             <Dropdown.Trigger>
                                 <button className="relative p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
@@ -530,6 +573,19 @@ export default function Authenticated({
                         </div>
                     </div>
                 )}
+
+                {!isOnline && (
+                    <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[9999] animate-bounce-in">
+                        <div className="bg-rose-600 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center space-x-3 border border-rose-500">
+                            <span className="flex h-2 w-2 relative">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+                            </span>
+                            <span className="text-xs font-black uppercase tracking-wider">Mode Offline Aktif</span>
+                            <span className="text-xs font-medium text-rose-100">Koneksi internet terputus.</span>
+                        </div>
+                    </div>
+                )}
             </div>
             <style>{`
                 @keyframes bounce-in {
@@ -537,6 +593,20 @@ export default function Authenticated({
                     100% { transform: scale(1); opacity: 1; }
                 }
                 .animate-bounce-in { animation: bounce-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+
+                @keyframes swing {
+                    0% { transform: rotate(0); }
+                    15% { transform: rotate(15deg); }
+                    30% { transform: rotate(-10deg); }
+                    45% { transform: rotate(5deg); }
+                    60% { transform: rotate(-5deg); }
+                    75% { transform: rotate(2deg); }
+                    100% { transform: rotate(0); }
+                }
+                .animate-swing {
+                    animation: swing 1s ease-in-out infinite;
+                    transform-origin: top center;
+                }
             `}</style>
         </div>
     );

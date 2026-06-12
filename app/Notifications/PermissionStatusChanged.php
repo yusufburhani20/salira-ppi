@@ -49,7 +49,25 @@ class PermissionStatusChanged extends Notification implements ShouldQueue
             }
         }
 
+        $channels[] = \App\Notifications\Channels\WebPushChannel::class;
+
         return $channels;
+    }
+
+    /**
+     * Get the web push representation of the notification.
+     */
+    public function toWebPush(object $notifiable): array
+    {
+        $statusStr = strtoupper($this->permission->status->label());
+        $typeLabel = $this->permission->type->label();
+        
+        return [
+            'title' => "Status Izin: {$statusStr}",
+            'body' => "Pengajuan izin {$typeLabel} Anda pada tanggal " . $this->permission->start_date->format('d/m/Y') . " telah {$statusStr}.",
+            'action_url' => '/permissions',
+            'icon' => '/images/icon-192.png',
+        ];
     }
 
     /**

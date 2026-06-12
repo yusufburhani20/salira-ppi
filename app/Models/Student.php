@@ -51,6 +51,11 @@ class Student extends Authenticatable
         return $this->hasMany(StudentConsultation::class);
     }
 
+    public function pushSubscriptions()
+    {
+        return $this->morphMany(PushSubscription::class, 'subscribable');
+    }
+
     public function routeNotificationForMail($notification)
     {
         return $this->parent_email;

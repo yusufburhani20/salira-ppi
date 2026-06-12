@@ -45,7 +45,29 @@ class NewPermissionRequest extends Notification implements ShouldQueue
                 $channels[] = \App\Notifications\Channels\WhatsAppChannel::class;
             }
         }
+
+        $channels[] = \App\Notifications\Channels\WebPushChannel::class;
+
         return $channels;
+    }
+
+    /**
+     * Get the web push representation of the notification.
+     */
+    public function toWebPush(object $notifiable): array
+    {
+        $typeLabel = $this->permissionRequest->type instanceof \App\Enums\PermissionType 
+            ? $this->permissionRequest->type->label() 
+            : $this->permissionRequest->type;
+
+        $requesterName = $this->permissionRequest->user->name ?? $this->permissionRequest->student->name ?? 'Pemohon';
+
+        return [
+            'title' => 'Pengajuan Izin Baru',
+            'body' => "{$requesterName} mengajukan izin {$typeLabel} baru.",
+            'action_url' => '/admin/approvals',
+            'icon' => '/images/icon-192.png',
+        ];
     }
 
     /**

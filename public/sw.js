@@ -140,3 +140,73 @@ async function networkFirstWithOfflineFallback(request) {
     });
   }
 }
+
+// ─── PUSH NOTIFICATIONS ──────────────────────────────────────────────────────
+self.addEventListener('push', (event) => {
+  if (!event.data) {
+    console.log('[PWA SW] Push event received with no data.');
+    return;
+  }
+
+  let data = {};
+  try {
+    data = event.data.json();
+  } catch (e) {
+    data = {
+      title: 'SALIRA',
+      body: event.data.text()
+    };
+  }
+
+  const title = data.title || 'SALIRA';
+  const options = {
+    body: data.body || '',
+    icon: data.icon || '/images/icon-192.png',
+    badge: data.badge || '/favicon.ico',
+    data: {
+      action_url: data.action_url || '/dashboard'
+    },
+    // Vibrate patterns on supported devices
+    vibrate: [100, 50, 100],
+    actions: [
+      { action: 'open', title: 'Buka Aplikasi' }
+    ]
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(title, options)
+  );
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+
+  const actionUrl = event.notification.data?.action_url || '/dashboard';
+  const targetUrl = new URL(actionUrl, self.location.origin).href;
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      // Check if there is already a window open with this origin
+      for (let i = 0; i < windowClients.length; i++) {
+        const client = windowClients[i];
+        if (client.url === targetUrl && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      
+      // If a window is open on a different page of the same origin, navigate & focus
+      for (let i = 0; i < windowClients.length; i++) {
+        const client = windowClients[i];
+        if ('focus' in client && 'navigate' in client) {
+          client.navigate(targetUrl);
+          return client.focus();
+        }
+      }
+
+      // If no windows are open, open a new one
+      if (clients.openWindow) {
+        return clients.openWindow(targetUrl);
+      }
+    })
+  );
+});

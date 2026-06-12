@@ -49,6 +49,7 @@ class HandleInertiaRequests extends Middleware
                 'error' => $request->session()->get('error'),
             ],
             'csrf_token' => csrf_token(),
+            'vapid_public_key' => env('VAPID_PUBLIC_KEY'),
         ];
     }
 }

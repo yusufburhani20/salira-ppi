@@ -30,7 +30,20 @@ class PortalNotification extends Notification
      */
     public function via(object $notifiable): array
     {
-        return ['database'];
+        return ['database', \App\Notifications\Channels\WebPushChannel::class];
+    }
+
+    /**
+     * Get the web push representation of the notification.
+     */
+    public function toWebPush(object $notifiable): array
+    {
+        return [
+            'title' => 'Portal Siswa SALIRA',
+            'body' => $this->message,
+            'action_url' => '/portal/dashboard',
+            'icon' => '/images/icon-192.png',
+        ];
     }
 
     /**

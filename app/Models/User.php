@@ -71,6 +71,11 @@ class User extends Authenticatable
         return $this->hasMany(Session::class);
     }
 
+    public function pushSubscriptions()
+    {
+        return $this->morphMany(PushSubscription::class, 'subscribable');
+    }
+
     public function isOnline()
     {
         return $this->sessions()->where('last_activity', '>=', now()->subMinutes(5)->getTimestamp())->exists();

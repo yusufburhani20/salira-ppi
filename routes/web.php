@@ -324,4 +324,9 @@ Route::prefix('portal')->name('portal.')->group(function () {
     });
 });
 
+Route::middleware(['auth:web,student'])->group(function () {
+    Route::post('/api/push-subscriptions', [\App\Http\Controllers\PushSubscriptionController::class, 'store'])->name('push-subscriptions.store');
+    Route::post('/api/push-subscriptions/unsubscribe', [\App\Http\Controllers\PushSubscriptionController::class, 'destroy'])->name('push-subscriptions.destroy');
+});
+
 require __DIR__.'/auth.php';
