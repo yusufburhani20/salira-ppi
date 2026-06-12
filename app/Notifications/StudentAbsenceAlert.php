@@ -40,7 +40,23 @@ class StudentAbsenceAlert extends Notification implements ShouldQueue
                 $channels[] = 'mail';
             }
         }
+
+        $channels[] = \App\Notifications\Channels\WebPushChannel::class;
+
         return $channels;
+    }
+
+    /**
+     * Get the web push representation of the notification.
+     */
+    public function toWebPush(object $notifiable): array
+    {
+        return [
+            'title' => 'Peringatan Absensi Siswa',
+            'body' => "Kami informasikan bahwa anak Anda {$this->student->name} belum tercatat melakukan presensi kehadiran di sekolah hari ini.",
+            'action_url' => '/portal/attendance',
+            'icon' => '/images/icon-192.png',
+        ];
     }
 
     private function parseTemplate($template, $notifiable)

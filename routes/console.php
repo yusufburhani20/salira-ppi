@@ -21,3 +21,12 @@ try {
 }
 
 Schedule::command('salira:send-absence-alerts')->dailyAt($alertTime);
+
+// Pengingat absensi Guru & Pegawai (Check-in jam 07:30, Check-out jam 15:00)
+Schedule::command('salira:send-user-attendance-reminders check_in')
+    ->dailyAt('07:30')
+    ->skip(fn() => now()->isSunday());
+
+Schedule::command('salira:send-user-attendance-reminders check_out')
+    ->dailyAt('15:00')
+    ->skip(fn() => now()->isSunday());
