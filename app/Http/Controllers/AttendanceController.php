@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Attendance;
 use App\Models\Geofence;
+use App\Services\ImageCompressionService;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use App\Enums\AttendanceStatus;
@@ -83,7 +84,12 @@ class AttendanceController extends Controller
         $verificationStatus = $geoCheck['valid'] ? 'valid' : 'system_flagged';
         $notes = $geoCheck['notes'];
 
-        $path = $request->file('photo')->store('attendances/checkin', 'public');
+        $path = ImageCompressionService::compressAndStore(
+            $request->file('photo'),
+            'attendances/checkin',
+            1200,
+            75
+        );
 
         Attendance::updateOrCreate(
             ['user_id' => $user->id, 'date' => $date],
@@ -158,7 +164,12 @@ class AttendanceController extends Controller
         
         $checkoutPath = null;
         if ($request->hasFile('photo')) {
-            $checkoutPath = $request->file('photo')->store('attendances/checkout', 'public');
+            $checkoutPath = ImageCompressionService::compressAndStore(
+                $request->file('photo'),
+                'attendances/checkout',
+                1200,
+                75
+            );
         }
 
         $existing->update([

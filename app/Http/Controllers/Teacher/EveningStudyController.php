@@ -9,6 +9,7 @@ use App\Models\EveningStudyAttendance;
 use App\Models\PermissionRequest;
 use App\Models\Student;
 use App\Enums\PermissionStatus;
+use App\Services\ImageCompressionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -228,7 +229,12 @@ class EveningStudyController extends Controller
             'attendance.*.notes' => 'nullable|string|max:255',
         ]);
 
-        $photoPath = $request->file('photo')->store('evening_studies', 'public');
+        $photoPath = ImageCompressionService::compressAndStore(
+            $request->file('photo'),
+            'evening_studies',
+            1200,
+            80
+        );
 
         DB::transaction(function () use ($request, $photoPath) {
             $eveningStudy = EveningStudy::create([
@@ -323,7 +329,12 @@ class EveningStudyController extends Controller
             ];
 
             if ($request->hasFile('photo')) {
-                $updateData['photo_path'] = $request->file('photo')->store('evening_studies', 'public');
+                $updateData['photo_path'] = ImageCompressionService::compressAndStore(
+                    $request->file('photo'),
+                    'evening_studies',
+                    1200,
+                    80
+                );
             }
 
             $eveningStudy->update($updateData);

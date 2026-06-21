@@ -266,6 +266,6 @@ class ComputerLabController extends Controller
             'notes' => $request->notes,
         ]);
 
-        return $pdf->download('stock-opname-' . str_replace(' ', '_', $lab->name) . '-' . date('Ymd') . '.pdf');
+        return $pdf->stream('stock-opname-' . str_replace(' ', '_', $lab->name) . '-' . date('Ymd') . '.pdf');
     }
 }

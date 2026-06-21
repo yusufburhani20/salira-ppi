@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\ComputerUnit;
 use App\Models\ComputerIssue;
+use App\Models\ComputerUnit;
+use App\Services\ImageCompressionService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 use Inertia\Inertia;
 
 class ComputerIssueController extends Controller
@@ -88,7 +90,12 @@ class ComputerIssueController extends Controller
 
             $photoPath = null;
             if ($request->hasFile('photo')) {
-                $photoPath = $request->file('photo')->store('computer_issues', 'public');
+                $photoPath = ImageCompressionService::compressAndStore(
+                    $request->file('photo'),
+                    'computer_issues',
+                    1200,
+                    80
+                );
             }
 
             $issue = ComputerIssue::create([

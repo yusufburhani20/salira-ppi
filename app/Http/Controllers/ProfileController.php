@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Services\ImageCompressionService;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -41,7 +42,12 @@ class ProfileController extends Controller
             if ($user->avatar) {
                 Storage::delete('public/' . $user->avatar);
             }
-            $path = $request->file('avatar')->store('avatars', 'public');
+            $path = ImageCompressionService::compressAndStoreCropped(
+                $request->file('avatar'),
+                'avatars',
+                400,
+                80
+            );
             $user->avatar = $path;
         }
 
