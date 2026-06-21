@@ -47,6 +47,7 @@ class HandleInertiaRequests extends Middleware
             'flash' => [
                 'success' => $request->session()->get('success'),
                 'error' => $request->session()->get('error'),
+                'ticket_code' => $request->session()->get('ticket_code'),
             ],
             'csrf_token' => csrf_token(),
             'vapid_public_key' => env('VAPID_PUBLIC_KEY'),

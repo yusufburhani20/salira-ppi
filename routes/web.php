@@ -102,9 +102,9 @@ Route::middleware('auth')->group(function () {
         Route::put('/computer-units/{unit}', [\App\Http\Controllers\Admin\ComputerLabController::class, 'updateUnit'])->name('computer-units.update');
         Route::delete('/computer-units/{unit}', [\App\Http\Controllers\Admin\ComputerLabController::class, 'destroyUnit'])->name('computer-units.destroy');
 
-        // Computer Issue Management
         Route::get('/computer-issues', [\App\Http\Controllers\Admin\ComputerIssueController::class, 'index'])->name('computer-issues.index');
         Route::post('/computer-issues/{issue}/resolve', [\App\Http\Controllers\Admin\ComputerIssueController::class, 'resolve'])->name('computer-issues.resolve');
+        Route::post('/computer-issues/{issue}/process', [\App\Http\Controllers\Admin\ComputerIssueController::class, 'process'])->name('computer-issues.process');
     });
 
     // Admin Group C: Super Admin, Admin, Pimpinan, Bendahara

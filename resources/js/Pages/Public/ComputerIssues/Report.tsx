@@ -1,4 +1,4 @@
-import { Head, useForm } from '@inertiajs/react';
+import { Head, useForm, usePage } from '@inertiajs/react';
 import { useState, useEffect } from 'react';
 import {
     ExclamationTriangleIcon,
@@ -8,6 +8,7 @@ import {
 } from '@heroicons/react/24/outline';
 
 export default function Report({ prefilledCode, unit }: any) {
+    const { flash } = usePage().props as any;
     const [submitted, setSubmitted] = useState(false);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
@@ -124,6 +125,17 @@ export default function Report({ prefilledCode, unit }: any) {
                             <p className="text-xs text-slate-500 dark:text-slate-400 px-4">
                                 Terima kasih atas laporannya. Tim Laboran/Teknisi akan segera menindaklanjuti perbaikan pada PC ini.
                             </p>
+                            {flash?.ticket_code && (
+                                <div className="mt-4 p-4 bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/40 rounded-2xl">
+                                    <p className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">KODE TIKET PELACAKAN</p>
+                                    <p className="text-xl font-black text-slate-800 dark:text-slate-100 font-mono mt-1 select-all cursor-pointer hover:text-indigo-600 transition-colors" title="Klik untuk menyeleksi">
+                                        {flash.ticket_code}
+                                    </p>
+                                    <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-2">
+                                        Simpan kode di atas untuk memantau status perbaikan komputer Anda.
+                                    </p>
+                                </div>
+                            )}
                         </div>
                         <button
                             onClick={() => setSubmitted(false)}

@@ -91,7 +91,7 @@ class ComputerIssueController extends Controller
                 $photoPath = $request->file('photo')->store('computer_issues', 'public');
             }
 
-            ComputerIssue::create([
+            $issue = ComputerIssue::create([
                 'computer_unit_id' => $unit->id,
                 'reporter_name' => $request->reporter_name,
                 'description' => $request->description,
@@ -103,7 +103,8 @@ class ComputerIssueController extends Controller
             $unit->update(['status' => 'broken']);
 
             return redirect()->route('public.computer-issues.report', ['code' => $request->pc_code])
-                ->with('success', 'Laporan kerusakan berhasil dikirim. Laporan Anda sedang menunggu perbaikan.');
+                ->with('success', 'Laporan kerusakan berhasil dikirim. Laporan Anda sedang menunggu perbaikan.')
+                ->with('ticket_code', $issue->ticket_code);
         } catch (\Exception $e) {
             \Illuminate\Support\Facades\Log::error('Gagal membuat tiket kerusakan: ' . $e->getMessage(), [
                 'exception' => $e,
@@ -137,5 +138,20 @@ class ComputerIssueController extends Controller
         $issue->unit->update(['status' => $request->pc_status]);
 
         return back()->with('success', 'Tiket kerusakan berhasil diselesaikan.');
+    }
+
+    /**
+     * Mark a computer issue as in progress.
+     */
+    public function process(ComputerIssue $issue)
+    {
+        $issue->update([
+            'status' => 'open',
+        ]);
+
+        // Automatically set the unit's status to maintenance
+        $issue->unit->update(['status' => 'maintenance']);
+
+        return back()->with('success', 'Tiket kerusakan sekarang dalam proses perbaikan.');
     }
 }

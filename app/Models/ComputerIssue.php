@@ -11,6 +11,15 @@ class ComputerIssue extends Model
 
     protected $appends = ['photo_url'];
 
+    protected static function booted()
+    {
+        static::creating(function ($issue) {
+            if (empty($issue->ticket_code)) {
+                $issue->ticket_code = 'TKT-' . strtoupper(bin2hex(random_bytes(4)));
+            }
+        });
+    }
+
     public function unit()
     {
         return $this->belongsTo(ComputerUnit::class, 'computer_unit_id');

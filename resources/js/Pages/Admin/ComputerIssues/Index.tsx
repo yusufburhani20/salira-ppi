@@ -123,6 +123,7 @@ export default function Index({ issues, filters }: any) {
                             <thead>
                                 <tr className="border-b border-slate-100 dark:border-slate-700/50 bg-slate-50/80 dark:bg-slate-900/30">
                                     <th className="text-left px-5 py-3 text-[10px] font-black text-slate-500 uppercase tracking-wider">Tanggal</th>
+                                    <th className="text-left px-4 py-3 text-[10px] font-black text-slate-500 uppercase tracking-wider">Kode Tiket</th>
                                     <th className="text-left px-4 py-3 text-[10px] font-black text-slate-500 uppercase tracking-wider">PC & Ruangan</th>
                                     <th className="text-left px-4 py-3 text-[10px] font-black text-slate-500 uppercase tracking-wider">Pelapor</th>
                                     <th className="text-left px-4 py-3 text-[10px] font-black text-slate-500 uppercase tracking-wider">Laporan Kerusakan</th>
@@ -134,7 +135,7 @@ export default function Index({ issues, filters }: any) {
                             <tbody className="divide-y divide-slate-100 dark:divide-slate-700/30">
                                 {issues.data.length === 0 ? (
                                     <tr>
-                                        <td colSpan={7} className="text-center py-16 text-slate-400 text-sm">
+                                        <td colSpan={8} className="text-center py-16 text-slate-400 text-sm">
                                             Tidak ada tiket laporan kerusakan
                                         </td>
                                     </tr>
@@ -156,6 +157,9 @@ export default function Index({ issues, filters }: any) {
                                                         month: 'short',
                                                         year: 'numeric',
                                                     })}
+                                                </td>
+                                                <td className="px-4 py-4 font-mono font-bold text-slate-800 dark:text-slate-200">
+                                                    {issue.ticket_code || '-'}
                                                 </td>
                                                 <td className="px-4 py-4">
                                                     <p className="font-bold text-slate-800 dark:text-slate-200 font-mono">
@@ -201,22 +205,36 @@ export default function Index({ issues, filters }: any) {
                                                     </span>
                                                 </td>
                                                 <td className="px-4 py-4 text-center">
-                                                    {issue.status !== 'resolved' ? (
-                                                        <button
-                                                            onClick={() => {
-                                                                setResolveTicket(issue);
-                                                                resolveForm.setData({
-                                                                    resolution_notes: '',
-                                                                    pc_status: 'active',
-                                                                });
-                                                            }}
-                                                            className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition-all cursor-pointer"
-                                                        >
-                                                            Selesaikan
-                                                        </button>
-                                                    ) : (
-                                                        <span className="text-xs text-slate-400 font-bold">Closed</span>
-                                                    )}
+                                                    <div className="flex items-center justify-center gap-2">
+                                                        {issue.status === 'pending' && (
+                                                            <button
+                                                                onClick={() => {
+                                                                    if (confirm('Mulai proses perbaikan untuk tiket ini?')) {
+                                                                        router.post(route('admin.computer-issues.process', issue.id));
+                                                                    }
+                                                                }}
+                                                                className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold rounded-lg transition-all cursor-pointer animate-pulse"
+                                                            >
+                                                                Proses
+                                                            </button>
+                                                        )}
+                                                        {issue.status !== 'resolved' ? (
+                                                            <button
+                                                                onClick={() => {
+                                                                    setResolveTicket(issue);
+                                                                    resolveForm.setData({
+                                                                        resolution_notes: '',
+                                                                        pc_status: 'active',
+                                                                    });
+                                                                }}
+                                                                className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition-all cursor-pointer"
+                                                            >
+                                                                Selesaikan
+                                                            </button>
+                                                        ) : (
+                                                            <span className="text-xs text-slate-400 font-bold">Closed</span>
+                                                        )}
+                                                    </div>
                                                 </td>
                                             </tr>
                                         );
