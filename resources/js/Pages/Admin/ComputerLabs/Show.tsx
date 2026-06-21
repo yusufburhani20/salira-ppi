@@ -245,47 +245,18 @@ export default function Show({ lab, kepalaPrograms }: any) {
     return (
         <AuthenticatedLayout
             header={
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                    <div className="flex items-center gap-3">
-                        <a
-                            href={route('admin.computer-labs.index')}
-                            className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-500 transition-colors"
-                        >
-                            <ArrowLeftIcon className="w-4 h-4" />
-                        </a>
-                        <div>
-                            <h2 className="text-xl font-black text-slate-800 dark:text-slate-200 tracking-tight">
-                                {lab.name}
-                            </h2>
-                            <p className="text-xs text-slate-500 mt-0.5">{lab.location || 'Tidak ada info lokasi'}</p>
-                        </div>
-                    </div>
-                    <div className="flex gap-2 flex-wrap">
-                        <button
-                            onClick={() => setShowScannerModal(true)}
-                            className="flex items-center gap-2 px-4 py-2 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/30 dark:hover:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 text-xs font-bold rounded-xl transition-all cursor-pointer"
-                        >
-                            <QrCodeIcon className="w-4 h-4" /> Scan QR PC
-                        </button>
-                        <a
-                            href={route('admin.computer-labs.print-qrs', lab.id)}
-                            target="_blank"
-                            className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-xl transition-all cursor-pointer"
-                        >
-                            <PrinterIcon className="w-4 h-4" /> Cetak QR Massal
-                        </a>
-                        <button
-                            onClick={() => setShowReportModal(true)}
-                            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-emerald-500/20 active:scale-95 cursor-pointer"
-                        >
-                            <DocumentArrowUpIcon className="w-4 h-4" /> Kirim Opname
-                        </button>
-                        <button
-                            onClick={openAddUnit}
-                            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-indigo-500/20 active:scale-95 cursor-pointer"
-                        >
-                            <PlusIcon className="w-4 h-4" /> Tambah Unit PC
-                        </button>
+                <div className="flex items-center gap-3">
+                    <a
+                        href={route('admin.computer-labs.index')}
+                        className="p-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-500 transition-colors"
+                    >
+                        <ArrowLeftIcon className="w-4 h-4" />
+                    </a>
+                    <div>
+                        <h2 className="text-xl font-black text-slate-800 dark:text-slate-200 tracking-tight">
+                            {lab.name}
+                        </h2>
+                        <p className="text-xs text-slate-500 mt-0.5">{lab.location || 'Tidak ada info lokasi'}</p>
                     </div>
                 </div>
             }
@@ -311,30 +282,30 @@ export default function Show({ lab, kepalaPrograms }: any) {
                     </div>
                 </div>
 
-                {/* Mobile Action Buttons (Visible only on mobile / screens < lg) */}
-                <div className="lg:hidden grid grid-cols-2 gap-2 bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-100/80 dark:border-slate-700/50 shadow-sm">
+                {/* Lab Action Buttons (Unified for both desktop and mobile, positioned below header) */}
+                <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-3 bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/50 shadow-sm">
                     <button
                         onClick={() => setShowScannerModal(true)}
-                        className="flex items-center justify-center gap-2 px-3 py-2.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/30 dark:hover:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 text-xs font-bold rounded-xl transition-all cursor-pointer"
+                        className="flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/30 dark:hover:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 text-xs font-bold rounded-xl transition-all cursor-pointer"
                     >
                         <QrCodeIcon className="w-4 h-4" /> Scan QR PC
                     </button>
                     <a
                         href={route('admin.computer-labs.print-qrs', lab.id)}
                         target="_blank"
-                        className="flex items-center justify-center gap-2 px-3 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-xl transition-all cursor-pointer"
+                        className="flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-xl transition-all cursor-pointer"
                     >
                         <PrinterIcon className="w-4 h-4" /> Cetak QR Massal
                     </a>
                     <button
                         onClick={() => setShowReportModal(true)}
-                        className="flex items-center justify-center gap-2 px-3 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-emerald-500/20 active:scale-95 cursor-pointer"
+                        className="flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-emerald-500/20 active:scale-95 cursor-pointer"
                     >
                         <DocumentArrowUpIcon className="w-4 h-4" /> Kirim Opname
                     </button>
                     <button
                         onClick={openAddUnit}
-                        className="flex items-center justify-center gap-2 px-3 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-indigo-500/20 active:scale-95 cursor-pointer"
+                        className="flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-indigo-500/20 active:scale-95 cursor-pointer"
                     >
                         <PlusIcon className="w-4 h-4" /> Tambah Unit PC
                     </button>
