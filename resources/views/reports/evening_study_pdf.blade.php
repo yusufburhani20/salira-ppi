@@ -23,12 +23,17 @@
         @php
             // Resolve local photo path for DomPDF inline rendering
             $photoPath = null;
+            $photoUrl  = null;
             if (!empty($item['photo_path'])) {
                 if (file_exists(storage_path('app/public/' . $item['photo_path']))) {
                     $photoPath = storage_path('app/public/' . $item['photo_path']);
                 } elseif (file_exists(public_path('storage/' . $item['photo_path']))) {
                     $photoPath = public_path('storage/' . $item['photo_path']);
                 }
+                // Public URL so DomPDF can embed it as a clickable link
+                $photoUrl = url('storage/' . $item['photo_path']);
+            } elseif (!empty($item['photo_url'])) {
+                $photoUrl = url($item['photo_url']);
             }
 
             // Build per-status student lists
@@ -66,8 +71,15 @@
                 @endif
             </td>
             <td class="text-center" style="font-size: 8px;">
-                @if($photoPath)
+                @if($photoPath && $photoUrl)
+                    <a href="{{ $photoUrl }}" style="display: inline-block; border: 1px solid #000; text-decoration: none; color: #000;">
+                        <img src="{{ $photoPath }}" style="width: 80px; max-height: 55px; display: block;">
+                        <div style="font-size: 6px; padding: 1px 0; text-align: center; background: #eee; border-top: 1px solid #000;">&#128247; Klik untuk buka</div>
+                    </a>
+                @elseif($photoPath)
                     <img src="{{ $photoPath }}" style="width: 80px; max-height: 55px; border: 1px solid #000;">
+                @elseif($photoUrl)
+                    <a href="{{ $photoUrl }}" style="font-size: 8px; font-weight: bold; text-decoration: underline; color: #000;">[Lihat Foto]</a>
                 @else
                     <span style="font-style: italic; font-size: 7px;">Tidak ada foto</span>
                 @endif
