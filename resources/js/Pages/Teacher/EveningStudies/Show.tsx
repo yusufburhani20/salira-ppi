@@ -61,6 +61,23 @@ export default function Show({ eveningStudy }: any) {
             <Head title={`Jurnal Belajar Malam ${eveningStudy.academic_class?.name}`} />
 
             <div className="space-y-6">
+                {/* Mobile Header (Visible only on mobile / screens < lg) */}
+                <div className="lg:hidden flex items-center justify-between gap-3 bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-100/80 dark:border-slate-700/50 shadow-sm">
+                    <div className="flex items-center gap-3">
+                        <Link
+                            href={route('teacher.evening-studies.index')}
+                            className="p-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 transition-colors"
+                        >
+                            <ArrowLeftIcon className="w-4 h-4" />
+                        </Link>
+                        <div>
+                            <h2 className="text-base font-black text-slate-800 dark:text-slate-200 tracking-tight">
+                                Detail Belajar Malam
+                            </h2>
+                            <p className="text-[10px] text-slate-500 mt-0.5">{eveningStudy.academic_class?.name || '-'} • {dateFormatted}</p>
+                        </div>
+                    </div>
+                </div>
                 
                 {/* Stats Summary Panel */}
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">

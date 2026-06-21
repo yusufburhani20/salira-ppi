@@ -247,6 +247,8 @@ Route::middleware('auth')->group(function () {
     Route::middleware(['auth', 'role:Super Admin|Guru|Wali Kelas|Pengawas Malam'])->prefix('teacher')->name('teacher.')->group(function () {
         // Evening Study (Belajar Malam)
         Route::get('/evening-studies/students/{classId}', [\App\Http\Controllers\Teacher\EveningStudyController::class, 'getStudents'])->name('evening-studies.students');
+        Route::get('/evening-studies/export/excel', [\App\Http\Controllers\Teacher\EveningStudyController::class, 'exportExcel'])->name('evening-studies.export.excel');
+        Route::get('/evening-studies/export/pdf', [\App\Http\Controllers\Teacher\EveningStudyController::class, 'exportPdf'])->name('evening-studies.export.pdf');
         Route::resource('evening-studies', \App\Http\Controllers\Teacher\EveningStudyController::class);
 
         // Class Agendas

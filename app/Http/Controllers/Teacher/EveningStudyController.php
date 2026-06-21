@@ -14,21 +14,157 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Carbon\Carbon;
+use App\Models\Semester;
+use App\Exports\EveningStudyRecapExport;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Maatwebsite\Excel\Facades\Excel;
 
 class EveningStudyController extends Controller
 {
+    private function resolveSemesterDates(Request $request)
+    {
+        if ($request->filled('semester_id')) {
+            $sem = Semester::find($request->semester_id);
+            if ($sem) {
+                $request->merge([
+                    'start_date' => $sem->start_date,
+                    'end_date' => $sem->end_date,
+                ]);
+            }
+        } elseif (!$request->has('start_date') && !$request->has('end_date')) {
+            $activeSem = Semester::where('is_active', true)->first();
+            if ($activeSem) {
+                $request->merge([
+                    'semester_id' => $activeSem->id,
+                    'start_date' => $activeSem->start_date,
+                    'end_date' => $activeSem->end_date,
+                ]);
+            }
+        }
+    }
+
     /**
      * Display a listing of evening study logs.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $eveningStudies = EveningStudy::with(['academicClass', 'supervisor'])
-            ->latest('date')
-            ->paginate(15);
+        $this->resolveSemesterDates($request);
+
+        $query = EveningStudy::with(['academicClass', 'supervisor']);
+
+        if ($request->academic_class_id) {
+            $query->where('academic_class_id', $request->academic_class_id);
+        }
+
+        if ($request->start_date) {
+            $query->whereDate('date', '>=', $request->start_date);
+        }
+        if ($request->end_date) {
+            $query->whereDate('date', '<=', $request->end_date);
+        }
+
+        $eveningStudies = $query->latest('date')
+            ->latest('id')
+            ->paginate(15)
+            ->withQueryString();
+
+        $semesters = Semester::with('academicYear')
+            ->get()
+            ->map(function($sem) {
+                return [
+                    'id' => $sem->id,
+                    'name' => 'TA ' . $sem->academicYear->name . ' - ' . $sem->name,
+                    'start_date' => $sem->start_date,
+                    'end_date' => $sem->end_date,
+                    'is_active' => $sem->is_active,
+                ];
+            });
+
+        $filters = $request->only(['academic_class_id', 'start_date', 'end_date', 'semester_id']);
 
         return Inertia::render('Teacher/EveningStudies/Index', [
-            'eveningStudies' => $eveningStudies
+            'eveningStudies' => $eveningStudies,
+            'classes' => AcademicClass::all(),
+            'semesters' => $semesters,
+            'filters' => $filters
         ]);
+    }
+
+    public function exportExcel(Request $request)
+    {
+        $this->resolveSemesterDates($request);
+        Carbon::setLocale('id');
+        $data = $this->getExportQuery($request)->get();
+
+        $className = $request->academic_class_id ? AcademicClass::find($request->academic_class_id)->name : 'Semua Kelas';
+        $startDateFormatted = $request->start_date ? Carbon::parse($request->start_date)->translatedFormat('d F Y') : 'Awal';
+        $endDateFormatted = $request->end_date ? Carbon::parse($request->end_date)->translatedFormat('d F Y') : 'Sekarang';
+
+        $meta = [
+            'school_name' => \App\Models\Setting::get('school_name', 'SALIRA ACADEMY'),
+            'class_name' => $className,
+            'range' => $startDateFormatted . ' - ' . $endDateFormatted,
+            'printed_at' => Carbon::now()->isoFormat('D MMMM YYYY H:mm:ss')
+        ];
+
+        return Excel::download(new EveningStudyRecapExport($data, $meta), 'rekap_belajar_malam.xlsx');
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $this->resolveSemesterDates($request);
+        Carbon::setLocale('id');
+        $data = $this->getExportQuery($request)->get();
+
+        $className = $request->academic_class_id ? AcademicClass::find($request->academic_class_id)->name : 'Semua Kelas';
+        $startDateFormatted = $request->start_date ? Carbon::parse($request->start_date)->translatedFormat('d F Y') : 'Awal';
+        $endDateFormatted = $request->end_date ? Carbon::parse($request->end_date)->translatedFormat('d F Y') : 'Sekarang';
+        $range = $startDateFormatted . ' - ' . $endDateFormatted;
+
+        $logo = \App\Models\Setting::get('school_logo');
+        $logoPath = null;
+        if ($logo) {
+            if (file_exists(public_path('storage/' . $logo))) {
+                $logoPath = public_path('storage/' . $logo);
+            } elseif (file_exists(storage_path('app/public/' . $logo))) {
+                $logoPath = storage_path('app/public/' . $logo);
+            } elseif (file_exists(public_path($logo))) {
+                $logoPath = public_path($logo);
+            }
+        }
+
+        $settings = [
+            'title' => 'Rekapitulasi Jurnal Belajar Malam',
+            'school_name' => \App\Models\Setting::get('school_name', 'SALIRA ACADEMY'),
+            'school_address' => \App\Models\Setting::get('school_address'),
+            'logo' => $logoPath,
+            'class_name' => $className,
+            'range' => $range,
+        ];
+
+        $pdf = Pdf::loadView('reports.evening_study_pdf', array_merge($settings, [
+            'data' => $data
+        ]))->setPaper('a4', 'landscape');
+
+        return $pdf->stream('rekap_belajar_malam.pdf');
+    }
+
+    private function getExportQuery(Request $request)
+    {
+        $query = EveningStudy::with(['academicClass', 'supervisor', 'attendances.student']);
+
+        if ($request->academic_class_id) {
+            $query->where('academic_class_id', $request->academic_class_id);
+        }
+
+        if ($request->start_date) {
+            $query->whereDate('date', '>=', $request->start_date);
+        }
+        if ($request->end_date) {
+            $query->whereDate('date', '<=', $request->end_date);
+        }
+
+        return $query->latest('date')->latest('id');
     }
 
     /**

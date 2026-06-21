@@ -10,11 +10,38 @@ import {
     TrashIcon,
 } from '@heroicons/react/24/outline';
 
-export default function Index({ eveningStudies }: any) {
+export default function Index({ eveningStudies, classes = [], semesters = [], filters = {} }: any) {
     const handleDelete = (item: any) => {
         if (confirm(`Hapus Jurnal Belajar Malam tanggal ${item.date} untuk kelas ${item.academic_class?.name}?`)) {
             router.delete(route('teacher.evening-studies.destroy', item.id));
         }
+    };
+
+    const handleExport = (type: 'excel' | 'pdf') => {
+        const params = new URLSearchParams(filters);
+        window.open(route(`teacher.evening-studies.export.${type}`) + '?' + params.toString(), '_blank');
+    };
+
+    const updateFilter = (key: string, value: string) => {
+        const newFilters = { ...filters, [key]: value };
+        if (key === 'semester_id' && value !== '') {
+            newFilters.start_date = '';
+            newFilters.end_date = '';
+        } else if ((key === 'start_date' || key === 'end_date') && value !== '') {
+            newFilters.semester_id = '';
+        }
+        router.get(route('teacher.evening-studies.index'), newFilters, {
+            preserveState: true,
+            preserveScroll: true,
+            replace: true
+        });
+    };
+
+    const resetFilters = () => {
+        router.get(route('teacher.evening-studies.index'), {}, {
+            preserveState: true,
+            preserveScroll: true
+        });
     };
 
     return (
@@ -29,18 +56,90 @@ export default function Index({ eveningStudies }: any) {
                             Pantau absensi santri, agenda belajar malam, dan dokumentasi foto harian
                         </p>
                     </div>
-                    <a
-                        href={route('teacher.evening-studies.create')}
-                        className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-indigo-500/20 active:scale-95 cursor-pointer"
-                    >
-                        <PlusIcon className="w-4 h-4" /> Catat Belajar Malam
-                    </a>
+                    <div className="flex flex-wrap gap-2">
+                        <button
+                            onClick={() => handleExport('excel')}
+                            className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-emerald-500/20 active:scale-95 cursor-pointer"
+                        >
+                            Excel
+                        </button>
+                        <button
+                            onClick={() => handleExport('pdf')}
+                            className="inline-flex items-center gap-1.5 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-rose-500/20 active:scale-95 cursor-pointer"
+                        >
+                            PDF
+                        </button>
+                        <a
+                            href={route('teacher.evening-studies.create')}
+                            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-indigo-500/20 active:scale-95 cursor-pointer"
+                        >
+                            <PlusIcon className="w-4 h-4" /> Catat Belajar Malam
+                        </a>
+                    </div>
                 </div>
             }
         >
             <Head title="Kegiatan Belajar Malam" />
 
             <div className="space-y-6">
+                {/* Filter Bar */}
+                <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/50 shadow-sm">
+                    <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Pilih Semester</label>
+                            <select 
+                                value={filters.semester_id || ''}
+                                onChange={(e) => updateFilter('semester_id', e.target.value)}
+                                className="w-full rounded-xl border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-xs text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 font-medium py-2 px-3 outline-none"
+                            >
+                                <option value="">-- Custom Tanggal --</option>
+                                {semesters.map((sem: any) => (
+                                    <option key={sem.id} value={sem.id}>{sem.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Pilih Kelas</label>
+                            <select 
+                                value={filters.academic_class_id || ''}
+                                onChange={(e) => updateFilter('academic_class_id', e.target.value)}
+                                className="w-full rounded-xl border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-xs text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 font-medium py-2 px-3 outline-none"
+                            >
+                                <option value="">Semua Kelas</option>
+                                {classes.map((c: any) => (
+                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Mulai Tanggal</label>
+                            <input 
+                                type="date"
+                                value={filters.start_date || ''}
+                                onChange={(e) => updateFilter('start_date', e.target.value)}
+                                className="w-full rounded-xl border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-xs text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 font-medium py-2 px-3 outline-none"
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Sampai Tanggal</label>
+                            <input 
+                                type="date"
+                                value={filters.end_date || ''}
+                                onChange={(e) => updateFilter('end_date', e.target.value)}
+                                className="w-full rounded-xl border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-700 text-xs text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 font-medium py-2 px-3 outline-none"
+                            />
+                        </div>
+                        <div>
+                            <button 
+                                onClick={resetFilters}
+                                className="w-full py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 rounded-xl font-bold text-xs transition-all cursor-pointer"
+                            >
+                                Reset Filter
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 {eveningStudies.data.length === 0 ? (
                     <div className="bg-white dark:bg-slate-800 rounded-2xl p-16 text-center border border-slate-100 dark:border-slate-700/50 shadow-sm">
                         <BookOpenIcon className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
