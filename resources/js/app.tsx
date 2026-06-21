@@ -80,6 +80,16 @@ function isAuthenticatedRoute(url: string): boolean {
             return false;
         }
 
+        // Exclude public computer issues reporting path
+        if (path.startsWith('/public/computer-issues/report')) {
+            return false;
+        }
+
+        // Exclude public invoice paths
+        if (path.startsWith('/invoice/')) {
+            return false;
+        }
+
         return !PUBLIC_OR_GUEST_PATHS.includes(path);
     } catch {
         return false;
