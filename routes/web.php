@@ -30,9 +30,9 @@ Route::middleware('auth')->group(function () {
         // Classes (read-only for pimpinan can be restricted similar to students if needed in the future, for now they don't see it per matrix, so it moves to Group B)
     });
 
-    // Admin Group B: Super Admin, Admin, Staff/TU
+    // Admin Group B: Super Admin, Admin, Staff/TU, Laboran Komputer
     // Manajemen Data Operasional
-    Route::middleware(['role:Super Admin|Staff/TU'])->prefix('admin')->name('admin.')->group(function () {
+    Route::middleware(['role:Super Admin|Staff/TU|Laboran Komputer'])->prefix('admin')->name('admin.')->group(function () {
         // Students CRUD
         Route::post('/students', [\App\Http\Controllers\Admin\StudentController::class, 'store'])->name('students.store');
         Route::put('/students/{student}', [\App\Http\Controllers\Admin\StudentController::class, 'update'])->name('students.update');
@@ -87,6 +87,23 @@ Route::middleware('auth')->group(function () {
             Route::put('/{item}', [\App\Http\Controllers\Admin\InventoryController::class, 'update'])->name('update');
             Route::delete('/{item}', [\App\Http\Controllers\Admin\InventoryController::class, 'destroy'])->name('destroy');
         });
+
+        // Computer Lab & PC Management
+        Route::get('/computer-labs', [\App\Http\Controllers\Admin\ComputerLabController::class, 'index'])->name('computer-labs.index');
+        Route::post('/computer-labs', [\App\Http\Controllers\Admin\ComputerLabController::class, 'store'])->name('computer-labs.store');
+        Route::get('/computer-labs/{lab}', [\App\Http\Controllers\Admin\ComputerLabController::class, 'show'])->name('computer-labs.show');
+        Route::put('/computer-labs/{lab}', [\App\Http\Controllers\Admin\ComputerLabController::class, 'update'])->name('computer-labs.update');
+        Route::delete('/computer-labs/{lab}', [\App\Http\Controllers\Admin\ComputerLabController::class, 'destroy'])->name('computer-labs.destroy');
+        Route::post('/computer-labs/{lab}/units', [\App\Http\Controllers\Admin\ComputerLabController::class, 'storeUnit'])->name('computer-labs.units.store');
+        Route::get('/computer-labs/{lab}/print-qrs', [\App\Http\Controllers\Admin\ComputerLabController::class, 'printQrs'])->name('computer-labs.print-qrs');
+        Route::post('/computer-labs/{lab}/send-report', [\App\Http\Controllers\Admin\ComputerLabController::class, 'sendReport'])->name('computer-labs.send-report');
+
+        Route::put('/computer-units/{unit}', [\App\Http\Controllers\Admin\ComputerLabController::class, 'updateUnit'])->name('computer-units.update');
+        Route::delete('/computer-units/{unit}', [\App\Http\Controllers\Admin\ComputerLabController::class, 'destroyUnit'])->name('computer-units.destroy');
+
+        // Computer Issue Management
+        Route::get('/computer-issues', [\App\Http\Controllers\Admin\ComputerIssueController::class, 'index'])->name('computer-issues.index');
+        Route::post('/computer-issues/{issue}/resolve', [\App\Http\Controllers\Admin\ComputerIssueController::class, 'resolve'])->name('computer-issues.resolve');
     });
 
     // Admin Group C: Super Admin, Admin, Pimpinan, Bendahara
@@ -226,7 +243,11 @@ Route::middleware('auth')->group(function () {
     Route::patch('/notifications/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.markAllAsRead');
 
     // Teacher Routes
-    Route::middleware(['auth', 'role:Super Admin|Guru|Wali Kelas'])->prefix('teacher')->name('teacher.')->group(function () {
+    Route::middleware(['auth', 'role:Super Admin|Guru|Wali Kelas|Pengawas Malam'])->prefix('teacher')->name('teacher.')->group(function () {
+        // Evening Study (Belajar Malam)
+        Route::get('/evening-studies/students/{classId}', [\App\Http\Controllers\Teacher\EveningStudyController::class, 'getStudents'])->name('evening-studies.students');
+        Route::resource('evening-studies', \App\Http\Controllers\Teacher\EveningStudyController::class);
+
         // Class Agendas
         Route::get('/agendas', [\App\Http\Controllers\Teacher\ClassAgendaController::class, 'index'])->name('agendas.index');
         Route::get('/agendas/create', [\App\Http\Controllers\Teacher\ClassAgendaController::class, 'create'])->name('agendas.create');
@@ -283,6 +304,10 @@ Route::post('/webhook/midtrans', [\App\Http\Controllers\Webhook\MidtransControll
 Route::get('/invoice/{bill_number}', [\App\Http\Controllers\InvoiceController::class, 'show'])->name('invoice.show');
 Route::get('/invoice/{bill_number}/pdf', [\App\Http\Controllers\InvoiceController::class, 'downloadPdf'])->name('invoice.pdf');
 Route::post('/invoice/{bill_number}/prepare-payment', [\App\Http\Controllers\InvoiceController::class, 'preparePayment'])->name('invoice.prepare-payment');
+
+// Public Computer Issue Report (Scan QR PC)
+Route::get('/public/computer-issues/report', [\App\Http\Controllers\Admin\ComputerIssueController::class, 'reportForm'])->name('public.computer-issues.report');
+Route::post('/public/computer-issues/report', [\App\Http\Controllers\Admin\ComputerIssueController::class, 'storeIssue']);
 
 // Student Portal Routes
 Route::prefix('portal')->name('portal.')->group(function () {

@@ -76,9 +76,9 @@ export default function Authenticated({
     const isStaff = userRoles.includes('Staff/TU');
     const isBendahara = userRoles.includes('Bendahara');
     const isKaprog = userRoles.includes('Kepala Program');
-    const isTeacher = isGuru || isWaliKelas || isAdmin;
+    const isTeacher = isGuru || isWaliKelas || isAdmin || userRoles.includes('Pengawas Malam');
     const isWaliOrAdmin = isWaliKelas || isAdmin;
-    const hasDataAccess = isAdmin || isStaff;
+    const hasDataAccess = isAdmin || isStaff || userRoles.includes('Laboran Komputer');
 
     // Grouped nav structure
     const navGroups = [
@@ -154,6 +154,13 @@ export default function Authenticated({
                     active: route().current('admin.reports.student-resume'),
                     show: isAdmin || isPimpinan,
                     icon: (<svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.414a4 4 0 00-5.656-5.656l-6.415 6.414a6 6 0 108.486 8.486L19 14" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5" /></svg>),
+                },
+                {
+                    label: 'Belajar Malam',
+                    href: route('teacher.evening-studies.index'),
+                    active: route().current('teacher.evening-studies.*'),
+                    show: isGuru || isWaliKelas || isSuperAdmin || userRoles.includes('Pengawas Malam'),
+                    icon: (<svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>),
                 },
             ],
         },
@@ -297,6 +304,20 @@ export default function Authenticated({
                     active: route().current('admin.inventory.logs'),
                     show: hasDataAccess,
                     icon: (<svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>),
+                },
+                {
+                    label: 'Lab Komputer & PC',
+                    href: route('admin.computer-labs.index'),
+                    active: route().current('admin.computer-labs.*') || route().current('admin.computer-units.*'),
+                    show: hasDataAccess,
+                    icon: (<svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>),
+                },
+                {
+                    label: 'Laporan Masalah PC',
+                    href: route('admin.computer-issues.index'),
+                    active: route().current('admin.computer-issues.*'),
+                    show: hasDataAccess,
+                    icon: (<svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>),
                 },
             ],
         },
