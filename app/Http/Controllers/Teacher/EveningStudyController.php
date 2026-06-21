@@ -100,11 +100,23 @@ class EveningStudyController extends Controller
         $startDateFormatted = $request->start_date ? Carbon::parse($request->start_date)->translatedFormat('d F Y') : 'Awal';
         $endDateFormatted = $request->end_date ? Carbon::parse($request->end_date)->translatedFormat('d F Y') : 'Sekarang';
 
+        // Compute per-supervisor session count
+        $supervisorSummary = [];
+        foreach ($data as $item) {
+            $name = $item['supervisor']['name'] ?? 'Tidak Diketahui';
+            if (!isset($supervisorSummary[$name])) {
+                $supervisorSummary[$name] = 0;
+            }
+            $supervisorSummary[$name]++;
+        }
+        arsort($supervisorSummary);
+
         $meta = [
-            'school_name' => \App\Models\Setting::get('school_name', 'SALIRA ACADEMY'),
-            'class_name' => $className,
-            'range' => $startDateFormatted . ' - ' . $endDateFormatted,
-            'printed_at' => Carbon::now()->isoFormat('D MMMM YYYY H:mm:ss')
+            'school_name'        => \App\Models\Setting::get('school_name', 'SALIRA ACADEMY'),
+            'class_name'         => $className,
+            'range'              => $startDateFormatted . ' - ' . $endDateFormatted,
+            'printed_at'         => Carbon::now()->isoFormat('D MMMM YYYY H:mm:ss'),
+            'supervisor_summary' => $supervisorSummary,
         ];
 
         return Excel::download(new EveningStudyRecapExport($data, $meta), 'rekap_belajar_malam.xlsx');
@@ -121,6 +133,17 @@ class EveningStudyController extends Controller
         $endDateFormatted = $request->end_date ? Carbon::parse($request->end_date)->translatedFormat('d F Y') : 'Sekarang';
         $range = $startDateFormatted . ' - ' . $endDateFormatted;
 
+        // Compute per-supervisor session count
+        $supervisorSummary = [];
+        foreach ($data as $item) {
+            $name = $item['supervisor']['name'] ?? 'Tidak Diketahui';
+            if (!isset($supervisorSummary[$name])) {
+                $supervisorSummary[$name] = 0;
+            }
+            $supervisorSummary[$name]++;
+        }
+        arsort($supervisorSummary);
+
         $logo = \App\Models\Setting::get('school_logo');
         $logoPath = null;
         if ($logo) {
@@ -134,12 +157,13 @@ class EveningStudyController extends Controller
         }
 
         $settings = [
-            'title' => 'Rekapitulasi Jurnal Belajar Malam',
-            'school_name' => \App\Models\Setting::get('school_name', 'SALIRA ACADEMY'),
-            'school_address' => \App\Models\Setting::get('school_address'),
-            'logo' => $logoPath,
-            'class_name' => $className,
-            'range' => $range,
+            'title'              => 'Rekapitulasi Jurnal Belajar Malam',
+            'school_name'        => \App\Models\Setting::get('school_name', 'SALIRA ACADEMY'),
+            'school_address'     => \App\Models\Setting::get('school_address'),
+            'logo'               => $logoPath,
+            'class_name'         => $className,
+            'range'              => $range,
+            'supervisor_summary' => $supervisorSummary,
         ];
 
         $pdf = Pdf::loadView('reports.evening_study_pdf', array_merge($settings, [
