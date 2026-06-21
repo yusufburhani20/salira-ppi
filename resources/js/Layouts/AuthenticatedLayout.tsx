@@ -76,9 +76,13 @@ export default function Authenticated({
     const isStaff = userRoles.includes('Staff/TU');
     const isBendahara = userRoles.includes('Bendahara');
     const isKaprog = userRoles.includes('Kepala Program');
-    const isTeacher = isGuru || isWaliKelas || isAdmin || userRoles.includes('Pengawas Malam');
+    const isLaboran = userRoles.includes('Laboran Komputer');
+    const isPengawasMalam = userRoles.includes('Pengawas Malam');
+    // isTeacher: Pengawas Malam masuk, tapi nanti dibatasi di item-item tertentu
+    const isTeacher = isGuru || isWaliKelas || isAdmin || isPengawasMalam;
     const isWaliOrAdmin = isWaliKelas || isAdmin;
-    const hasDataAccess = isAdmin || isStaff || userRoles.includes('Laboran Komputer');
+    // hasDataAccess: Laboran Komputer masuk, tapi dibatasi di item tertentu
+    const hasDataAccess = isAdmin || isStaff || isLaboran;
 
     // Grouped nav structure
     const navGroups = [
@@ -104,74 +108,79 @@ export default function Authenticated({
         },
         {
             group: 'KBM & Akademik',
-            show: true,
+            // Laboran & Pengawas Malam tidak butuh grup KBM penuh —
+            // Pengawas Malam hanya butuh Belajar Malam (ada di sini)
+            show: !isLaboran,
             items: [
                 {
                     label: 'Jurnal Mengajar',
                     href: route('teacher.agendas.index'),
                     active: route().current('teacher.agendas.*'),
-                    show: !isBendahara && !isPimpinan,
+                    show: !isBendahara && !isPimpinan && !isPengawasMalam && !isLaboran,
                     icon: (<svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5s3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18s-3.332.477-4.5 1.253" /></svg>),
                 },
                 {
                     label: 'Asesmen Harian',
                     href: route('teacher.assessments.index'),
                     active: route().current('teacher.assessments.*'),
-                    show: isTeacher,
+                    show: isTeacher && !isPengawasMalam && !isLaboran,
                     icon: (<svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>),
                 },
                 {
                     label: 'Asesmen Akhir (ASAS/ASAT)',
                     href: route('teacher.final-assessments.index'),
                     active: route().current('teacher.final-assessments.*'),
-                    show: isGuru || isWaliKelas || isAdmin,
+                    show: (isGuru || isWaliKelas || isAdmin) && !isPengawasMalam,
                     icon: (<svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" /></svg>),
                 },
                 {
                     label: 'Bimbingan Siswa',
                     href: route('teacher.consultations.index'),
                     active: route().current('teacher.consultations.*'),
-                    show: isTeacher,
+                    show: isTeacher && !isPengawasMalam && !isLaboran,
                     icon: (<svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" /></svg>),
                 },
                 {
                     label: 'Rekapitulasi',
                     href: route('admin.reports.index'),
                     active: route().current('admin.reports.index') || route().current('admin.reports.attendance.*') || route().current('admin.reports.assessments.*'),
-                    show: isAdmin || isPimpinan || isKaprog,
+                    show: (isAdmin || isPimpinan || isKaprog) && !isPengawasMalam,
                     icon: (<svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>),
                 },
                 {
                     label: 'Laporan Wali Kelas',
                     href: route('teacher.my-students.index'),
                     active: route().current('teacher.my-students.*'),
-                    show: isWaliOrAdmin,
+                    show: isWaliOrAdmin && !isPengawasMalam,
                     icon: (<svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>),
                 },
                 {
                     label: 'Resume Akademik',
                     href: route('admin.reports.student-resume'),
                     active: route().current('admin.reports.student-resume'),
-                    show: isAdmin || isPimpinan,
+                    show: (isAdmin || isPimpinan) && !isPengawasMalam,
                     icon: (<svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.414a4 4 0 00-5.656-5.656l-6.415 6.414a6 6 0 108.486 8.486L19 14" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5" /></svg>),
                 },
                 {
                     label: 'Belajar Malam',
                     href: route('teacher.evening-studies.index'),
                     active: route().current('teacher.evening-studies.*'),
-                    show: isGuru || isWaliKelas || isSuperAdmin || userRoles.includes('Pengawas Malam'),
+                    // Pengawas Malam: HANYA ini yang tampil di grup ini
+                    show: isGuru || isWaliKelas || isSuperAdmin || isPengawasMalam,
                     icon: (<svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>),
                 },
             ],
         },
         {
             group: 'Kepegawaian',
-            show: true,
+            // Pengawas Malam tidak butuh grup ini sama sekali
+            show: !isPengawasMalam,
             items: [
                 {
                     label: 'Presensi Pegawai',
                     href: route('attendances.scanner'),
                     active: route().current('attendances.scanner'),
+                    // Laboran Komputer boleh akses presensi harian
                     show: true,
                     icon: (<svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>),
                 },
@@ -193,14 +202,14 @@ export default function Authenticated({
                     label: 'Approval Perizinan',
                     href: route('admin.approvals.index'),
                     active: route().current('admin.approvals.*'),
-                    show: isAdmin || isPimpinan,
+                    show: (isAdmin || isPimpinan) && !isLaboran,
                     icon: (<svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>),
                 },
                 {
                     label: 'Rekap Absensi Pegawai',
                     href: route('admin.attendances.index'),
                     active: route().current('admin.attendances.*'),
-                    show: isAdmin || isPimpinan,
+                    show: (isAdmin || isPimpinan) && !isLaboran,
                     icon: (<svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>),
                 },
             ],
@@ -241,81 +250,87 @@ export default function Authenticated({
         },
         {
             group: 'Data Master',
-            show: hasDataAccess,
+            // Laboran Komputer tidak butuh Data Master
+            show: hasDataAccess && !isLaboran,
             items: [
                 {
                     label: 'Tahun Ajaran',
                     href: route('admin.academic-years.index'),
                     active: route().current('admin.academic-years.*'),
-                    show: hasDataAccess,
+                    show: hasDataAccess && !isLaboran,
                     icon: (<svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>),
                 },
                 {
                     label: 'Data Siswa',
                     href: route('admin.students.index'),
                     active: route().current('admin.students.*'),
-                    show: hasDataAccess,
+                    show: hasDataAccess && !isLaboran,
                     icon: (<svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>),
                 },
                 {
                     label: 'Data Kelas',
                     href: route('admin.classes.index'),
                     active: route().current('admin.classes.*'),
-                    show: hasDataAccess,
+                    show: hasDataAccess && !isLaboran,
                     icon: (<svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>),
                 },
                 {
                     label: 'Mata Pelajaran',
                     href: route('admin.subjects.index'),
                     active: route().current('admin.subjects.*'),
-                    show: hasDataAccess,
+                    show: hasDataAccess && !isLaboran,
                     icon: (<svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" /></svg>),
                 },
                 {
                     label: 'Jam Pelajaran',
                     href: route('admin.lesson-hours.index'),
                     active: route().current('admin.lesson-hours.*'),
-                    show: hasDataAccess,
+                    show: hasDataAccess && !isLaboran,
                     icon: (<svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>),
                 },
             ],
         },
         {
             group: 'Sarpras & Inventaris',
-            show: hasDataAccess,
+            // Laboran Komputer boleh masuk grup ini (Lab + Tiket)
+            // Pengawas Malam tidak butuh grup ini
+            show: hasDataAccess && !isPengawasMalam,
             items: [
                 {
                     label: 'Kelola Barang',
                     href: route('admin.inventory.index'),
                     active: route().current('admin.inventory.*'),
-                    show: hasDataAccess,
+                    // Laboran tidak butuh manajemen barang umum
+                    show: hasDataAccess && !isLaboran,
                     icon: (<svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>),
                 },
                 {
                     label: 'Scanner Barcode',
                     href: route('admin.inventory.scanner'),
                     active: route().current('admin.inventory.scanner'),
-                    show: hasDataAccess,
+                    show: hasDataAccess && !isLaboran,
                     icon: (<svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" /></svg>),
                 },
                 {
                     label: 'Log Transaksi',
                     href: route('admin.inventory.logs'),
                     active: route().current('admin.inventory.logs'),
-                    show: hasDataAccess,
+                    show: hasDataAccess && !isLaboran,
                     icon: (<svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>),
                 },
                 {
                     label: 'Lab Komputer & PC',
                     href: route('admin.computer-labs.index'),
                     active: route().current('admin.computer-labs.*') || route().current('admin.computer-units.*'),
+                    // Laboran Komputer boleh akses Lab Komputer
                     show: hasDataAccess,
                     icon: (<svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>),
                 },
                 {
-                    label: 'Laporan Masalah PC',
+                    label: 'Tiket Kerusakan',
                     href: route('admin.computer-issues.index'),
                     active: route().current('admin.computer-issues.*'),
+                    // Laboran Komputer boleh akses tiket kerusakan
                     show: hasDataAccess,
                     icon: (<svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>),
                 },
