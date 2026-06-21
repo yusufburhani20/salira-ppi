@@ -272,13 +272,13 @@ export default function Show({ lab, kepalaPrograms }: any) {
                             target="_blank"
                             className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-xl transition-all cursor-pointer"
                         >
-                            <PrinterIcon className="w-4 h-4" /> Cetak QR Massal (PDF)
+                            <PrinterIcon className="w-4 h-4" /> Cetak QR Massal
                         </a>
                         <button
                             onClick={() => setShowReportModal(true)}
                             className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-emerald-500/20 active:scale-95 cursor-pointer"
                         >
-                            <DocumentArrowUpIcon className="w-4 h-4" /> Kirim Stock Opname
+                            <DocumentArrowUpIcon className="w-4 h-4" /> Kirim Opname
                         </button>
                         <button
                             onClick={openAddUnit}

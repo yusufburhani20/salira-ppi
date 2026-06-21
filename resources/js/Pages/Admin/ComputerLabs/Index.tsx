@@ -8,17 +8,69 @@ import {
     XMarkIcon,
     MapPinIcon,
     CpuChipIcon,
+    DocumentArrowUpIcon,
+    PrinterIcon,
 } from '@heroicons/react/24/outline';
 
-export default function Index({ labs }: any) {
+export default function Index({ labs, kepalaPrograms }: any) {
     const [showForm, setShowForm] = useState(false);
     const [editLab, setEditLab] = useState<any>(null);
+    const [showReportModal, setShowReportModal] = useState(false);
+    const [selectedLab, setSelectedLab] = useState<any>(null);
 
     const { data, setData, post, put, processing, errors, reset } = useForm({
         name: '',
         location: '',
         description: '',
     });
+
+    const reportForm = useForm({
+        recipient_id: kepalaPrograms && kepalaPrograms.length > 0 ? kepalaPrograms[0].id : '',
+        start_date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 7 days ago
+        end_date: new Date().toISOString().split('T')[0],
+        notes: '',
+    });
+
+    const openReportModal = (lab: any) => {
+        setSelectedLab(lab);
+        setShowReportModal(true);
+    };
+
+    const handleReportSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedLab) return;
+        reportForm.post(route('admin.computer-labs.send-report', selectedLab.id), {
+            onSuccess: () => {
+                setShowReportModal(false);
+                reportForm.reset('notes');
+            },
+        });
+    };
+
+    const handleDownloadPdf = (e: React.MouseEvent) => {
+        e.preventDefault();
+        if (!selectedLab) return;
+        if (!reportForm.data.recipient_id) {
+            reportForm.setError('recipient_id', 'Penerima laporan harus dipilih.');
+            return;
+        }
+        if (!reportForm.data.start_date) {
+            reportForm.setError('start_date', 'Tanggal mulai harus diisi.');
+            return;
+        }
+        if (!reportForm.data.end_date) {
+            reportForm.setError('end_date', 'Tanggal selesai harus diisi.');
+            return;
+        }
+
+        const url = route('admin.computer-labs.download-report', selectedLab.id) + 
+            `?recipient_id=${reportForm.data.recipient_id}` +
+            `&start_date=${reportForm.data.start_date}` +
+            `&end_date=${reportForm.data.end_date}` +
+            `&notes=${encodeURIComponent(reportForm.data.notes)}`;
+        
+        window.open(url, '_blank');
+    };
 
     const openAdd = () => {
         reset();
@@ -141,19 +193,27 @@ export default function Index({ labs }: any) {
                                     </p>
                                 </div>
 
-                                <div className="border-t border-slate-100 dark:border-slate-700/60 pt-4 mt-4 flex justify-between items-center">
-                                    <div className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                                <div className="border-t border-slate-100 dark:border-slate-700/60 pt-4 mt-4 flex justify-between items-center gap-2">
+                                    <div className="text-xs font-bold text-slate-700 dark:text-slate-300 shrink-0">
                                         <span className="text-base font-black text-indigo-600 dark:text-indigo-400">
                                             {lab.units_count}
                                         </span>{' '}
-                                        Unit PC Terdaftar
+                                        PC
                                     </div>
-                                    <a
-                                        href={route('admin.computer-labs.show', lab.id)}
-                                        className="text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-2 rounded-xl transition-all shadow-md shadow-indigo-500/10 active:scale-95"
-                                    >
-                                        Kelola Lab &rarr;
-                                    </a>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={() => openReportModal(lab)}
+                                            className="text-xs font-bold text-slate-700 dark:text-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 px-3.5 py-2 rounded-xl transition-all active:scale-95 flex items-center gap-1 cursor-pointer"
+                                        >
+                                            <DocumentArrowUpIcon className="w-3.5 h-3.5" /> Laporan
+                                        </button>
+                                        <a
+                                            href={route('admin.computer-labs.show', lab.id)}
+                                            className="text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 px-3.5 py-2 rounded-xl transition-all shadow-md shadow-indigo-500/10 active:scale-95"
+                                        >
+                                            Kelola &rarr;
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
                         ))}
@@ -229,6 +289,121 @@ export default function Index({ labs }: any) {
                                     className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 disabled:opacity-50 transition-all cursor-pointer"
                                 >
                                     {processing ? 'Menyimpan...' : 'Simpan'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Stock Opname Mail Modal */}
+            {showReportModal && selectedLab && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-bounce-in">
+                        <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
+                            <h3 className="font-black text-slate-900 dark:text-white">
+                                Laporan Stock Opname - {selectedLab.name}
+                            </h3>
+                            <button
+                                onClick={() => setShowReportModal(false)}
+                                className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400"
+                            >
+                                <XMarkIcon className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <form onSubmit={handleReportSubmit} className="p-6 space-y-4">
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">
+                                    Pilih Kepala Program *
+                                </label>
+                                <select
+                                    value={reportForm.data.recipient_id}
+                                    onChange={(e) => reportForm.setData('recipient_id', e.target.value)}
+                                    className="w-full py-2 px-3 text-sm border border-slate-200 dark:border-slate-600 rounded-xl bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                    required
+                                >
+                                    <option value="">Pilih Penerima Laporan</option>
+                                    {kepalaPrograms && kepalaPrograms.map((kp: any) => (
+                                        <option key={kp.id} value={kp.id}>
+                                            {kp.name} ({kp.email})
+                                        </option>
+                                    ))}
+                                </select>
+                                {reportForm.errors.recipient_id && (
+                                    <p className="text-xs text-red-500 mt-1">{reportForm.errors.recipient_id}</p>
+                                )}
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">
+                                        Tanggal Mulai *
+                                    </label>
+                                    <input
+                                        type="date"
+                                        value={reportForm.data.start_date}
+                                        onChange={(e) => reportForm.setData('start_date', e.target.value)}
+                                        className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-xl bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                        required
+                                    />
+                                    {reportForm.errors.start_date && (
+                                        <p className="text-xs text-red-500 mt-1">{reportForm.errors.start_date}</p>
+                                    )}
+                                </div>
+                                <div>
+                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">
+                                        Tanggal Selesai *
+                                    </label>
+                                    <input
+                                        type="date"
+                                        value={reportForm.data.end_date}
+                                        onChange={(e) => reportForm.setData('end_date', e.target.value)}
+                                        className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-xl bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                        required
+                                    />
+                                    {reportForm.errors.end_date && (
+                                        <p className="text-xs text-red-500 mt-1">{reportForm.errors.end_date}</p>
+                                    )}
+                                </div>
+                            </div>
+                            <div>
+                                <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">
+                                    Catatan / Rekomendasi Laboran
+                                </label>
+                                <textarea
+                                    value={reportForm.data.notes}
+                                    onChange={(e) => reportForm.setData('notes', e.target.value)}
+                                    className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-xl bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+                                    rows={4}
+                                    placeholder="Tuliskan analisis, catatan kerusakan, atau permohonan pengadaan barang baru..."
+                                />
+                                {reportForm.errors.notes && (
+                                    <p className="text-xs text-red-500 mt-1">{reportForm.errors.notes}</p>
+                                )}
+                            </div>
+                            <div className="flex flex-col gap-2 pt-2">
+                                <div className="flex gap-3">
+                                    <button
+                                        type="button"
+                                        disabled={reportForm.processing}
+                                        onClick={handleDownloadPdf}
+                                        className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 disabled:opacity-50 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                                    >
+                                        <PrinterIcon className="w-4 h-4" /> Unduh PDF
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={reportForm.processing}
+                                        className="flex-1 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 disabled:opacity-50 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                                    >
+                                        <DocumentArrowUpIcon className="w-4 h-4" /> Kirim Email
+                                    </button>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowReportModal(false)}
+                                    className="w-full py-2 rounded-xl border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-700 transition-all cursor-pointer"
+                                >
+                                    Batal
                                 </button>
                             </div>
                         </form>

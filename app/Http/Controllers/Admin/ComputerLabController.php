@@ -21,8 +21,19 @@ class ComputerLabController extends Controller
     public function index()
     {
         $labs = ComputerLab::withCount('units')->get();
+
+        // Fetch users for Head of Program role, fallback to admins or general users
+        $kepalaPrograms = User::role('Kepala Program')->get();
+        if ($kepalaPrograms->isEmpty()) {
+            $kepalaPrograms = User::role('Super Admin')->get();
+            if ($kepalaPrograms->isEmpty()) {
+                $kepalaPrograms = User::all();
+            }
+        }
+
         return Inertia::render('Admin/ComputerLabs/Index', [
-            'labs' => $labs
+            'labs' => $labs,
+            'kepalaPrograms' => $kepalaPrograms
         ]);
     }
 
