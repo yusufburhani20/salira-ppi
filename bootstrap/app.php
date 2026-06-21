@@ -32,6 +32,7 @@ return Application::configure(basePath: dirname(__DIR__))
             '/webhook/midtrans',
             '/portal/attendance/scan',
             '/invoice/*/prepare-payment',
+            '/public/computer-issues/report',
         ]);
 
         $middleware->alias([
