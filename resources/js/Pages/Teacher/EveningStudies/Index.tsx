@@ -47,41 +47,51 @@ export default function Index({ eveningStudies, classes = [], semesters = [], fi
     return (
         <AuthenticatedLayout
             header={
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                    <div>
-                        <h2 className="text-xl font-black text-slate-800 dark:text-slate-200 tracking-tight">
-                            Kegiatan Belajar Malam
-                        </h2>
-                        <p className="text-xs text-slate-500 mt-0.5">
-                            Pantau absensi santri, agenda belajar malam, dan dokumentasi foto harian
-                        </p>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                        <button
-                            onClick={() => handleExport('excel')}
-                            className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-emerald-500/20 active:scale-95 cursor-pointer"
-                        >
-                            Excel
-                        </button>
-                        <button
-                            onClick={() => handleExport('pdf')}
-                            className="inline-flex items-center gap-1.5 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-rose-500/20 active:scale-95 cursor-pointer"
-                        >
-                            PDF
-                        </button>
-                        <a
-                            href={route('teacher.evening-studies.create')}
-                            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-indigo-500/20 active:scale-95 cursor-pointer"
-                        >
-                            <PlusIcon className="w-4 h-4" /> Catat Belajar Malam
-                        </a>
-                    </div>
+                <div>
+                    <h2 className="text-xl font-black text-slate-800 dark:text-slate-200 tracking-tight">
+                        Kegiatan Belajar Malam
+                    </h2>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                        Pantau absensi santri, agenda belajar malam, dan dokumentasi foto harian
+                    </p>
                 </div>
             }
         >
             <Head title="Kegiatan Belajar Malam" />
 
             <div className="space-y-6">
+                {/* Mobile Header (Visible only on mobile / screens < lg) */}
+                <div className="lg:hidden flex flex-col gap-1 bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/50 shadow-sm">
+                    <h2 className="text-base font-black text-slate-800 dark:text-slate-200 tracking-tight">
+                        Kegiatan Belajar Malam
+                    </h2>
+                    <p className="text-[10px] text-slate-500">
+                        Pantau absensi santri, agenda belajar malam, dan dokumentasi foto harian
+                    </p>
+                </div>
+
+                {/* Unified Action Panel (Desktop and Mobile) */}
+                <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-3 bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/50 shadow-sm">
+                    <button
+                        onClick={() => handleExport('excel')}
+                        className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-emerald-500/20 active:scale-95 cursor-pointer text-center"
+                    >
+                        Excel
+                    </button>
+                    <button
+                        onClick={() => handleExport('pdf')}
+                        className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-rose-500/20 active:scale-95 cursor-pointer text-center"
+                    >
+                        PDF
+                    </button>
+                    <a
+                        href={route('teacher.evening-studies.create')}
+                        className="col-span-2 sm:col-span-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-indigo-500/20 active:scale-95 cursor-pointer text-center"
+                    >
+                        <PlusIcon className="w-4 h-4" /> Catat Belajar Malam
+                    </a>
+                </div>
+
                 {/* Filter Bar */}
                 <div className="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/50 shadow-sm">
                     <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
