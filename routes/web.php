@@ -97,6 +97,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/computer-labs/{lab}/units', [\App\Http\Controllers\Admin\ComputerLabController::class, 'storeUnit'])->name('computer-labs.units.store');
         Route::get('/computer-labs/{lab}/print-qrs', [\App\Http\Controllers\Admin\ComputerLabController::class, 'printQrs'])->name('computer-labs.print-qrs');
         Route::post('/computer-labs/{lab}/send-report', [\App\Http\Controllers\Admin\ComputerLabController::class, 'sendReport'])->name('computer-labs.send-report');
+        Route::get('/computer-labs/{lab}/download-report', [\App\Http\Controllers\Admin\ComputerLabController::class, 'downloadReport'])->name('computer-labs.download-report');
 
         Route::put('/computer-units/{unit}', [\App\Http\Controllers\Admin\ComputerLabController::class, 'updateUnit'])->name('computer-units.update');
         Route::delete('/computer-units/{unit}', [\App\Http\Controllers\Admin\ComputerLabController::class, 'destroyUnit'])->name('computer-units.destroy');

@@ -1,6 +1,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router, useForm } from '@inertiajs/react';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { Html5Qrcode } from 'html5-qrcode';
 import { QRCodeSVG } from 'qrcode.react';
 import {
     PlusIcon,
@@ -40,6 +41,12 @@ export default function Show({ lab, kepalaPrograms }: any) {
     
     const [showReportModal, setShowReportModal] = useState(false);
     const [viewQrUnit, setViewQrUnit] = useState<any>(null);
+
+    const [showScannerModal, setShowScannerModal] = useState(false);
+    const [scannerActive, setScannerActive] = useState(false);
+    const [scannerError, setScannerError] = useState<string | null>(null);
+    const [manualCode, setManualCode] = useState('');
+    const scannerRef = useRef<Html5Qrcode | null>(null);
 
     // PC Unit Form
     const unitForm = useForm({
@@ -135,6 +142,100 @@ export default function Show({ lab, kepalaPrograms }: any) {
         });
     };
 
+    const handleDownloadPdf = (e: React.MouseEvent) => {
+        e.preventDefault();
+        if (!reportForm.data.recipient_id) {
+            reportForm.setError('recipient_id', 'Penerima laporan harus dipilih.');
+            return;
+        }
+        if (!reportForm.data.start_date) {
+            reportForm.setError('start_date', 'Tanggal mulai harus diisi.');
+            return;
+        }
+        if (!reportForm.data.end_date) {
+            reportForm.setError('end_date', 'Tanggal selesai harus diisi.');
+            return;
+        }
+
+        const url = route('admin.computer-labs.download-report', lab.id) + 
+            `?recipient_id=${reportForm.data.recipient_id}` +
+            `&start_date=${reportForm.data.start_date}` +
+            `&end_date=${reportForm.data.end_date}` +
+            `&notes=${encodeURIComponent(reportForm.data.notes)}`;
+        
+        window.open(url, '_blank');
+    };
+
+    // Scanner functions
+    const extractPcCode = (scannedValue: string) => {
+        const match = scannedValue.match(/[\?&]code=([^&]+)/);
+        if (match) {
+            return decodeURIComponent(match[1]);
+        }
+        return scannedValue.trim();
+    };
+
+    const startScanner = async () => {
+        setScannerError(null);
+        setScannerActive(true);
+        await new Promise(r => setTimeout(r, 200));
+        const scanner = new Html5Qrcode('pc-qr-scanner-region');
+        scannerRef.current = scanner;
+        try {
+            await scanner.start(
+                { facingMode: 'environment' },
+                { fps: 10, qrbox: { width: 250, height: 250 } },
+                async (decodedText) => {
+                    await stopScanner();
+                    handleScannedCode(decodedText);
+                },
+                () => {}
+            );
+        } catch (err) {
+            setScannerActive(false);
+            setScannerError('Kamera tidak dapat diakses atau diblokir. Silakan ketik kode PC secara manual.');
+        }
+    };
+
+    const stopScanner = async () => {
+        if (scannerRef.current) {
+            try {
+                await scannerRef.current.stop();
+            } catch (e) {}
+            scannerRef.current = null;
+        }
+        setScannerActive(false);
+    };
+
+    const handleScannedCode = (value: string) => {
+        const pcCode = extractPcCode(value);
+        const unit = lab.units.find((u: any) => u.code.toLowerCase() === pcCode.toLowerCase());
+        if (unit) {
+            openEditUnit(unit);
+            setManualCode('');
+            setShowScannerModal(false);
+        } else {
+            alert(`Unit PC dengan kode "${pcCode}" tidak ditemukan di lab ${lab.name}.`);
+        }
+    };
+
+    const handleManualScanSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!manualCode.trim()) return;
+        handleScannedCode(manualCode);
+    };
+
+    useEffect(() => {
+        if (showScannerModal) {
+            startScanner();
+        } else {
+            stopScanner();
+        }
+        return () => {
+            stopScanner();
+        };
+    }, [showScannerModal]);
+
     // Calculate stats
     const totalCount = lab.units.length;
     const activeCount = lab.units.filter((u: any) => u.status === 'active').length;
@@ -160,6 +261,12 @@ export default function Show({ lab, kepalaPrograms }: any) {
                         </div>
                     </div>
                     <div className="flex gap-2 flex-wrap">
+                        <button
+                            onClick={() => setShowScannerModal(true)}
+                            className="flex items-center gap-2 px-4 py-2 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/30 dark:hover:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 text-xs font-bold rounded-xl transition-all cursor-pointer"
+                        >
+                            <QrCodeIcon className="w-4 h-4" /> Scan QR PC
+                        </button>
                         <a
                             href={route('admin.computer-labs.print-qrs', lab.id)}
                             target="_blank"
@@ -186,6 +293,53 @@ export default function Show({ lab, kepalaPrograms }: any) {
             <Head title={`Lab ${lab.name}`} />
 
             <div className="space-y-6">
+                {/* Mobile Header (Visible only on mobile / screens < lg) */}
+                <div className="lg:hidden flex items-center justify-between gap-3 bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-100/80 dark:border-slate-700/50 shadow-sm">
+                    <div className="flex items-center gap-3">
+                        <a
+                            href={route('admin.computer-labs.index')}
+                            className="p-2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 transition-colors"
+                        >
+                            <ArrowLeftIcon className="w-4 h-4" />
+                        </a>
+                        <div>
+                            <h2 className="text-base font-black text-slate-800 dark:text-slate-200 tracking-tight">
+                                {lab.name}
+                            </h2>
+                            <p className="text-[10px] text-slate-500 mt-0.5">{lab.location || 'Tidak ada info lokasi'}</p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Mobile Action Buttons (Visible only on mobile / screens < lg) */}
+                <div className="lg:hidden grid grid-cols-2 gap-2 bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-100/80 dark:border-slate-700/50 shadow-sm">
+                    <button
+                        onClick={() => setShowScannerModal(true)}
+                        className="flex items-center justify-center gap-2 px-3 py-2.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/30 dark:hover:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 text-xs font-bold rounded-xl transition-all cursor-pointer"
+                    >
+                        <QrCodeIcon className="w-4 h-4" /> Scan QR PC
+                    </button>
+                    <a
+                        href={route('admin.computer-labs.print-qrs', lab.id)}
+                        target="_blank"
+                        className="flex items-center justify-center gap-2 px-3 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-bold rounded-xl transition-all cursor-pointer"
+                    >
+                        <PrinterIcon className="w-4 h-4" /> Cetak QR Massal
+                    </a>
+                    <button
+                        onClick={() => setShowReportModal(true)}
+                        className="flex items-center justify-center gap-2 px-3 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-emerald-500/20 active:scale-95 cursor-pointer"
+                    >
+                        <DocumentArrowUpIcon className="w-4 h-4" /> Kirim Opname
+                    </button>
+                    <button
+                        onClick={openAddUnit}
+                        className="flex items-center justify-center gap-2 px-3 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-indigo-500/20 active:scale-95 cursor-pointer"
+                    >
+                        <PlusIcon className="w-4 h-4" /> Tambah Unit PC
+                    </button>
+                </div>
+
                 {/* Stats cards */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     {[
@@ -562,23 +716,98 @@ export default function Show({ lab, kepalaPrograms }: any) {
                                 />
                                 {reportForm.errors.notes && <p className="text-xs text-red-500 mt-1">{reportForm.errors.notes}</p>}
                             </div>
-                            <div className="flex gap-3 pt-2">
+                            <div className="flex flex-col gap-2 pt-2">
+                                <div className="flex gap-3">
+                                    <button
+                                        type="button"
+                                        disabled={reportForm.processing}
+                                        onClick={handleDownloadPdf}
+                                        className="flex-1 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 disabled:opacity-50 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                                    >
+                                        <PrinterIcon className="w-4 h-4" /> Unduh PDF
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={reportForm.processing}
+                                        className="flex-1 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 disabled:opacity-50 transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                                    >
+                                        <DocumentArrowUpIcon className="w-4 h-4" /> Kirim Email
+                                    </button>
+                                </div>
                                 <button
                                     type="button"
                                     onClick={() => setShowReportModal(false)}
-                                    className="flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 text-sm font-bold hover:bg-slate-50 dark:hover:bg-slate-700 transition-all cursor-pointer"
+                                    className="w-full py-2 rounded-xl border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300 text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-700 transition-all cursor-pointer"
                                 >
                                     Batal
                                 </button>
-                                <button
-                                    type="submit"
-                                    disabled={reportForm.processing}
-                                    className="flex-1 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 disabled:opacity-50 transition-all cursor-pointer"
-                                >
-                                    {reportForm.processing ? 'Mengirim Laporan...' : 'Kirim ke Kepala Program'}
-                                </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* QR Scanner Modal */}
+            {showScannerModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+                        <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
+                            <h3 className="font-black text-slate-900 dark:text-white flex items-center gap-2">
+                                <QrCodeIcon className="w-5 h-5 text-indigo-500" />
+                                <span>Scan QR Code Unit PC</span>
+                            </h3>
+                            <button
+                                onClick={() => setShowScannerModal(false)}
+                                className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400"
+                            >
+                                <XMarkIcon className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            {/* Camera Frame */}
+                            {scannerActive ? (
+                                <div className="space-y-3">
+                                    <div id="pc-qr-scanner-region" className="w-full rounded-xl overflow-hidden bg-black border border-slate-200 dark:border-slate-700" style={{ minHeight: 250 }} />
+                                    <p className="text-xs text-center text-slate-500">Posisikan QR Code di tengah kamera</p>
+                                </div>
+                            ) : (
+                                <div className="py-10 flex flex-col items-center justify-center gap-3 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-xl">
+                                    {scannerError ? (
+                                        <div className="text-center px-4 text-rose-500">
+                                            <ExclamationTriangleIcon className="w-10 h-10 mx-auto mb-2 text-rose-500" />
+                                            <p className="font-bold text-xs">{scannerError}</p>
+                                        </div>
+                                    ) : (
+                                        <div className="text-center">
+                                            <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-700 animate-pulse flex items-center justify-center mx-auto text-slate-400">
+                                                <QrCodeIcon className="w-6 h-6" />
+                                            </div>
+                                            <p className="text-xs text-slate-500 mt-2 font-medium">Memulai kamera...</p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Manual Lookup form */}
+                            <div className="border-t border-slate-100 dark:border-slate-700 pt-4">
+                                <h4 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Input Kode Manual</h4>
+                                <form onSubmit={handleManualScanSubmit} className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={manualCode}
+                                        onChange={(e) => setManualCode(e.target.value)}
+                                        placeholder="mis: LAB1-PC01"
+                                        className="flex-1 px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-xl bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                    />
+                                    <button
+                                        type="submit"
+                                        className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition-all cursor-pointer"
+                                    >
+                                        Cari
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}

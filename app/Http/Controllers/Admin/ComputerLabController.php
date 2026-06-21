@@ -154,7 +154,7 @@ class ComputerLabController extends Controller
         $pdf = Pdf::loadView('exports.pc_qr_pdf', [
             'lab' => $lab,
             'units' => $units
-        ]);
+        ])->setOption('isRemoteEnabled', true);
 
         return $pdf->stream('qr-codes-' . str_replace(' ', '_', $lab->name) . '.pdf');
     }
@@ -211,5 +211,51 @@ class ComputerLabController extends Controller
         ));
 
         return back()->with('success', 'Laporan Stock Opname berhasil dikirim ke email Kepala Program.');
+    }
+
+    /**
+     * Generate and download Stock Opname PDF directly.
+     */
+    public function downloadReport(Request $request, ComputerLab $lab)
+    {
+        $request->validate([
+            'recipient_id' => 'required|exists:users,id',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date',
+            'notes' => 'nullable|string',
+        ]);
+
+        $recipient = User::findOrFail($request->recipient_id);
+        $units = $lab->units;
+
+        $stats = [
+            'total' => $units->count(),
+            'active' => $units->where('status', 'active')->count(),
+            'maintenance' => $units->where('status', 'maintenance')->count(),
+            'broken' => $units->where('status', 'broken')->count(),
+        ];
+
+        // Fetch issues reported this week within date range
+        $recentIssues = ComputerIssue::with('unit')
+            ->whereIn('computer_unit_id', $units->pluck('id'))
+            ->whereBetween('created_at', [$request->start_date . ' 00:00:00', $request->end_date . ' 23:59:59'])
+            ->get();
+
+        $dateRange = date('d-m-Y', strtotime($request->start_date)) . ' s/d ' . date('d-m-Y', strtotime($request->end_date));
+        $laboranName = auth()->user()->name;
+
+        // Generate the PDF
+        $pdf = Pdf::loadView('exports.stock_opname_pdf', [
+            'lab' => $lab,
+            'units' => $units,
+            'stats' => $stats,
+            'recentIssues' => $recentIssues,
+            'dateRange' => $dateRange,
+            'laboranName' => $laboranName,
+            'recipientName' => $recipient->name,
+            'notes' => $request->notes,
+        ]);
+
+        return $pdf->download('stock-opname-' . str_replace(' ', '_', $lab->name) . '-' . date('Ymd') . '.pdf');
     }
 }
