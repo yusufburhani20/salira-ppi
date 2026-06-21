@@ -70,12 +70,18 @@ class ComputerIssueController extends Controller
      */
     public function storeIssue(Request $request)
     {
-        $request->validate([
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
             'pc_code' => 'required|string|exists:computer_units,code',
             'reporter_name' => 'required|string|max:255',
             'description' => 'required|string|max:1000',
             'photo' => 'nullable|image|max:2048', // max 2MB
         ]);
+
+        if ($validator->fails()) {
+            return redirect()->route('public.computer-issues.report', ['code' => $request->pc_code])
+                ->withErrors($validator)
+                ->withInput();
+        }
 
         $unit = ComputerUnit::where('code', $request->pc_code)->firstOrFail();
 
@@ -95,7 +101,8 @@ class ComputerIssueController extends Controller
         // Automatically set unit status to broken
         $unit->update(['status' => 'broken']);
 
-        return back()->with('success', 'Laporan kerusakan berhasil dikirim. Teknisi kami akan segera memeriksa PC ini.');
+        return redirect()->route('public.computer-issues.report', ['code' => $request->pc_code])
+            ->with('success', 'Laporan kerusakan berhasil dikirim. Laporan Anda sedang menunggu perbaikan.');
     }
 
     /**
