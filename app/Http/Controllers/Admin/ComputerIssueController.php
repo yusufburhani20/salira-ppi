@@ -83,26 +83,37 @@ class ComputerIssueController extends Controller
                 ->withInput();
         }
 
-        $unit = ComputerUnit::where('code', $request->pc_code)->firstOrFail();
+        try {
+            $unit = ComputerUnit::where('code', $request->pc_code)->firstOrFail();
 
-        $photoPath = null;
-        if ($request->hasFile('photo')) {
-            $photoPath = $request->file('photo')->store('computer_issues', 'public');
+            $photoPath = null;
+            if ($request->hasFile('photo')) {
+                $photoPath = $request->file('photo')->store('computer_issues', 'public');
+            }
+
+            ComputerIssue::create([
+                'computer_unit_id' => $unit->id,
+                'reporter_name' => $request->reporter_name,
+                'description' => $request->description,
+                'photo_path' => $photoPath,
+                'status' => 'pending',
+            ]);
+
+            // Automatically set unit status to broken
+            $unit->update(['status' => 'broken']);
+
+            return redirect()->route('public.computer-issues.report', ['code' => $request->pc_code])
+                ->with('success', 'Laporan kerusakan berhasil dikirim. Laporan Anda sedang menunggu perbaikan.');
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Gagal membuat tiket kerusakan: ' . $e->getMessage(), [
+                'exception' => $e,
+                'request' => $request->all()
+            ]);
+
+            return redirect()->route('public.computer-issues.report', ['code' => $request->pc_code])
+                ->withErrors(['error' => 'Gagal menyimpan laporan ke database: ' . $e->getMessage()])
+                ->withInput();
         }
-
-        ComputerIssue::create([
-            'computer_unit_id' => $unit->id,
-            'reporter_name' => $request->reporter_name,
-            'description' => $request->description,
-            'photo_path' => $photoPath,
-            'status' => 'pending',
-        ]);
-
-        // Automatically set unit status to broken
-        $unit->update(['status' => 'broken']);
-
-        return redirect()->route('public.computer-issues.report', ['code' => $request->pc_code])
-            ->with('success', 'Laporan kerusakan berhasil dikirim. Laporan Anda sedang menunggu perbaikan.');
     }
 
     /**

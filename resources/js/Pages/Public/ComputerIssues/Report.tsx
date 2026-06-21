@@ -76,8 +76,17 @@ export default function Report({ prefilledCode, unit }: any) {
                         </button>
                     </div>
                 ) : (
-                    /* Form State */
                     <form onSubmit={handleSubmit} className="space-y-4">
+                        {Object.keys(errors).length > 0 && (
+                            <div className="bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/40 rounded-2xl p-4 text-xs text-red-600 dark:text-red-400 space-y-1">
+                                <p className="font-bold">Gagal mengirim laporan. Sila periksa kembali input Anda:</p>
+                                <ul className="list-disc list-inside">
+                                    {Object.entries(errors).map(([key, val]) => (
+                                        <li key={key}>{val}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
                         {/* PC Information Panel if prefilled and valid */}
                         {unit ? (
                             <div className="bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-100 dark:border-indigo-900/40 rounded-2xl p-4 flex gap-3 items-center">
