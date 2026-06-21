@@ -1,5 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import StatCard from '@/Components/StatCard';
 import Card, { CardHeader } from '@/Components/Card';
 import { 
@@ -14,6 +14,7 @@ import {
 } from '@heroicons/react/24/outline';
 import SystemClock from '@/Components/SystemClock';
 import { useState } from 'react';
+import usePWA from '@/hooks/usePWA';
 
 export default function Dashboard({ 
     stats, 
@@ -30,6 +31,10 @@ export default function Dashboard({
     const [classId, setClassId] = useState(filters?.academic_class_id || '');
     const [startDate, setStartDate] = useState(filters?.start_date || '');
     const [endDate, setEndDate] = useState(filters?.end_date || '');
+
+    const { props } = usePage();
+    const { vapid_public_key } = props as any;
+    const { isInstallable, installApp } = usePWA(vapid_public_key);
 
     const handleFilterChange = (id: string, start: string, end: string) => {
         setClassId(id);
@@ -157,6 +162,22 @@ export default function Dashboard({
                                 </div>
                                 <ArrowUpRightIcon className="w-4 h-4 text-amber-300/50 group-hover:text-amber-300 shrink-0 transition-colors group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                             </a>
+
+                            {isInstallable && (
+                                <button 
+                                    onClick={installApp} 
+                                    className="group flex items-center text-left gap-4 bg-emerald-500/20 hover:bg-emerald-500/35 backdrop-blur-sm border border-emerald-400/25 hover:border-emerald-400/50 rounded-xl p-4 transition-all duration-200 active:scale-95 cursor-pointer w-full sm:w-auto lg:w-full"
+                                >
+                                    <div className="w-10 h-10 bg-emerald-500/20 rounded-xl flex items-center justify-center shrink-0">
+                                        <svg className="w-5 h-5 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <p className="text-sm font-bold text-emerald-200">Instal Aplikasi</p>
+                                        <p className="text-[10px] text-emerald-300/60 font-medium">Pasang di perangkat Anda</p>
+                                    </div>
+                                    <ArrowUpRightIcon className="w-4 h-4 text-emerald-300/50 group-hover:text-emerald-300 shrink-0 transition-colors group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>

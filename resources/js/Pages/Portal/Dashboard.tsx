@@ -1,13 +1,18 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import PortalLayout from '@/Layouts/PortalLayout';
 import { useState } from 'react';
 import SystemClock from '@/Components/SystemClock';
+import usePWA from '@/hooks/usePWA';
 
 export default function Dashboard({ student, unpaidBillsCount, attendanceStats, academics = [], consultations = [], todayStatus, todayAlphaDetails = [], announcements = [] }: any) {
     const totalAttendance = attendanceStats.present + attendanceStats.sick + attendanceStats.permission + attendanceStats.absent;
     const presentPercentage = totalAttendance > 0 
         ? Math.round((attendanceStats.present / totalAttendance) * 100) 
         : 100;
+
+    const { props } = usePage();
+    const { vapid_public_key } = props as any;
+    const { isInstallable, installApp } = usePWA(vapid_public_key);
 
     const [showReportModal, setShowReportModal] = useState(false);
     const [selectedMonth, setSelectedMonth] = useState('');
@@ -146,13 +151,24 @@ export default function Dashboard({ student, unpaidBillsCount, attendanceStats, 
                             <p className="text-blue-50 max-w-xl text-sm leading-relaxed mb-6">
                                 Portal ini menampilkan ringkasan performa akademik dan administratif Anda. Mari pertahankan pencapaian.
                             </p>
-                            <button 
-                                onClick={() => setShowReportModal(true)}
-                                className="inline-flex items-center gap-2 bg-white text-blue-700 px-6 py-3 rounded-2xl font-bold text-sm shadow-xl hover:bg-blue-50 transition-all border-b-4 border-blue-200 active:border-b-0 active:translate-y-1"
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                                Cetak Rapor Digital
-                            </button>
+                             <div className="flex flex-wrap gap-3">
+                                <button 
+                                    onClick={() => setShowReportModal(true)}
+                                    className="inline-flex items-center gap-2 bg-white text-blue-700 px-6 py-3 rounded-2xl font-bold text-sm shadow-xl hover:bg-blue-50 transition-all border-b-4 border-blue-200 active:border-b-0 active:translate-y-1"
+                                >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                    Cetak Rapor Digital
+                                </button>
+                                {isInstallable && (
+                                    <button 
+                                        onClick={installApp}
+                                        className="inline-flex items-center gap-2 bg-amber-400 text-slate-900 px-6 py-3 rounded-2xl font-bold text-sm shadow-xl hover:bg-amber-300 transition-all border-b-4 border-amber-500 active:border-b-0 active:translate-y-1"
+                                    >
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                                        Instal Aplikasi
+                                    </button>
+                                )}
+                            </div>
                         </div>
                         
                         {/* Quick Status Badges */}
