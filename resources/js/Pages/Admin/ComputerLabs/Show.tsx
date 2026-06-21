@@ -50,6 +50,7 @@ export default function Show({ lab, kepalaPrograms }: any) {
 
     // PC Unit Form
     const unitForm = useForm({
+        type: 'pc',
         code: '',
         name: '',
         brand: '',
@@ -70,11 +71,48 @@ export default function Show({ lab, kepalaPrograms }: any) {
         notes: '',
     });
 
+    const handleTypeChange = (type: string) => {
+        const nextNum = String(lab.units.length + 1).padStart(2, '0');
+        const prefix = lab.name.replace(/\s+/g, '').toUpperCase();
+        let codeSuffix = 'PC';
+        let defaultName = 'PC';
+
+        switch (type) {
+            case 'switch':
+                codeSuffix = 'SW';
+                defaultName = 'Switch';
+                break;
+            case 'router':
+                codeSuffix = 'RT';
+                defaultName = 'Router';
+                break;
+            case 'lemari':
+                codeSuffix = 'LM';
+                defaultName = 'Lemari';
+                break;
+            case 'other':
+                codeSuffix = 'EQ';
+                defaultName = 'Barang';
+                break;
+            default:
+                codeSuffix = 'PC';
+                defaultName = 'PC';
+        }
+
+        unitForm.setData((d) => ({
+            ...d,
+            type,
+            code: editUnit ? d.code : `${prefix}-${codeSuffix}${nextNum}`,
+            name: editUnit ? d.name : `${defaultName} ${nextNum}`,
+        }));
+    };
+
     const openAddUnit = () => {
         unitForm.reset();
         // Prefill code format based on lab
         const nextNum = String(lab.units.length + 1).padStart(2, '0');
         unitForm.setData({
+            type: 'pc',
             code: `${lab.name.replace(/\s+/g, '').toUpperCase()}-PC${nextNum}`,
             name: `PC ${nextNum}`,
             brand: '',
@@ -93,6 +131,7 @@ export default function Show({ lab, kepalaPrograms }: any) {
     const openEditUnit = (unit: any) => {
         setEditUnit(unit);
         unitForm.setData({
+            type: unit.type || 'pc',
             code: unit.code,
             name: unit.name,
             brand: unit.brand || '',
@@ -127,7 +166,7 @@ export default function Show({ lab, kepalaPrograms }: any) {
     };
 
     const handleUnitDelete = (unit: any) => {
-        if (confirm(`Hapus unit PC "${unit.code}"? Tindakan ini tidak bisa dibatalkan.`)) {
+        if (confirm(`Hapus barang/perangkat "${unit.code}"? Tindakan ini tidak bisa dibatalkan.`)) {
             router.delete(route('admin.computer-units.destroy', unit.id));
         }
     };
@@ -286,9 +325,9 @@ export default function Show({ lab, kepalaPrograms }: any) {
                 <div className="grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-3 bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-100 dark:border-slate-700/50 shadow-sm">
                     <button
                         onClick={() => setShowScannerModal(true)}
-                        className="flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/30 dark:hover:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 text-xs font-bold rounded-xl transition-all cursor-pointer"
+                        className="flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-indigo-500/20 active:scale-95 cursor-pointer"
                     >
-                        <QrCodeIcon className="w-4 h-4" /> Scan QR PC
+                        <QrCodeIcon className="w-4 h-4" /> Scan QR Barang
                     </button>
                     <a
                         href={route('admin.computer-labs.print-qrs', lab.id)}
@@ -307,14 +346,14 @@ export default function Show({ lab, kepalaPrograms }: any) {
                         onClick={openAddUnit}
                         className="flex items-center justify-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition-all shadow-md shadow-indigo-500/20 active:scale-95 cursor-pointer"
                     >
-                        <PlusIcon className="w-4 h-4" /> Tambah Unit PC
+                        <PlusIcon className="w-4 h-4" /> Tambah Barang / PC
                     </button>
                 </div>
 
                 {/* Stats cards */}
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                     {[
-                        { label: 'Total Unit PC', value: totalCount, color: 'indigo', icon: QrCodeIcon },
+                        { label: 'Total Barang / PC', value: totalCount, color: 'indigo', icon: QrCodeIcon },
                         { label: 'Kondisi Baik', value: activeCount, color: 'emerald', icon: CheckCircleIcon },
                         { label: 'Sedang Perbaikan', value: maintenanceCount, color: 'amber', icon: WrenchScrewdriverIcon },
                         { label: 'Rusak / Bermasalah', value: brokenCount, color: 'red', icon: ExclamationTriangleIcon },
@@ -340,9 +379,9 @@ export default function Show({ lab, kepalaPrograms }: any) {
                         <table className="w-full text-sm">
                             <thead>
                                 <tr className="border-b border-slate-100 dark:border-slate-700/50 bg-slate-50/80 dark:bg-slate-900/30">
-                                    <th className="text-left px-5 py-3 text-[10px] font-black text-slate-500 uppercase tracking-wider">Kode PC</th>
-                                    <th className="text-left px-4 py-3 text-[10px] font-black text-slate-500 uppercase tracking-wider">Merek & Tipe</th>
-                                    <th className="text-left px-4 py-3 text-[10px] font-black text-slate-500 uppercase tracking-wider">Spesifikasi Utama</th>
+                                    <th className="text-left px-5 py-3 text-[10px] font-black text-slate-500 uppercase tracking-wider">Kode Item</th>
+                                    <th className="text-left px-4 py-3 text-[10px] font-black text-slate-500 uppercase tracking-wider">Nama & Tipe</th>
+                                    <th className="text-left px-4 py-3 text-[10px] font-black text-slate-500 uppercase tracking-wider">Detail / Spesifikasi</th>
                                     <th className="text-left px-4 py-3 text-[10px] font-black text-slate-500 uppercase tracking-wider">Kondisi</th>
                                     <th className="text-center px-4 py-3 text-[10px] font-black text-slate-500 uppercase tracking-wider">Aksi</th>
                                 </tr>
@@ -351,7 +390,7 @@ export default function Show({ lab, kepalaPrograms }: any) {
                                 {lab.units.length === 0 ? (
                                     <tr>
                                         <td colSpan={5} className="text-center py-16 text-slate-400 text-sm">
-                                            Belum ada unit PC terdaftar di lab ini
+                                            Belum ada barang/perangkat terdaftar di lab ini
                                         </td>
                                     </tr>
                                 ) : (
@@ -367,16 +406,27 @@ export default function Show({ lab, kepalaPrograms }: any) {
                                                 </td>
                                                 <td className="px-4 py-3.5">
                                                     <p className="font-semibold text-slate-700 dark:text-slate-300">{unit.name}</p>
-                                                    <p className="text-[10px] text-slate-400">{unit.brand || 'No Brand'}</p>
+                                                    <p className="text-[10px] text-slate-400">
+                                                        {unit.brand ? unit.brand : (unit.type === 'pc' ? 'No Brand' : '')}
+                                                    </p>
                                                 </td>
                                                 <td className="px-4 py-3.5 text-xs text-slate-600 dark:text-slate-400">
-                                                    <div className="flex flex-wrap gap-x-2 gap-y-1 font-medium">
-                                                        {unit.processor && <span>{unit.processor}</span>}
-                                                        {unit.ram && <span>• RAM {unit.ram}</span>}
-                                                        {unit.storage && <span>• Disk {unit.storage}</span>}
-                                                        {unit.gpu && <span>• GPU {unit.gpu}</span>}
-                                                        {unit.os && <span className="bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded text-[9px] font-bold">{unit.os}</span>}
-                                                    </div>
+                                                    {unit.type && unit.type !== 'pc' ? (
+                                                        <span className="px-2 py-1 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 rounded-lg text-[10px] font-bold uppercase tracking-wider">
+                                                            {unit.type === 'switch' && 'Switch Hub'}
+                                                            {unit.type === 'router' && 'Router'}
+                                                            {unit.type === 'lemari' && 'Inventaris Lab (Lemari/Meja)'}
+                                                            {unit.type === 'other' && 'Perangkat Pendukung'}
+                                                        </span>
+                                                    ) : (
+                                                        <div className="flex flex-wrap gap-x-2 gap-y-1 font-medium">
+                                                            {unit.processor && <span>{unit.processor}</span>}
+                                                            {unit.ram && <span>• RAM {unit.ram}</span>}
+                                                            {unit.storage && <span>• Disk {unit.storage}</span>}
+                                                            {unit.gpu && <span>• GPU {unit.gpu}</span>}
+                                                            {unit.os && <span className="bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded text-[9px] font-bold">{unit.os}</span>}
+                                                        </div>
+                                                    )}
                                                 </td>
                                                 <td className="px-4 py-3.5">
                                                     <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold ${badge.color}`}>
@@ -418,14 +468,14 @@ export default function Show({ lab, kepalaPrograms }: any) {
                     </div>
                 </div>
             </div>
-
+            
             {/* PC Unit Form Modal */}
             {showUnitForm && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
                     <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl w-full max-w-lg overflow-y-auto max-h-[90vh]">
                         <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between">
                             <h3 className="font-black text-slate-900 dark:text-white">
-                                {editUnit ? 'Edit Unit PC' : 'Tambah Unit PC'}
+                                {editUnit ? 'Edit Barang / Perangkat' : 'Tambah Barang / Perangkat'}
                             </h3>
                             <button
                                 onClick={() => setShowUnitForm(false)}
@@ -436,9 +486,25 @@ export default function Show({ lab, kepalaPrograms }: any) {
                         </div>
                         <form onSubmit={handleUnitSubmit} className="p-6 space-y-4">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="sm:col-span-2">
+                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">
+                                        Jenis Barang / Perangkat *
+                                    </label>
+                                    <select
+                                        value={unitForm.data.type}
+                                        onChange={(e) => handleTypeChange(e.target.value)}
+                                        className="w-full py-2 px-3 text-sm border border-slate-200 dark:border-slate-600 rounded-xl bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                    >
+                                        <option value="pc">Komputer / PC</option>
+                                        <option value="switch">Switch Hub</option>
+                                        <option value="router">Router</option>
+                                        <option value="lemari">Lemari / Meja / Kursi (Inventaris)</option>
+                                        <option value="other">Lainnya (Perangkat Pendukung)</option>
+                                    </select>
+                                </div>
                                 <div>
                                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">
-                                        Kode PC *
+                                        Kode Barang *
                                     </label>
                                     <input
                                         value={unitForm.data.code}
@@ -451,7 +517,7 @@ export default function Show({ lab, kepalaPrograms }: any) {
                                 </div>
                                 <div>
                                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">
-                                        Nama PC / Nomor Meja *
+                                        Nama Barang *
                                     </label>
                                     <input
                                         value={unitForm.data.name}
@@ -470,64 +536,68 @@ export default function Show({ lab, kepalaPrograms }: any) {
                                         value={unitForm.data.brand}
                                         onChange={(e) => unitForm.setData('brand', e.target.value)}
                                         className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-xl bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
-                                        placeholder="mis: Lenovo ThinkCentre"
+                                        placeholder="mis: Lenovo / TP-Link"
                                     />
                                 </div>
-                                <div>
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">
-                                        Sistem Operasi (OS)
-                                    </label>
-                                    <input
-                                        value={unitForm.data.os}
-                                        onChange={(e) => unitForm.setData('os', e.target.value)}
-                                        className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-xl bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
-                                        placeholder="Windows 11 / Ubuntu"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">
-                                        Processor (CPU)
-                                    </label>
-                                    <input
-                                        value={unitForm.data.processor}
-                                        onChange={(e) => unitForm.setData('processor', e.target.value)}
-                                        className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-xl bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
-                                        placeholder="Intel Core i5-12400"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">
-                                        RAM
-                                    </label>
-                                    <input
-                                        value={unitForm.data.ram}
-                                        onChange={(e) => unitForm.setData('ram', e.target.value)}
-                                        className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-xl bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
-                                        placeholder="16 GB DDR4"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">
-                                        Storage / Penyimpanan
-                                    </label>
-                                    <input
-                                        value={unitForm.data.storage}
-                                        onChange={(e) => unitForm.setData('storage', e.target.value)}
-                                        className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-xl bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
-                                        placeholder="512 GB SSD NVMe"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">
-                                        Kartu Grafis (GPU)
-                                    </label>
-                                    <input
-                                        value={unitForm.data.gpu}
-                                        onChange={(e) => unitForm.setData('gpu', e.target.value)}
-                                        className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-xl bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
-                                        placeholder="NVIDIA GTX 1650 / Integrated"
-                                    />
-                                </div>
+                                {unitForm.data.type === 'pc' ? (
+                                    <>
+                                        <div>
+                                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">
+                                                Sistem Operasi (OS)
+                                            </label>
+                                            <input
+                                                value={unitForm.data.os}
+                                                onChange={(e) => unitForm.setData('os', e.target.value)}
+                                                className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-xl bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+                                                placeholder="Windows 11 / Ubuntu"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">
+                                                Processor (CPU)
+                                            </label>
+                                            <input
+                                                value={unitForm.data.processor}
+                                                onChange={(e) => unitForm.setData('processor', e.target.value)}
+                                                className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-xl bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+                                                placeholder="Intel Core i5-12400"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">
+                                                RAM
+                                            </label>
+                                            <input
+                                                value={unitForm.data.ram}
+                                                onChange={(e) => unitForm.setData('ram', e.target.value)}
+                                                className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-xl bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+                                                placeholder="16 GB DDR4"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">
+                                                Storage / Penyimpanan
+                                            </label>
+                                            <input
+                                                value={unitForm.data.storage}
+                                                onChange={(e) => unitForm.setData('storage', e.target.value)}
+                                                className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-xl bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+                                                placeholder="512 GB SSD NVMe"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">
+                                                Kartu Grafis (GPU)
+                                            </label>
+                                            <input
+                                                value={unitForm.data.gpu}
+                                                onChange={(e) => unitForm.setData('gpu', e.target.value)}
+                                                className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-xl bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
+                                                placeholder="NVIDIA GTX 1650 / Integrated"
+                                            />
+                                        </div>
+                                    </>
+                                ) : null}
                                 <div className="sm:col-span-2">
                                     <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1 block">
                                         Status Kondisi *
@@ -551,7 +621,7 @@ export default function Show({ lab, kepalaPrograms }: any) {
                                         onChange={(e) => unitForm.setData('note', e.target.value)}
                                         className="w-full px-3 py-2 text-sm border border-slate-200 dark:border-slate-600 rounded-xl bg-slate-50 dark:bg-slate-700 text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none"
                                         rows={3}
-                                        placeholder="Catatan tambahan mengenai unit PC ini..."
+                                        placeholder="Catatan tambahan mengenai barang ini..."
                                     />
                                 </div>
                             </div>

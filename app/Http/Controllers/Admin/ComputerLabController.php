@@ -100,14 +100,12 @@ class ComputerLabController extends Controller
         return redirect()->route('admin.computer-labs.index')->with('success', 'Lab Komputer berhasil dihapus.');
     }
 
-    /**
-     * Add a PC Unit to the Lab.
-     */
     public function storeUnit(Request $request, ComputerLab $lab)
     {
         $request->validate([
             'code' => 'required|string|unique:computer_units,code',
             'name' => 'required|string|max:255',
+            'type' => 'required|string|in:pc,switch,router,lemari,other',
             'brand' => 'nullable|string|max:255',
             'processor' => 'nullable|string|max:255',
             'ram' => 'nullable|string|max:255',
@@ -120,7 +118,7 @@ class ComputerLabController extends Controller
 
         $lab->units()->create($request->all());
 
-        return back()->with('success', 'Unit PC berhasil ditambahkan.');
+        return back()->with('success', 'Unit/Barang berhasil ditambahkan.');
     }
 
     /**
@@ -131,6 +129,7 @@ class ComputerLabController extends Controller
         $request->validate([
             'code' => 'required|string|unique:computer_units,code,' . $unit->id,
             'name' => 'required|string|max:255',
+            'type' => 'required|string|in:pc,switch,router,lemari,other',
             'brand' => 'nullable|string|max:255',
             'processor' => 'nullable|string|max:255',
             'ram' => 'nullable|string|max:255',
