@@ -33,6 +33,7 @@ return Application::configure(basePath: dirname(__DIR__))
             '/portal/attendance/scan',
             '/invoice/*/prepare-payment',
             '/public/computer-issues/report',
+            'public/computer-issues/report',
         ]);
 
         $middleware->alias([

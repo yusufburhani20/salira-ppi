@@ -308,7 +308,7 @@ Route::post('/invoice/{bill_number}/prepare-payment', [\App\Http\Controllers\Inv
 
 // Public Computer Issue Report (Scan QR PC)
 Route::get('/public/computer-issues/report', [\App\Http\Controllers\Admin\ComputerIssueController::class, 'reportForm'])->name('public.computer-issues.report');
-Route::post('/public/computer-issues/report', [\App\Http\Controllers\Admin\ComputerIssueController::class, 'storeIssue']);
+Route::post('/public/computer-issues/report', [\App\Http\Controllers\Admin\ComputerIssueController::class, 'storeIssue'])->name('public.computer-issues.report.store');
 
 // Student Portal Routes
 Route::prefix('portal')->name('portal.')->group(function () {

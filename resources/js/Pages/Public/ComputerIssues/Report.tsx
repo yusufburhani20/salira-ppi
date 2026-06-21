@@ -28,7 +28,7 @@ export default function Report({ prefilledCode, unit }: any) {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        post(route('public.computer-issues.report'), {
+        post(route('public.computer-issues.report.store'), {
             onSuccess: () => {
                 setSubmitted(true);
                 reset();
