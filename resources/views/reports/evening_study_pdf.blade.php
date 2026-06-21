@@ -22,7 +22,7 @@
                 <div style="font-weight: bold;">{{ \Carbon\Carbon::parse($item['date'])->isoFormat('dddd') }}</div>
                 <div>{{ \Carbon\Carbon::parse($item['date'])->format('d/m/Y') }}</div>
             </td>
-            <td class="text-center" style="font-weight: bold; background: #eee; font-size: 10px;">{{ $item['academicClass']['name'] ?? '-' }}</td>
+            <td class="text-center" style="font-weight: bold; background: #eee; font-size: 10px;">{{ $item['academic_class']['name'] ?? '-' }}</td>
             <td style="font-size: 9px;">{{ $item['supervisor']['name'] ?? '-' }}</td>
             <td style="font-size: 9px; font-weight: bold;">{{ $item['activity_name'] }}</td>
             <td style="font-size: 9px; line-height: 1.3;">{{ $item['notes'] ?? '-' }}</td>

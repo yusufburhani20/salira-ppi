@@ -94,7 +94,7 @@ class EveningStudyController extends Controller
     {
         $this->resolveSemesterDates($request);
         Carbon::setLocale('id');
-        $data = $this->getExportQuery($request)->get();
+        $data = $this->getExportQuery($request)->get()->toArray();
 
         $className = $request->academic_class_id ? AcademicClass::find($request->academic_class_id)->name : 'Semua Kelas';
         $startDateFormatted = $request->start_date ? Carbon::parse($request->start_date)->translatedFormat('d F Y') : 'Awal';
@@ -114,7 +114,7 @@ class EveningStudyController extends Controller
     {
         $this->resolveSemesterDates($request);
         Carbon::setLocale('id');
-        $data = $this->getExportQuery($request)->get();
+        $data = $this->getExportQuery($request)->get()->toArray();
 
         $className = $request->academic_class_id ? AcademicClass::find($request->academic_class_id)->name : 'Semua Kelas';
         $startDateFormatted = $request->start_date ? Carbon::parse($request->start_date)->translatedFormat('d F Y') : 'Awal';

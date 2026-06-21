@@ -51,7 +51,7 @@
                 {{ \Carbon\Carbon::parse($item['date'])->isoFormat('dddd') }}<br>
                 {{ \Carbon\Carbon::parse($item['date'])->format('d/m/Y') }}
             </td>
-            <td style="border: 1px solid #000; text-align: center; vertical-align: top; font-weight: bold;">{{ $item['academicClass']['name'] ?? '-' }}</td>
+            <td style="border: 1px solid #000; text-align: center; vertical-align: top; font-weight: bold;">{{ $item['academic_class']['name'] ?? '-' }}</td>
             <td style="border: 1px solid #000; vertical-align: top;">{{ $item['supervisor']['name'] ?? '-' }}</td>
             <td style="border: 1px solid #000; vertical-align: top; font-weight: bold;">{{ $item['activity_name'] }}</td>
             <td style="border: 1px solid #000; vertical-align: top;">{{ $item['notes'] ?? '-' }}</td>
