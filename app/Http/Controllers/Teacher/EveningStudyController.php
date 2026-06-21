@@ -270,6 +270,11 @@ class EveningStudyController extends Controller
      */
     public function edit(EveningStudy $eveningStudy)
     {
+        // Pengawas Malam hanya boleh edit milik sendiri
+        if (Auth::user()->hasRole('Pengawas Malam') && $eveningStudy->supervisor_id !== Auth::id()) {
+            abort(403, 'Anda tidak diizinkan mengedit jurnal milik pengawas lain.');
+        }
+
         $eveningStudy->load('attendances.student');
         
         $classes = AcademicClass::whereHas('academicYear', function($q) {
@@ -292,6 +297,11 @@ class EveningStudyController extends Controller
      */
     public function update(Request $request, EveningStudy $eveningStudy)
     {
+        // Pengawas Malam hanya boleh update milik sendiri
+        if (Auth::user()->hasRole('Pengawas Malam') && $eveningStudy->supervisor_id !== Auth::id()) {
+            abort(403, 'Anda tidak diizinkan mengubah jurnal milik pengawas lain.');
+        }
+
         $request->validate([
             'date' => 'required|date',
             'academic_class_id' => 'required|exists:academic_classes,id',
@@ -341,6 +351,11 @@ class EveningStudyController extends Controller
      */
     public function destroy(EveningStudy $eveningStudy)
     {
+        // Pengawas Malam hanya boleh hapus milik sendiri
+        if (Auth::user()->hasRole('Pengawas Malam') && $eveningStudy->supervisor_id !== Auth::id()) {
+            abort(403, 'Anda tidak diizinkan menghapus jurnal milik pengawas lain.');
+        }
+
         $eveningStudy->delete(); // Cascades deletes to attendances
         return redirect()->route('teacher.evening-studies.index')
             ->with('success', 'Jurnal Belajar Malam berhasil dihapus.');

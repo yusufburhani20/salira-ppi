@@ -1,5 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, router } from '@inertiajs/react';
+import { Head, router, usePage } from '@inertiajs/react';
 import {
     PlusIcon,
     CalendarIcon,
@@ -11,6 +11,17 @@ import {
 } from '@heroicons/react/24/outline';
 
 export default function Index({ eveningStudies, classes = [], semesters = [], filters = {} }: any) {
+    const { props } = usePage();
+    const authUser = (props.auth as any).user;
+    const currentUserId: number = authUser?.id;
+    const isPengawasMalam: boolean = (authUser?.roles ?? []).includes('Pengawas Malam');
+
+    // Pengawas Malam: can only edit/delete their own records
+    const canModify = (item: any): boolean => {
+        if (!isPengawasMalam) return true;
+        return item.supervisor_id === currentUserId;
+    };
+
     const handleDelete = (item: any) => {
         if (confirm(`Hapus Jurnal Belajar Malam tanggal ${item.date} untuk kelas ${item.academic_class?.name}?`)) {
             router.delete(route('teacher.evening-studies.destroy', item.id));
@@ -209,20 +220,27 @@ export default function Index({ eveningStudies, classes = [], semesters = [], fi
                                                     >
                                                         <EyeIcon className="w-4 h-4" />
                                                     </a>
-                                                    <a
-                                                        href={route('teacher.evening-studies.edit', item.id)}
-                                                        className="p-2 rounded-xl hover:bg-amber-50 dark:hover:bg-amber-900/20 text-amber-500 transition-colors"
-                                                        title="Edit"
-                                                    >
-                                                        <PencilIcon className="w-4 h-4" />
-                                                    </a>
-                                                    <button
-                                                        onClick={() => handleDelete(item)}
-                                                        className="p-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 text-red-400 transition-colors cursor-pointer"
-                                                        title="Hapus"
-                                                    >
-                                                        <TrashIcon className="w-4 h-4" />
-                                                    </button>
+                                                    {canModify(item) && (
+                                                        <a
+                                                            href={route('teacher.evening-studies.edit', item.id)}
+                                                            className="p-2 rounded-xl hover:bg-amber-50 dark:hover:bg-amber-900/20 text-amber-500 transition-colors"
+                                                            title="Edit"
+                                                        >
+                                                            <PencilIcon className="w-4 h-4" />
+                                                        </a>
+                                                    )}
+                                                    {canModify(item) && (
+                                                        <button
+                                                            onClick={() => handleDelete(item)}
+                                                            className="p-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 text-red-400 transition-colors cursor-pointer"
+                                                            title="Hapus"
+                                                        >
+                                                            <TrashIcon className="w-4 h-4" />
+                                                        </button>
+                                                    )}
+                                                    {!canModify(item) && (
+                                                        <span className="text-[10px] text-slate-400 italic px-2">Hanya lihat</span>
+                                                    )}
                                                 </div>
                                             </td>
                                         </tr>
