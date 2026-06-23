@@ -8,6 +8,11 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Services\WhatsAppService;
 use App\Services\TelegramService;
+use App\Models\PushSubscription;
+use App\Models\User;
+use App\Models\Student;
+use Spatie\Permission\Models\Role;
+use App\Notifications\GeneralBroadcastPushNotification;
 
 class NotificationSettingController extends Controller
 {
@@ -84,9 +89,16 @@ class NotificationSettingController extends Controller
             'user_attendance_reminder_time_out' => Setting::get('user_attendance_reminder_time_out', '15:00'),
         ];
 
+        $userSubscriptionsCount = PushSubscription::where('subscribable_type', User::class)->count();
+        $studentSubscriptionsCount = PushSubscription::where('subscribable_type', Student::class)->count();
+        $roles = Role::pluck('name');
+
         return Inertia::render('Admin/Settings/Notifications/Index', [
             'settings' => $settings,
             'bot_username' => env('TELEGRAM_BOT_USERNAME', 'SaliraBot'),
+            'user_subscriptions_count' => $userSubscriptionsCount,
+            'student_subscriptions_count' => $studentSubscriptionsCount,
+            'available_roles' => $roles,
         ]);
     }
 
@@ -179,5 +191,69 @@ class NotificationSettingController extends Controller
         } catch (\Exception $e) {
             return back()->with('error', "Gagal mengirim pesan: " . $e->getMessage());
         }
+    }
+
+    /**
+     * Broadcast push notification to targeted groups or roles.
+     */
+    public function broadcast(Request $request)
+    {
+        $request->validate([
+            'title' => 'required|string|max:100',
+            'body' => 'required|string|max:255',
+            'action_url' => 'required|string',
+            'target' => 'required|string',
+        ]);
+
+        $title = $request->input('title');
+        $body = $request->input('body');
+        $actionUrl = $request->input('action_url');
+        $target = $request->input('target');
+
+        $count = 0;
+
+        if ($target === 'all') {
+            // Broadcast to all active users and students who have subscriptions
+            $users = User::where('status', 'active')->whereHas('pushSubscriptions')->get();
+            foreach ($users as $user) {
+                $user->notify(new GeneralBroadcastPushNotification($title, $body, $actionUrl));
+                $count++;
+            }
+
+            $students = Student::where('status', 'active')->whereHas('pushSubscriptions')->get();
+            foreach ($students as $student) {
+                $student->notify(new GeneralBroadcastPushNotification($title, $body, $actionUrl));
+                $count++;
+            }
+        } elseif ($target === 'students') {
+            // Only active students
+            $students = Student::where('status', 'active')->whereHas('pushSubscriptions')->get();
+            foreach ($students as $student) {
+                $student->notify(new GeneralBroadcastPushNotification($title, $body, $actionUrl));
+                $count++;
+            }
+        } elseif ($target === 'users') {
+            // All active staff/teachers
+            $users = User::where('status', 'active')->whereHas('pushSubscriptions')->get();
+            foreach ($users as $user) {
+                $user->notify(new GeneralBroadcastPushNotification($title, $body, $actionUrl));
+                $count++;
+            }
+        } elseif (str_starts_with($target, 'role:')) {
+            // Target users with a specific role
+            $roleName = substr($target, 5);
+
+            $users = User::role($roleName)
+                ->where('status', 'active')
+                ->whereHas('pushSubscriptions')
+                ->get();
+
+            foreach ($users as $user) {
+                $user->notify(new GeneralBroadcastPushNotification($title, $body, $actionUrl));
+                $count++;
+            }
+        }
+
+        return back()->with('success', "Notifikasi broadcast berhasil dikirim ke {$count} perangkat penerima.");
     }
 }

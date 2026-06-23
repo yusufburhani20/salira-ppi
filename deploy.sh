@@ -6,6 +6,11 @@
 LOG_PREFIX="[$(date '+%H:%M:%S')]"
 APP_DIR="$(cd "$(dirname "$0")" && pwd)"
 
+# Nonaktifkan interaksi terminal untuk semua perintah git agar tidak stuck
+export GIT_TERMINAL_PROMPT=0
+export GIT_ASKPASS=echo
+export SSH_ASKPASS=echo
+
 # Fungsi untuk menangani error
 die() {
     echo "$LOG_PREFIX ❌ ERROR: $1"
@@ -22,7 +27,7 @@ cd "$APP_DIR" || die "Gagal masuk ke direktori $APP_DIR"
 # Mendukung repo privat via GITHUB_USER + GITHUB_TOKEN dari environment variable
 echo "$LOG_PREFIX 📥 Menarik kode terbaru dari GitHub..."
 
-# Buang perubahan lokal agar git pull tidak konflik
+# Buang perubahan lokal agar tidak konflik
 git checkout -- . 2>/dev/null || true
 git clean -fd 2>/dev/null || true
 
@@ -34,27 +39,30 @@ if [ -n "$GITHUB_TOKEN" ] && [ -n "$GITHUB_USER" ]; then
     # Ambil URL repo dari remote origin saat ini
     REPO_URL=$(git remote get-url origin)
 
-    # Ekstrak domain dan path repo (hapus https:// dan kredensial lama jika ada)
-    CLEAN_PATH=$(echo "$REPO_URL" | sed -E 's|https://([^@]+@)?github.com/||' | tr -d '[:space:]')
+    # Ekstrak domain dan path repo (mendukung HTTPS dan SSH)
+    CLEAN_PATH=$(echo "$REPO_URL" | sed -E -e 's|https://([^@]+@)?github.com/||' -e 's|git@github.com:||' -e 's|\.git$||' | tr -d '[:space:]')
     
     # Hapus trailing slash jika ada
     CLEAN_PATH=${CLEAN_PATH%/}
 
     # Bentuk URL baru yang bersih dengan kredensial
-    AUTHED_URL="https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/${CLEAN_PATH}"
+    AUTHED_URL="https://${GITHUB_USER}:${GITHUB_TOKEN}@github.com/${CLEAN_PATH}.git"
     
-    # Pull dengan URL yang sudah di-autentikasi
-    git pull "$AUTHED_URL" main 2>&1
+    # Fetch dengan URL yang sudah di-autentikasi
+    git fetch "$AUTHED_URL" main 2>&1
 else
-    # Jika tidak ada token, coba pull biasa (untuk repo publik atau SSH)
-    git pull origin main 2>&1
+    # Jika tidak ada token, coba fetch biasa (untuk repo publik atau SSH)
+    git fetch origin main 2>&1
 fi
 
 if [ $? -ne 0 ]; then
-    die "git pull GAGAL! Pastikan Kredensial GitHub sudah diisi dengan benar di Pengaturan."
+    die "git fetch GAGAL! Pastikan Kredensial GitHub sudah diisi dengan benar di Pengaturan."
 fi
 
-echo "$LOG_PREFIX ✅ git pull berhasil."
+# Reset hard ke FETCH_HEAD untuk menyelaraskan dengan repo tanpa prompt commit merge
+git reset --hard FETCH_HEAD 2>&1 || die "Gagal melakukan git reset --hard ke kode terbaru."
+
+echo "$LOG_PREFIX ✅ git fetch dan reset berhasil."
 
 # Fix kepemilikan file agar user www bisa membaca/menulis (cegah EACCES)
 chown -R www:www "$APP_DIR" 2>/dev/null || true

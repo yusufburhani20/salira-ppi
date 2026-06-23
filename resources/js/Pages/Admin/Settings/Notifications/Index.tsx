@@ -11,7 +11,7 @@ interface Settings {
     [key: string]: boolean | string;
 }
 
-export default function NotificationSettings({ auth, settings, bot_username }: PageProps<{ settings: Settings, bot_username: string }>) {
+export default function NotificationSettings({ auth, settings, bot_username, user_subscriptions_count, student_subscriptions_count, available_roles }: PageProps<{ settings: Settings, bot_username: string, user_subscriptions_count: number, student_subscriptions_count: number, available_roles: string[] }>) {
     const [waStatus, setWaStatus] = useState<string>('checking...');
     const [qrCode, setQrCode] = useState<string | null>(null);
     const [waInfo, setWaInfo] = useState<any>(null);
@@ -81,6 +81,14 @@ export default function NotificationSettings({ auth, settings, bot_username }: P
         target: '',
     });
 
+    // Form for Broadcast Push
+    const { data: broadcastData, setData: setBroadcastData, post: postBroadcast, processing: processingBroadcast, reset: resetBroadcast } = useForm({
+        target: 'all',
+        title: '',
+        body: '',
+        action_url: '/dashboard',
+    });
+
     useEffect(() => {
         const fetchStatus = async () => {
             try {
@@ -115,6 +123,17 @@ export default function NotificationSettings({ auth, settings, bot_username }: P
         });
     };
 
+    const submitBroadcast = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (confirm(`Apakah Anda yakin ingin mengirim push notifikasi broadcast ke target "${broadcastData.target}"?`)) {
+            postBroadcast(route('admin.settings.notifications.broadcast'), {
+                onSuccess: () => {
+                    resetBroadcast('title', 'body');
+                }
+            });
+        }
+    };
+
     const formatUptime = (seconds: number) => {
         if (!seconds) return '0s';
         const h = Math.floor(seconds / 3600);
@@ -145,7 +164,7 @@ export default function NotificationSettings({ auth, settings, bot_username }: P
                     <div className="bg-white dark:bg-gray-800 shadow-sm sm:rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden">
                         <Tab.Group>
                             <Tab.List className="flex space-x-1 rounded-xl bg-gray-50/50 dark:bg-gray-900/50 p-2 m-4 border border-gray-100 dark:border-gray-700">
-                                {['Koneksi & Master Switch', 'Matriks Distribusi', 'Template Pesan Telegram & WA'].map((category) => (
+                                {['Koneksi & Master Switch', 'Matriks Distribusi', 'Template Pesan Telegram & WA', 'Broadcast Push Notifikasi'].map((category) => (
                                     <Tab
                                         key={category}
                                         className={({ selected }) =>
@@ -515,6 +534,173 @@ export default function NotificationSettings({ auth, settings, bot_username }: P
                                             <li><code className="font-bold">[KONTEN]</code>: Isi Pengumuman / Pesan Wali Kelas</li>
                                             <li><code className="font-bold">[LINK_LAMPIRAN]</code>: Tautan Unduh Lampiran / Laporan</li>
                                         </ul>
+                                    </div>
+                                </Tab.Panel>
+
+                                {/* TAB 4: Broadcast Push Notifikasi */}
+                                <Tab.Panel className="p-6">
+                                    <div className="mb-8">
+                                        <h3 className="text-lg font-bold">Broadcast Push Notifikasi</h3>
+                                        <p className="text-sm text-gray-500">Kirim pesan instan langsung ke perangkat browser seluruh pengguna yang telah mengaktifkan notifikasi push.</p>
+                                    </div>
+
+                                    {/* Stats Cards */}
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                                        <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-gray-200 dark:border-gray-700 flex flex-col justify-between">
+                                            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Total Perangkat Terdaftar</span>
+                                            <span className="text-3xl font-black text-indigo-600 dark:text-indigo-400 mt-2">
+                                                {((user_subscriptions_count || 0) + (student_subscriptions_count || 0))} Device
+                                            </span>
+                                            <span className="text-[10px] text-gray-400 mt-1">Menggunakan push notifikasi web</span>
+                                        </div>
+                                        <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-gray-200 dark:border-gray-700 flex flex-col justify-between">
+                                            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Perangkat Guru & Pegawai</span>
+                                            <span className="text-3xl font-black text-slate-800 dark:text-slate-200 mt-2">
+                                                {user_subscriptions_count || 0} Device
+                                            </span>
+                                            <span className="text-[10px] text-gray-400 mt-1">Akun staf yang terdaftar</span>
+                                        </div>
+                                        <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-gray-200 dark:border-gray-700 flex flex-col justify-between">
+                                            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Perangkat Siswa / Orang Tua</span>
+                                            <span className="text-3xl font-black text-slate-800 dark:text-slate-200 mt-2">
+                                                {student_subscriptions_count || 0} Device
+                                            </span>
+                                            <span className="text-[10px] text-gray-400 mt-1">Akun portal siswa yang terdaftar</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                                        {/* Broadcast Form */}
+                                        <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 p-6">
+                                            <form onSubmit={submitBroadcast} className="space-y-6">
+                                                <div>
+                                                    <label className="block text-sm font-bold mb-2 text-gray-700 dark:text-gray-300">Target Penerima</label>
+                                                    <select
+                                                        value={broadcastData.target}
+                                                        onChange={e => setBroadcastData('target', e.target.value)}
+                                                        className="w-full rounded-xl border-gray-300 dark:border-gray-600 dark:bg-gray-800 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm font-semibold"
+                                                    >
+                                                        <option value="all">Semua Perangkat (Guru, Pegawai, & Siswa/Orang Tua)</option>
+                                                        <option value="users">Semua Guru & Pegawai</option>
+                                                        <option value="students">Semua Siswa & Orang Tua</option>
+                                                        {available_roles && available_roles.map((role: string) => (
+                                                            <option key={role} value={`role:${role}`}>Hanya Role: {role}</option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-sm font-bold mb-2 text-gray-700 dark:text-gray-300">Judul Notifikasi</label>
+                                                    <input
+                                                        type="text"
+                                                        maxLength={100}
+                                                        value={broadcastData.title}
+                                                        onChange={e => setBroadcastData('title', e.target.value)}
+                                                        placeholder="Masukkan judul notifikasi..."
+                                                        className="w-full rounded-xl border-gray-300 dark:border-gray-600 dark:bg-gray-800 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                        required
+                                                    />
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-sm font-bold mb-2 text-gray-700 dark:text-gray-300">Isi Pesan (Body)</label>
+                                                    <textarea
+                                                        rows={3}
+                                                        maxLength={255}
+                                                        value={broadcastData.body}
+                                                        onChange={e => setBroadcastData('body', e.target.value)}
+                                                        placeholder="Tulis detail pengumuman yang ingin disampaikan..."
+                                                        className="w-full rounded-xl border-gray-300 dark:border-gray-600 dark:bg-gray-800 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                        required
+                                                    />
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-sm font-bold mb-2 text-gray-700 dark:text-gray-300">Tautan Tindakan (Action URL)</label>
+                                                    <input
+                                                        type="text"
+                                                        value={broadcastData.action_url}
+                                                        onChange={e => setBroadcastData('action_url', e.target.value)}
+                                                        placeholder="Contoh: /dashboard atau /portal/attendance"
+                                                        className="w-full rounded-xl border-gray-300 dark:border-gray-600 dark:bg-gray-800 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 text-sm"
+                                                        required
+                                                    />
+                                                </div>
+
+                                                <button
+                                                    type="submit"
+                                                    disabled={processingBroadcast}
+                                                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-3 rounded-xl font-bold transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                                                >
+                                                    <BellIcon className="w-5 h-5" />
+                                                    {processingBroadcast ? 'Mengirim Broadcast...' : 'Kirim Broadcast'}
+                                                </button>
+                                            </form>
+                                        </div>
+
+                                        {/* Quick Templates */}
+                                        <div className="bg-slate-50 dark:bg-slate-900/50 p-6 rounded-2xl border border-gray-200 dark:border-gray-700 space-y-4">
+                                            <h4 className="font-bold text-sm text-gray-700 dark:text-gray-300 uppercase tracking-wider">Quick Template</h4>
+                                            <p className="text-xs text-gray-500">Gunakan templat cepat ini untuk mempermudah pengisian formulir broadcast.</p>
+                                            
+                                            <div className="space-y-2">
+                                                <button
+                                                    onClick={() => {
+                                                        setBroadcastData({
+                                                            target: 'all',
+                                                            title: 'Pengumuman Libur Sekolah 📢',
+                                                            body: 'Diinformasikan kepada seluruh warga sekolah bahwa kegiatan KBM besok ditiadakan sehubungan dengan hari libur nasional.',
+                                                            action_url: '/dashboard',
+                                                        });
+                                                    }}
+                                                    className="w-full text-left p-3 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl hover:border-indigo-400 dark:hover:border-indigo-500 transition-colors text-xs font-semibold text-gray-700 dark:text-gray-300"
+                                                >
+                                                    🌴 Libur Sekolah
+                                                </button>
+                                                
+                                                <button
+                                                    onClick={() => {
+                                                        setBroadcastData({
+                                                            target: 'role:Guru',
+                                                            title: 'Peringatan Rapat Guru 🕒',
+                                                            body: 'Undangan rapat dinas guru dan staf akan dilaksanakan sore ini pukul 14:00 di ruang guru. Kehadiran bersifat wajib.',
+                                                            action_url: '/dashboard',
+                                                        });
+                                                    }}
+                                                    className="w-full text-left p-3 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl hover:border-indigo-400 dark:hover:border-indigo-500 transition-colors text-xs font-semibold text-gray-700 dark:text-gray-300"
+                                                >
+                                                    👨‍🏫 Rapat Dewan Guru
+                                                </button>
+
+                                                <button
+                                                    onClick={() => {
+                                                        setBroadcastData({
+                                                            target: 'students',
+                                                            title: 'Pembayaran SPP Bulanan 💳',
+                                                            body: 'Tagihan SPP bulanan Anda telah terbit. Silakan lakukan pembayaran melalui portal keuangan sekolah.',
+                                                            action_url: '/portal/bills',
+                                                        });
+                                                    }}
+                                                    className="w-full text-left p-3 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl hover:border-indigo-400 dark:hover:border-indigo-500 transition-colors text-xs font-semibold text-gray-700 dark:text-gray-300"
+                                                >
+                                                    💳 Tagihan SPP
+                                                </button>
+
+                                                <button
+                                                    onClick={() => {
+                                                        setBroadcastData({
+                                                            target: 'all',
+                                                            title: 'Pemeliharaan Sistem Terjadwal 🔧',
+                                                            body: 'Sistem SALIRA akan mengalami pemeliharaan malam ini pukul 22:00 s.d 24:00. Aplikasi tidak dapat diakses sementara.',
+                                                            action_url: '/dashboard',
+                                                        });
+                                                    }}
+                                                    className="w-full text-left p-3 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl hover:border-indigo-400 dark:hover:border-indigo-500 transition-colors text-xs font-semibold text-gray-700 dark:text-gray-300"
+                                                >
+                                                    🔧 Maintenance Sistem
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
                                 </Tab.Panel>
                             </Tab.Panels>

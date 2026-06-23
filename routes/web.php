@@ -196,6 +196,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/settings/whatsapp-status', [\App\Http\Controllers\Admin\NotificationSettingController::class, 'whatsappStatus'])->name('settings.whatsapp-status');
             Route::post('/settings/whatsapp-restart', [\App\Http\Controllers\Admin\NotificationSettingController::class, 'restartWhatsapp'])->name('settings.whatsapp-restart');
             Route::post('/settings/notifications/test', [\App\Http\Controllers\Admin\NotificationSettingController::class, 'testSend'])->name('settings.notifications.test');
+            Route::post('/settings/notifications/broadcast', [\App\Http\Controllers\Admin\NotificationSettingController::class, 'broadcast'])->name('settings.notifications.broadcast');
         });
 
         // Geofences
