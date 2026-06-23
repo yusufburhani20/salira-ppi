@@ -6,6 +6,7 @@ import { PropsWithChildren, ReactNode, useState, useEffect } from 'react';
 import ThemeToggle from '@/Components/ThemeToggle';
 import SystemClock from '@/Components/SystemClock';
 import usePWA from '@/hooks/usePWA';
+import { DevicePhoneMobileIcon } from '@heroicons/react/24/outline';
 
 export default function Authenticated({
     header,
@@ -26,6 +27,91 @@ export default function Authenticated({
         subscribe,
         unsubscribe
     } = usePWA(vapid_public_key);
+
+    const [locationPermissionState, setLocationPermissionState] = useState<'granted' | 'prompt' | 'denied'>('prompt');
+    const [showPermissionModal, setShowPermissionModal] = useState(false);
+
+    // Request Location Permission
+    const handleRequestLocation = () => {
+        if ('geolocation' in navigator) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    setLocationPermissionState('granted');
+                },
+                (error) => {
+                    if (error.code === error.PERMISSION_DENIED) {
+                        setLocationPermissionState('denied');
+                        alert("Akses lokasi ditolak. Silakan aktifkan izin lokasi di pengaturan browser Anda.");
+                    } else {
+                        alert("Gagal mengakses lokasi: " + error.message);
+                    }
+                },
+                { enableHighAccuracy: true }
+            );
+        } else {
+            alert("Browser Anda tidak mendukung Geolocation.");
+        }
+    };
+
+    // Request Notification Permission
+    const handleRequestNotification = async () => {
+        const success = await subscribe();
+        if (success) {
+            // isSubscribed will automatically change via hook
+        }
+    };
+
+    // Dismiss Permission Modal
+    const handleDismissModal = () => {
+        sessionStorage.setItem('dismiss_permission_modal', 'true');
+        setShowPermissionModal(false);
+    };
+
+    // Check permissions status
+    useEffect(() => {
+        const checkPermissions = async () => {
+            // 1. Geolocation permission state
+            if ('permissions' in navigator) {
+                try {
+                    const result = await navigator.permissions.query({ name: 'geolocation' });
+                    setLocationPermissionState(result.state as any);
+                    
+                    // Listen for changes
+                    result.onchange = () => {
+                        setLocationPermissionState(result.state as any);
+                    };
+                } catch (e) {}
+            }
+
+            // 2. Determine if modal needs to be shown
+            const hasNotificationGranted = Notification.permission === 'granted';
+            
+            let hasGeoGranted = false;
+            if ('permissions' in navigator) {
+                try {
+                    const result = await navigator.permissions.query({ name: 'geolocation' });
+                    hasGeoGranted = result.state === 'granted';
+                } catch (e) {}
+            }
+
+            const dismissed = sessionStorage.getItem('dismiss_permission_modal') === 'true';
+
+            if ((!hasNotificationGranted || !hasGeoGranted) && !dismissed) {
+                // Delay slightly for smooth page entry
+                const timer = setTimeout(() => setShowPermissionModal(true), 1500);
+                return () => clearTimeout(timer);
+            }
+        };
+
+        checkPermissions();
+    }, [isSubscribed]);
+
+    // Auto close modal if both permissions are granted
+    useEffect(() => {
+        if (Notification.permission === 'granted' && locationPermissionState === 'granted') {
+            setShowPermissionModal(false);
+        }
+    }, [locationPermissionState]);
     
     // Sidebar collapse state (Desktop)
     const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
@@ -622,6 +708,81 @@ export default function Authenticated({
                         </div>
                     </div>
                 )}
+
+                {showPermissionModal && (
+                    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm animate-fade-in">
+                        <div className="w-full max-w-md bg-white dark:bg-slate-800 rounded-3xl p-6 shadow-2xl border border-slate-100 dark:border-slate-700 animate-slide-up relative overflow-hidden">
+                            <div className="absolute top-0 right-0 -mt-6 -mr-6 w-24 h-24 bg-indigo-500/10 rounded-full blur-xl"></div>
+                            <div className="absolute bottom-0 left-0 -mb-6 -ml-6 w-24 h-24 bg-violet-500/10 rounded-full blur-xl"></div>
+                            
+                            <div className="flex flex-col items-center text-center relative z-10">
+                                <div className="w-16 h-16 bg-emerald-50 dark:bg-emerald-950/30 rounded-2xl flex items-center justify-center mb-4 border border-emerald-100/50 dark:border-emerald-900/30 shadow-inner animate-pulse">
+                                    <svg className="w-8 h-8 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                    </svg>
+                                </div>
+
+                                <h3 className="text-xl font-black text-slate-800 dark:text-slate-100 mb-2">Izin Akses Diperlukan</h3>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-6 px-2">
+                                    Aplikasi SALIRA memerlukan akses Lokasi (GPS) dan Notifikasi untuk fitur presensi dan pemberitahuan sistem.
+                                </p>
+
+                                <div className="w-full space-y-4 mb-6">
+                                    {/* Notifikasi Push */}
+                                    <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-700 flex flex-col gap-3">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-xs font-bold text-slate-750 dark:text-slate-300">Notifikasi Push</span>
+                                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black ${
+                                                Notification.permission === 'granted'
+                                                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400'
+                                                    : 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400'
+                                            }`}>
+                                                {Notification.permission === 'granted' ? 'DIIZINKAN' : 'BELUM DIIZINKAN'}
+                                            </span>
+                                        </div>
+                                        {Notification.permission !== 'granted' && (
+                                            <button
+                                                onClick={handleRequestNotification}
+                                                className="w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-emerald-500/10 active:scale-95"
+                                            >
+                                                Minta Izin Notifikasi
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    {/* Lokasi Presensi */}
+                                    <div className="bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-700 flex flex-col gap-3">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-xs font-bold text-slate-750 dark:text-slate-300">Lokasi Presensi (GPS)</span>
+                                            <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black ${
+                                                locationPermissionState === 'granted'
+                                                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-400'
+                                                    : 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400'
+                                            }`}>
+                                                {locationPermissionState === 'granted' ? 'DIIZINKAN' : 'BELUM DIIZINKAN'}
+                                            </span>
+                                        </div>
+                                        {locationPermissionState !== 'granted' && (
+                                            <button
+                                                onClick={handleRequestLocation}
+                                                className="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-all shadow-md shadow-indigo-500/10 active:scale-95"
+                                            >
+                                                Minta Akses Lokasi (GPS)
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <button
+                                    onClick={handleDismissModal}
+                                    className="text-xs font-bold text-slate-400 hover:text-slate-650 dark:text-slate-500 dark:hover:text-slate-305 transition-colors py-1 hover:underline"
+                                >
+                                    Tutup & Ingatkan Nanti
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
             <style>{`
                 @keyframes bounce-in {
@@ -629,6 +790,18 @@ export default function Authenticated({
                     100% { transform: scale(1); opacity: 1; }
                 }
                 .animate-bounce-in { animation: bounce-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+
+                @keyframes fade-in {
+                    0% { opacity: 0; }
+                    100% { opacity: 1; }
+                }
+                .animate-fade-in { animation: fade-in 0.2s ease-out; }
+
+                @keyframes slide-up {
+                    0% { transform: translateY(20px); opacity: 0; }
+                    100% { transform: translateY(0); opacity: 1; }
+                }
+                .animate-slide-up { animation: slide-up 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
 
                 @keyframes swing {
                     0% { transform: rotate(0); }
