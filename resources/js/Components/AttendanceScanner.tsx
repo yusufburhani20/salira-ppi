@@ -90,47 +90,61 @@ export default function AttendanceScanner({ existingRecord, geofences = [] }: { 
         };
     }, []);
 
+    const [isRefreshingLocation, setIsRefreshingLocation] = useState(false);
+
+    // Fetch / Sharpen Geolocation coordinates
+    const getCurrentLocation = useCallback(() => {
+        if (!navigator.geolocation) {
+            setLocationError("Browser ini tidak mendukung Geolocation.");
+            return;
+        }
+
+        setIsRefreshingLocation(true);
+        setLocationError(null);
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                
+                setLocation({ lat, lng });
+                
+                // Trigger distance update
+                if (geofences.length > 0) {
+                    let closest = null;
+                    let minInfo = null;
+                    
+                    for (const gf of geofences) {
+                        const d = calculateDistance(lat, lng, parseFloat(gf.latitude), parseFloat(gf.longitude));
+                        if (closest === null || d < closest) {
+                            closest = d;
+                            minInfo = { name: gf.name, distance: d, radius: gf.radius, valid: d <= gf.radius };
+                        }
+                    }
+                    setNearestGeofence(minInfo);
+                } else {
+                    setNearestGeofence({ name: 'Tanpa Pembatasan', distance: 0, radius: 999999, valid: true });
+                }
+
+                setData(d => ({
+                    ...d,
+                    latitude: String(lat),
+                    longitude: String(lng)
+                }));
+                
+                setIsRefreshingLocation(false);
+            },
+            (error) => {
+                setLocationError("Gagal mendapatkan lokasi GPS: " + error.message);
+                setIsRefreshingLocation(false);
+            },
+            { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+        );
+    }, [geofences]);
+
     // Initial Geolocation
     useEffect(() => {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const lat = position.coords.latitude;
-                    const lng = position.coords.longitude;
-                    
-                    setLocation({ lat, lng });
-                    
-                    // Trigger distance update
-                    if (geofences.length > 0) {
-                        let closest = null;
-                        let minInfo = null;
-                        
-                        for (const gf of geofences) {
-                            const d = calculateDistance(lat, lng, parseFloat(gf.latitude), parseFloat(gf.longitude));
-                            if (closest === null || d < closest) {
-                                closest = d;
-                                minInfo = { name: gf.name, distance: d, radius: gf.radius, valid: d <= gf.radius };
-                            }
-                        }
-                        setNearestGeofence(minInfo);
-                    } else {
-                        setNearestGeofence({ name: 'Tanpa Pembatasan', distance: 0, radius: 999999, valid: true });
-                    }
-
-                    setData(d => ({
-                        ...d,
-                        latitude: String(lat),
-                        longitude: String(lng)
-                    }));
-                },
-                (error) => {
-                    setLocationError("Gagal mendapatkan lokasi GPS: " + error.message);
-                },
-                { enableHighAccuracy: true, timeout: 10000 }
-            );
-        } else {
-            setLocationError("Browser ini tidak mendukung Geolocation.");
-        }
+        getCurrentLocation();
 
         const isCheckedOut = existingRecord && existingRecord.check_out;
         if (!isCheckedOut) {
@@ -143,7 +157,7 @@ export default function AttendanceScanner({ existingRecord, geofences = [] }: { 
                 streamRef.current = null;
             }
         };
-    }, []);
+    }, [getCurrentLocation]);
 
     // Render/Update Leaflet Map
     useEffect(() => {
@@ -318,16 +332,27 @@ export default function AttendanceScanner({ existingRecord, geofences = [] }: { 
 
                 {/* Leaflet Visual Map */}
                 {location && (
-                    <div className="relative">
-                        <div 
-                            id="attendance-map" 
-                            className="w-full h-44 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-inner z-0"
-                        ></div>
-                        {!leafletLoaded && (
-                            <div className="absolute inset-0 bg-slate-100 dark:bg-slate-800 flex items-center justify-center rounded-xl text-slate-400 text-xs">
-                                Memuat peta...
-                            </div>
-                        )}
+                    <div className="space-y-2">
+                        <div className="relative">
+                            <div 
+                                id="attendance-map" 
+                                className="w-full h-44 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-inner z-0"
+                            ></div>
+                            {!leafletLoaded && (
+                                <div className="absolute inset-0 bg-slate-100 dark:bg-slate-800 flex items-center justify-center rounded-xl text-slate-400 text-xs">
+                                    Memuat peta...
+                                </div>
+                            )}
+                        </div>
+                        <button
+                            type="button"
+                            onClick={getCurrentLocation}
+                            disabled={isRefreshingLocation}
+                            className="flex items-center justify-center gap-2 w-full py-2 px-4 bg-slate-50 hover:bg-slate-100 dark:bg-slate-900/60 dark:hover:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-350 transition-all active:scale-[0.98] disabled:opacity-50 shadow-sm"
+                        >
+                            <ArrowPathIcon className={`w-4 h-4 text-indigo-500 ${isRefreshingLocation ? 'animate-spin' : ''}`} />
+                            <span>{isRefreshingLocation ? 'Menyelaraskan Akurasi GPS...' : 'Akuratkan Lokasi GPS'}</span>
+                        </button>
                     </div>
                 )}
 
