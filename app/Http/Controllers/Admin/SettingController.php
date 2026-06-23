@@ -150,7 +150,7 @@ class SettingController extends Controller
     }
 
     /**
-     * Backup the database schema and content to an SQL download.
+     * Backup the database schema, content, and public storage media to a ZIP download.
      */
     public function backup()
     {
@@ -187,40 +187,101 @@ class SettingController extends Controller
         }
         
         $sql .= "SET FOREIGN_KEY_CHECKS=1;\n";
+
+        // Create Zip Archive
+        $zipFilename = 'backup-' . now()->format('Y-m-d-H-i-s') . '.zip';
+        $zipPath = tempnam(sys_get_temp_dir(), 'salira-backup');
+
+        $zip = new \ZipArchive();
+        if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === true) {
+            // 1. Add database.sql
+            $zip->addFromString('database.sql', $sql);
+
+            // 2. Add public storage files recursively
+            $storagePublicPath = storage_path('app/public');
+            if (is_dir($storagePublicPath)) {
+                $files = new \RecursiveIteratorIterator(
+                    new \RecursiveDirectoryIterator($storagePublicPath),
+                    \RecursiveIteratorIterator::LEAVES_ONLY
+                );
+
+                foreach ($files as $name => $file) {
+                    if (!$file->isDir()) {
+                        $filePath = $file->getRealPath();
+                        // Structure inside ZIP folder: storage/...
+                        $relativePath = 'storage/' . substr($filePath, strlen($storagePublicPath) + 1);
+                        $zip->addFile($filePath, $relativePath);
+                    }
+                }
+            }
+
+            $zip->close();
+        }
         
-        $filename = 'backup-' . now()->format('Y-m-d-H-i-s') . '.sql';
-        
-        return response($sql, 200, [
-            'Content-Type' => 'application/octet-stream',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-        ]);
+        return response()->download($zipPath, $zipFilename)->deleteFileAfterSend(true);
     }
 
     /**
-     * Restore database from an uploaded SQL backup file.
+     * Restore database and media files from an uploaded ZIP backup archive.
      */
     public function restore(Request $request)
     {
         $request->validate([
-            'backup_file' => 'required|file|extensions:sql|max:30720', // max 30MB
+            'backup_file' => 'required|file|extensions:zip|max:51200', // max 50MB
         ]);
 
-        $sql = file_get_contents($request->file('backup_file')->getRealPath());
+        $zipPath = $request->file('backup_file')->getRealPath();
+        $zip = new \ZipArchive();
 
-        try {
-            DB::beginTransaction();
-            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
-            DB::unprepared($sql);
-            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
-            DB::commit();
-            
-            // Logout user as database tables have been overwritten
-            auth()->logout();
-            
-            return redirect()->route('login')->with('success', 'Database berhasil dipulihkan. Silakan login kembali.');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return back()->with('error', 'Gagal memulihkan database: ' . $e->getMessage());
+        if ($zip->open($zipPath) === true) {
+            // 1. Extract database.sql content
+            $sqlContent = $zip->getFromName('database.sql');
+            if ($sqlContent === false) {
+                $zip->close();
+                return back()->with('error', 'File backup tidak valid. database.sql tidak ditemukan di dalam arsip ZIP.');
+            }
+
+            try {
+                DB::beginTransaction();
+                DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+                DB::unprepared($sqlContent);
+                DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+                DB::commit();
+                
+                // 2. Extract public storage media files
+                $storagePublicPath = storage_path('app/public');
+                for ($i = 0; $i < $zip->numFiles; $i++) {
+                    $filename = $zip->getNameIndex($i);
+                    
+                    // Only extract files in the storage/ directory of the ZIP
+                    if (str_starts_with($filename, 'storage/')) {
+                        $fileData = $zip->getFromIndex($i);
+                        $relativePath = substr($filename, 8); // remove 'storage/'
+                        
+                        $destPath = $storagePublicPath . '/' . $relativePath;
+                        $destDir = dirname($destPath);
+                        
+                        if (!is_dir($destDir)) {
+                            mkdir($destDir, 0755, true);
+                        }
+                        
+                        file_put_contents($destPath, $fileData);
+                    }
+                }
+
+                $zip->close();
+
+                // Logout user as database tables have been overwritten
+                auth()->logout();
+                
+                return redirect()->route('login')->with('success', 'Database dan berkas media berhasil dipulihkan. Silakan login kembali.');
+            } catch (\Exception $e) {
+                DB::rollBack();
+                $zip->close();
+                return back()->with('error', 'Gagal memulihkan database dan berkas: ' . $e->getMessage());
+            }
+        } else {
+            return back()->with('error', 'Gagal membuka file backup ZIP.');
         }
     }
 

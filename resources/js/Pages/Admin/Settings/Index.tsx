@@ -54,7 +54,7 @@ export default function SettingIndex({ auth, settings }: PageProps<{ settings: S
     const submitRestore = (e: React.FormEvent) => {
         e.preventDefault();
         if (!restoreData.backup_file) {
-            alert('Silakan pilih berkas cadangan (.sql) terlebih dahulu.');
+            alert('Silakan pilih berkas cadangan (.zip) terlebih dahulu.');
             return;
         }
         if (confirm('PERINGATAN: Tindakan ini akan menimpa seluruh database Anda saat ini. Sistem akan otomatis log-out setelah selesai. Apakah Anda yakin ingin melanjutkan?')) {
@@ -414,7 +414,7 @@ export default function SettingIndex({ auth, settings }: PageProps<{ settings: S
                                                 Cadangkan Database (Backup)
                                             </h4>
                                             <p className="text-xs text-gray-500 mb-6">
-                                                Unduh salinan cadangan (.sql) dari seluruh skema dan isi basis data SALIRA saat ini untuk disimpan di perangkat lokal Anda.
+                                                Unduh berkas cadangan (.zip) berisi salinan database (skema & isi) dan berkas media terunggah saat ini untuk disimpan di perangkat lokal Anda.
                                             </p>
                                         </div>
                                         <a
@@ -422,7 +422,7 @@ export default function SettingIndex({ auth, settings }: PageProps<{ settings: S
                                             className="h-10 w-full bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center justify-center gap-2 shadow-md shadow-emerald-500/10 text-center"
                                         >
                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
-                                            Unduh Backup SQL
+                                            Unduh Backup ZIP
                                         </a>
                                     </div>
 
@@ -435,13 +435,13 @@ export default function SettingIndex({ auth, settings }: PageProps<{ settings: S
                                                     Pulihkan Database (Restore)
                                                 </h4>
                                                 <p className="text-xs text-gray-500">
-                                                    Unggah berkas cadangan database (.sql) untuk menimpa skema dan data saat ini. Sesi akan keluar otomatis setelah restore berhasil.
+                                                    Unggah berkas cadangan (.zip) untuk menimpa database dan seluruh berkas media saat ini. Maksimal 50MB. Sesi akan keluar otomatis setelah restore berhasil.
                                                 </p>
                                             </div>
                                             <div>
                                                 <input
                                                     type="file"
-                                                    accept=".sql"
+                                                    accept=".zip"
                                                     onChange={e => setRestoreData('backup_file', e.target.files ? e.target.files[0] : null)}
                                                     className="block w-full text-xs text-gray-500 file:mr-4 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100"
                                                     required
