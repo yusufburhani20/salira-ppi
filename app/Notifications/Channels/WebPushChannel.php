@@ -53,8 +53,8 @@ class WebPushChannel
         ]);
 
         // 3. Initialize WebPush client
-        $publicKey = env('VAPID_PUBLIC_KEY');
-        $privateKey = env('VAPID_PRIVATE_KEY');
+        $publicKey = config('services.webpush.vapid_public_key');
+        $privateKey = config('services.webpush.vapid_private_key');
 
         if (!$publicKey || !$privateKey) {
             Log::warning('WebPush is missing VAPID keys. Notification not sent.');

@@ -50,7 +50,7 @@ class HandleInertiaRequests extends Middleware
                 'ticket_code' => $request->session()->get('ticket_code'),
             ],
             'csrf_token' => csrf_token(),
-            'vapid_public_key' => env('VAPID_PUBLIC_KEY'),
+            'vapid_public_key' => config('services.webpush.vapid_public_key'),
         ];
     }
 }
