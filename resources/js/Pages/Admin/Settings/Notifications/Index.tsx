@@ -11,7 +11,17 @@ interface Settings {
     [key: string]: boolean | string;
 }
 
-export default function NotificationSettings({ auth, settings, bot_username, user_subscriptions_count, student_subscriptions_count, available_roles }: PageProps<{ settings: Settings, bot_username: string, user_subscriptions_count: number, student_subscriptions_count: number, available_roles: string[] }>) {
+interface Subscriber {
+    id: number;
+    name: string;
+    email_or_nisn: string;
+    type: 'Pegawai' | 'Siswa';
+    role_or_class: string;
+    devices_count: number;
+    last_active: string;
+}
+
+export default function NotificationSettings({ auth, settings, bot_username, user_subscriptions_count, student_subscriptions_count, available_roles, subscribers = [] }: PageProps<{ settings: Settings, bot_username: string, user_subscriptions_count: number, student_subscriptions_count: number, available_roles: string[], subscribers?: Subscriber[] }>) {
     const [waStatus, setWaStatus] = useState<string>('checking...');
     const [qrCode, setQrCode] = useState<string | null>(null);
     const [waInfo, setWaInfo] = useState<any>(null);
@@ -700,6 +710,70 @@ export default function NotificationSettings({ auth, settings, bot_username, use
                                                     🔧 Maintenance Sistem
                                                 </button>
                                             </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Registered Subscribers List */}
+                                    <div className="mt-12">
+                                        <h4 className="font-bold text-base text-gray-800 dark:text-gray-200 mb-4 flex items-center gap-2">
+                                            <DevicePhoneMobileIcon className="w-5 h-5 text-indigo-500" />
+                                            Daftar Perangkat Terdaftar ({subscribers.length} Pengguna)
+                                        </h4>
+                                        <div className="overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-2xl bg-white dark:bg-gray-800 shadow-sm">
+                                            {subscribers.length > 0 ? (
+                                                <table className="w-full text-left text-sm whitespace-nowrap">
+                                                    <thead className="bg-gray-50 dark:bg-gray-900/50">
+                                                        <tr>
+                                                            <th className="p-4 font-bold text-gray-750 dark:text-gray-300">Nama</th>
+                                                            <th className="p-4 font-bold text-gray-750 dark:text-gray-300">Tipe / Peran</th>
+                                                            <th className="p-4 font-bold text-gray-750 dark:text-gray-300">Email / NISN</th>
+                                                            <th className="p-4 font-bold text-gray-750 dark:text-gray-300 text-center">Jumlah Perangkat</th>
+                                                            <th className="p-4 font-bold text-gray-750 dark:text-gray-300 text-right">Terakhir Aktif</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-gray-150 dark:divide-gray-700">
+                                                        {subscribers.map((sub) => (
+                                                            <tr key={`${sub.type}-${sub.id}`} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/20 transition-colors">
+                                                                <td className="p-4">
+                                                                    <div className="font-semibold text-gray-900 dark:text-gray-100">{sub.name}</div>
+                                                                </td>
+                                                                <td className="p-4">
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
+                                                                            sub.type === 'Pegawai'
+                                                                                ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400'
+                                                                                : 'bg-green-50 text-green-700 dark:bg-green-950/40 dark:text-green-400'
+                                                                        }`}>
+                                                                            {sub.type}
+                                                                        </span>
+                                                                        <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                                                                            {sub.role_or_class}
+                                                                        </span>
+                                                                    </div>
+                                                                </td>
+                                                                <td className="p-4 text-xs font-medium text-gray-500 dark:text-gray-400">
+                                                                    {sub.email_or_nisn}
+                                                                </td>
+                                                                <td className="p-4 text-center">
+                                                                    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/50">
+                                                                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"></span>
+                                                                        {sub.devices_count} Device
+                                                                    </span>
+                                                                </td>
+                                                                <td className="p-4 text-right text-xs text-gray-400 dark:text-gray-500">
+                                                                    {sub.last_active}
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            ) : (
+                                                <div className="p-12 text-center text-gray-400 dark:text-gray-500">
+                                                    <DevicePhoneMobileIcon className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                                                    <p className="font-semibold text-sm">Belum ada perangkat yang terdaftar.</p>
+                                                    <p className="text-xs mt-1">Pengguna harus mengaktifkan notifikasi push dari HP/Browser mereka.</p>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </Tab.Panel>

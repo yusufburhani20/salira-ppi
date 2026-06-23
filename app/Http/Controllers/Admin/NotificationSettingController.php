@@ -93,12 +93,50 @@ class NotificationSettingController extends Controller
         $studentSubscriptionsCount = PushSubscription::where('subscribable_type', Student::class)->count();
         $roles = Role::pluck('name');
 
+        // Fetch registered subscribers with devices
+        $subscribers = PushSubscription::with('subscribable')
+            ->get()
+            ->groupBy(function($item) {
+                return $item->subscribable_type . '_' . $item->subscribable_id;
+            })
+            ->map(function($group) {
+                $first = $group->first();
+                $subscribable = $first->subscribable;
+                
+                if (!$subscribable) {
+                    return null;
+                }
+                
+                $type = $first->subscribable_type === User::class ? 'Pegawai' : 'Siswa';
+                $roleOrClass = '';
+                
+                if ($first->subscribable_type === User::class) {
+                    $roleOrClass = method_exists($subscribable, 'getRoleNames') ? implode(', ', $subscribable->getRoleNames()->toArray()) : 'Staf';
+                } else {
+                    $academicClass = $subscribable->academic_class;
+                    $roleOrClass = $academicClass ? 'Kelas ' . $academicClass->name : 'Siswa';
+                }
+                
+                return [
+                    'id' => $first->id,
+                    'name' => $subscribable->name,
+                    'email_or_nisn' => $first->subscribable_type === User::class ? $subscribable->email : $subscribable->nisn,
+                    'type' => $type,
+                    'role_or_class' => $roleOrClass,
+                    'devices_count' => $group->count(),
+                    'last_active' => $group->max('updated_at')->diffForHumans(),
+                ];
+            })
+            ->filter()
+            ->values();
+
         return Inertia::render('Admin/Settings/Notifications/Index', [
             'settings' => $settings,
             'bot_username' => env('TELEGRAM_BOT_USERNAME', 'SaliraBot'),
             'user_subscriptions_count' => $userSubscriptionsCount,
             'student_subscriptions_count' => $studentSubscriptionsCount,
             'available_roles' => $roles,
+            'subscribers' => $subscribers,
         ]);
     }
 
