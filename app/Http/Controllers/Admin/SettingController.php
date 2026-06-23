@@ -7,6 +7,9 @@ use App\Models\Setting;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
+use App\Models\User;
 
 class SettingController extends Controller
 {
@@ -144,5 +147,141 @@ class SettingController extends Controller
         }
 
         return response()->json(['logs' => $content]);
+    }
+
+    /**
+     * Backup the database schema and content to an SQL download.
+     */
+    public function backup()
+    {
+        $tables = DB::select('SHOW TABLES');
+        $dbName = config('database.connections.mysql.database');
+        $keyName = 'Tables_in_' . $dbName;
+        
+        $sql = "-- SALIRA Database Backup\n";
+        $sql .= "-- Generated on " . now()->toDateTimeString() . "\n\n";
+        $sql .= "SET FOREIGN_KEY_CHECKS=0;\n\n";
+
+        foreach ($tables as $tableObj) {
+            $table = $tableObj->$keyName;
+            
+            $sql .= "DROP TABLE IF EXISTS `$table`;\n";
+            
+            $createTable = DB::select("SHOW CREATE TABLE `$table`")[0];
+            $sql .= $createTable->{'Create Table'} . ";\n\n";
+            
+            $rows = DB::table($table)->get();
+            foreach ($rows as $row) {
+                $rowArray = (array) $row;
+                $keys = array_keys($rowArray);
+                $escapedValues = array_map(function ($value) {
+                    if (is_null($value)) {
+                        return 'NULL';
+                    }
+                    return "'" . addslashes($value) . "'";
+                }, array_values($rowArray));
+                
+                $sql .= "INSERT INTO `$table` (`" . implode("`, `", $keys) . "`) VALUES (" . implode(", ", $escapedValues) . ");\n";
+            }
+            $sql .= "\n";
+        }
+        
+        $sql .= "SET FOREIGN_KEY_CHECKS=1;\n";
+        
+        $filename = 'backup-' . now()->format('Y-m-d-H-i-s') . '.sql';
+        
+        return response($sql, 200, [
+            'Content-Type' => 'application/octet-stream',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ]);
+    }
+
+    /**
+     * Restore database from an uploaded SQL backup file.
+     */
+    public function restore(Request $request)
+    {
+        $request->validate([
+            'backup_file' => 'required|file|extensions:sql|max:30720', // max 30MB
+        ]);
+
+        $sql = file_get_contents($request->file('backup_file')->getRealPath());
+
+        try {
+            DB::beginTransaction();
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+            DB::unprepared($sql);
+            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+            DB::commit();
+            
+            // Logout user as database tables have been overwritten
+            auth()->logout();
+            
+            return redirect()->route('login')->with('success', 'Database berhasil dipulihkan. Silakan login kembali.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Gagal memulihkan database: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Clear all transactional data and reset database to fresh state.
+     * Preserves current Super Admin and general settings table.
+     */
+    public function reset()
+    {
+        $dbName = config('database.connections.mysql.database');
+        $tablesObj = DB::select('SHOW TABLES');
+        $keyName = 'Tables_in_' . $dbName;
+        
+        // System tables that should be kept intact
+        $protectedTables = [
+            'migrations',
+            'settings',
+            'roles',
+            'permissions',
+            'model_has_roles',
+            'role_has_permissions',
+            'model_has_permissions',
+            'users',
+        ];
+
+        try {
+            DB::beginTransaction();
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+
+            foreach ($tablesObj as $tableObj) {
+                $table = $tableObj->$keyName;
+                
+                if (!in_array($table, $protectedTables)) {
+                    DB::table($table)->truncate();
+                }
+            }
+
+            // Delete all other users except the currently logged-in Super Admin
+            $currentUser = auth()->user();
+            if ($currentUser) {
+                // Delete model_has_roles/model_has_permissions references for other users
+                DB::table('model_has_roles')
+                    ->where('model_id', '!=', $currentUser->id)
+                    ->where('model_type', User::class)
+                    ->delete();
+
+                DB::table('model_has_permissions')
+                    ->where('model_id', '!=', $currentUser->id)
+                    ->where('model_type', User::class)
+                    ->delete();
+
+                User::where('id', '!=', $currentUser->id)->delete();
+            }
+
+            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+            DB::commit();
+
+            return back()->with('success', 'Basis data berhasil di-reset. Semua data transaksi telah dikosongkan.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Gagal mereset basis data: ' . $e->getMessage());
+        }
     }
 }

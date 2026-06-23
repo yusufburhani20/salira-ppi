@@ -187,6 +187,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/settings', [\App\Http\Controllers\Admin\SettingController::class, 'update'])->name('settings.update');
         Route::post('/settings/system-update', [\App\Http\Controllers\Admin\SettingController::class, 'systemUpdate'])->name('settings.system-update');
         Route::get('/settings/update-logs', [\App\Http\Controllers\Admin\SettingController::class, 'updateLogs'])->name('settings.update-logs');
+        Route::get('/settings/backup', [\App\Http\Controllers\Admin\SettingController::class, 'backup'])->name('settings.backup');
+        Route::post('/settings/restore', [\App\Http\Controllers\Admin\SettingController::class, 'restore'])->name('settings.restore');
+        Route::post('/settings/reset', [\App\Http\Controllers\Admin\SettingController::class, 'reset'])->name('settings.reset');
 
         // Notification Settings (Super Admin Only)
         Route::middleware(['role:Super Admin'])->group(function () {
