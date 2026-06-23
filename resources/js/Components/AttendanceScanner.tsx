@@ -91,6 +91,7 @@ export default function AttendanceScanner({ existingRecord, geofences = [] }: { 
     }, []);
 
     const [isRefreshingLocation, setIsRefreshingLocation] = useState(false);
+    const [accuracy, setAccuracy] = useState<number | null>(null);
 
     // Fetch / Sharpen Geolocation coordinates
     const getCurrentLocation = useCallback(() => {
@@ -106,8 +107,10 @@ export default function AttendanceScanner({ existingRecord, geofences = [] }: { 
             (position) => {
                 const lat = position.coords.latitude;
                 const lng = position.coords.longitude;
+                const acc = position.coords.accuracy;
                 
                 setLocation({ lat, lng });
+                setAccuracy(acc);
                 
                 // Trigger distance update
                 if (geofences.length > 0) {
@@ -348,10 +351,14 @@ export default function AttendanceScanner({ existingRecord, geofences = [] }: { 
                             type="button"
                             onClick={getCurrentLocation}
                             disabled={isRefreshingLocation}
-                            className="flex items-center justify-center gap-2 w-full py-2 px-4 bg-slate-50 hover:bg-slate-100 dark:bg-slate-900/60 dark:hover:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-350 transition-all active:scale-[0.98] disabled:opacity-50 shadow-sm"
+                            className="flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-600 dark:hover:bg-emerald-700 border border-emerald-500 rounded-xl text-xs font-bold text-white transition-all active:scale-[0.98] disabled:opacity-50 shadow-md shadow-emerald-500/10"
                         >
-                            <ArrowPathIcon className={`w-4 h-4 text-indigo-500 ${isRefreshingLocation ? 'animate-spin' : ''}`} />
-                            <span>{isRefreshingLocation ? 'Menyelaraskan Akurasi GPS...' : 'Akuratkan Lokasi GPS'}</span>
+                            <ArrowPathIcon className={`w-4 h-4 text-white ${isRefreshingLocation ? 'animate-spin' : ''}`} />
+                            <span>
+                                {isRefreshingLocation 
+                                    ? 'Menyelaraskan Akurasi GPS...' 
+                                    : `Akuratkan Lokasi GPS${accuracy !== null ? ` (Akurasi: ±${Math.round(accuracy)}m)` : ''}`}
+                            </span>
                         </button>
                     </div>
                 )}
