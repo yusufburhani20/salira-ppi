@@ -153,7 +153,11 @@ export default function Authenticated({
     }, [flash.success, flash.error]);
 
     // Helpers to check current user roles
-    const userRoles = user.roles || [];
+    // Normalize: roles can be strings (from getRoleNames) or objects (from Eloquent eager load)
+    const rawRoles = user.roles || [];
+    const userRoles: string[] = rawRoles.map((r: string | { name: string }) =>
+        typeof r === 'string' ? r : r?.name ?? ''
+    );
     const isSuperAdmin = userRoles.includes('Super Admin');
     const isAdmin = isSuperAdmin;
     const isPimpinan = userRoles.includes('Kepala Sekolah') || userRoles.includes('Pimpinan');
