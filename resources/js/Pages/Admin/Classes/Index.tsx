@@ -367,10 +367,10 @@ export default function ClassIndex({ classes, filters, academicYears, teachers, 
                             >
                                 <option value="">— Pilih Kelas Tujuan —</option>
                                 {allClasses
-                                    ?.filter((cls: any) => cls.id !== promoteTarget?.id)
+                                    ?.filter((cls: any) => cls.id !== promoteTarget?.id && cls.academic_year_id === activeAcademicYear?.id)
                                     ?.map((cls: any) => (
                                         <option key={cls.id} value={cls.id}>
-                                            {cls.name} ({cls.academic_year?.name ?? 'Tanpa Tahun Ajaran'})
+                                            {cls.name}
                                         </option>
                                     ))
                                 }
