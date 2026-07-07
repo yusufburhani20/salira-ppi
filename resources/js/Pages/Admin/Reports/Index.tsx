@@ -55,12 +55,24 @@ export default function ReportIndex({ auth, classes, subjects, semesters = [], a
     const activeSemester = semesters.find((s: any) => s.is_active);
     const activeYearId = activeSemester?.academic_year_id;
 
+    // Filter classes based on selected semester's academic year (not just current active year)
     const filteredClasses = classes.filter((c: any) => {
         if (selectedSemester) {
             return c.academic_year_id === selectedSemester.academic_year_id;
         }
         return c.academic_year_id === activeYearId;
     });
+
+    // Reset class selection when semester changes so stale class from old year is not kept
+    const handleSemesterChange = (semId: string) => {
+        setData(d => ({
+            ...d,
+            semester_id: semId,
+            academic_class_id: '',
+            start_date: '',
+            end_date: '',
+        }));
+    };
 
     const fetchReport = async () => {
         if (!data.academic_class_id && activeTab !== 'consultation') return;
@@ -211,17 +223,17 @@ export default function ReportIndex({ auth, classes, subjects, semesters = [], a
                                     <div>
                                         <select
                                             value={data.semester_id}
-                                            onChange={e => setData(d => ({
-                                                ...d,
-                                                semester_id: e.target.value,
-                                                start_date: '',
-                                                end_date: '',
-                                            }))}
+                                            onChange={e => handleSemesterChange(e.target.value)}
                                             className="w-full h-12 rounded-xl border-gray-100 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-primary focus:border-primary transition-all font-bold text-sm"
                                         >
                                             <option value="">-- Custom Tanggal --</option>
-                                            {semesters.map((sem: any) => (
-                                                <option key={sem.id} value={sem.id}>{sem.name}</option>
+                                            {/* Active semester first */}
+                                            {semesters.filter((s: any) => s.is_active).map((sem: any) => (
+                                                <option key={sem.id} value={sem.id}>{sem.name} ✓ (Aktif)</option>
+                                            ))}
+                                            {/* Archived semesters */}
+                                            {semesters.filter((s: any) => !s.is_active).map((sem: any) => (
+                                                <option key={sem.id} value={sem.id}>{sem.name} (Arsip)</option>
                                             ))}
                                         </select>
                                     </div>

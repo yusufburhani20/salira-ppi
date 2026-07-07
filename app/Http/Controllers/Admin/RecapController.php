@@ -98,7 +98,7 @@ class RecapController extends Controller
         })->unique()->sort()->values()->toArray();
 
         $students = Student::whereHas('academicClasses', function($q) use ($classId) {
-            $q->where('academic_classes.id', $classId);
+            $q->withoutGlobalScope('active_year')->where('academic_classes.id', $classId);
         })->orderBy('name')->get();
 
         $report = [];
@@ -174,7 +174,7 @@ class RecapController extends Controller
         })->unique()->sort()->values()->toArray();
 
         $students = Student::whereHas('academicClasses', function($q) use ($classId) {
-            $q->where('academic_classes.id', $classId);
+            $q->withoutGlobalScope('active_year')->where('academic_classes.id', $classId);
         })->orderBy('name')->get();
 
         $report = [];
