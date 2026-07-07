@@ -33,7 +33,8 @@ function Field({ label, error, children }: { label: string; error?: string; chil
 
 const ic = "w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700/50 text-slate-800 dark:text-slate-100 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition";
 
-export default function ClassIndex({ classes, filters, academicYears, teachers, allClasses }: any) {
+export default function ClassIndex({ classes, filters, academicYears, teachers, allClasses, activeAcademicYear }: any) {
+    const isArchive = filters.archive === 'true' || filters.archive === '1' || filters.archive === true;
     const [showForm, setShowForm]         = useState(false);
     const [showDelete, setShowDelete]     = useState(false);
     const [showImport, setShowImport]     = useState(false);
@@ -100,7 +101,7 @@ export default function ClassIndex({ classes, filters, academicYears, teachers, 
     };
 
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-        router.get(route('admin.classes.index'), { search: e.target.value }, { preserveState: true, replace: true });
+        router.get(route('admin.classes.index'), { ...filters, search: e.target.value }, { preserveState: true, replace: true });
     };
 
     const handleImport = (e: FormEvent) => {
@@ -113,6 +114,22 @@ export default function ClassIndex({ classes, filters, academicYears, teachers, 
     return (
         <AuthenticatedLayout header={<h2 className="text-xl font-semibold text-slate-800 dark:text-slate-200">Manajemen Kelas</h2>}>
             <Head title="Manajemen Kelas" />
+
+            {/* ── Tabs ── */}
+            <div className="flex border-b border-slate-200 dark:border-slate-700 mb-6 bg-slate-50 dark:bg-slate-800/20 rounded-xl px-4 pt-2">
+                <button
+                    onClick={() => router.get(route('admin.classes.index'), { ...filters, archive: false })}
+                    className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors ${!isArchive ? 'border-emerald-600 text-emerald-600 dark:text-emerald-400 dark:border-emerald-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
+                >
+                    Kelas Aktif {activeAcademicYear ? `(${activeAcademicYear.name})` : ''}
+                </button>
+                <button
+                    onClick={() => router.get(route('admin.classes.index'), { ...filters, archive: true })}
+                    className={`px-4 py-2.5 text-sm font-semibold border-b-2 transition-colors ${isArchive ? 'border-emerald-600 text-emerald-600 dark:text-emerald-400 dark:border-emerald-400' : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'}`}
+                >
+                    Arsip Kelas (Tahun Sebelumnya)
+                </button>
+            </div>
 
             {/* ── Toolbar ── */}
             <div className="flex flex-col sm:flex-row gap-3 mb-5">

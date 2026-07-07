@@ -16,7 +16,18 @@ class AcademicClassController extends Controller
 {
     public function index(Request $request)
     {
+        $activeYear = AcademicYear::where('is_active', true)->first();
+        $showArchive = $request->boolean('archive', false);
+
         $query = AcademicClass::with(['academicYear', 'homeroomTeacher'])->withCount('students');
+
+        if ($activeYear) {
+            if ($showArchive) {
+                $query->where('academic_year_id', '!=', $activeYear->id);
+            } else {
+                $query->where('academic_year_id', $activeYear->id);
+            }
+        }
 
         if ($request->filled('search')) {
             $query->where('name', 'like', '%' . $request->search . '%');
@@ -25,11 +36,12 @@ class AcademicClassController extends Controller
         $classes = $query->orderBy('name')->paginate(15)->withQueryString();
 
         return Inertia::render('Admin/Classes/Index', [
-            'classes'       => $classes,
-            'allClasses'    => AcademicClass::with('academicYear')->orderBy('name')->get(),
-            'academicYears' => AcademicYear::orderBy('name', 'desc')->get(),
-            'teachers'      => User::role(['Guru', 'Wali Kelas'])->get(['id', 'name', 'nip']),
-            'filters'       => $request->only(['search']),
+            'classes'            => $classes,
+            'allClasses'         => AcademicClass::with('academicYear')->orderBy('name')->get(),
+            'academicYears'      => AcademicYear::orderBy('name', 'desc')->get(),
+            'teachers'           => User::role(['Guru', 'Wali Kelas'])->get(['id', 'name', 'nip']),
+            'filters'            => $request->only(['search', 'archive']),
+            'activeAcademicYear' => $activeYear,
         ]);
     }
 
