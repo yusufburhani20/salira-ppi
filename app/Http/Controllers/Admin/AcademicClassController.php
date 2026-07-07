@@ -154,11 +154,17 @@ class AcademicClassController extends Controller
                     $syncData[$id] = ['is_active' => true];
                 }
                 $targetClass->students()->syncWithoutDetaching($syncData);
+
+                // 3. Tandai kelas asal sebagai 'promoted'
+                $class->update(['promotion_status' => 'promoted']);
             } else {
                 // 2. Jika kelulusan, ubah status siswa di tabel students menjadi 'graduated'
                 \App\Models\Student::whereIn('id', $studentIds)->update([
                     'status' => \App\Enums\StudentStatus::graduated
                 ]);
+
+                // 3. Tandai kelas asal sebagai 'graduated'
+                $class->update(['promotion_status' => 'graduated']);
             }
         });
 

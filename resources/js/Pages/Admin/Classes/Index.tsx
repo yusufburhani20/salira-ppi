@@ -183,7 +183,21 @@ export default function ClassIndex({ classes, filters, academicYears, teachers, 
                                 </td></tr>
                             ) : classes.data.map((cls: any) => (
                                 <tr key={cls.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors">
-                                    <td className="px-5 py-3.5 font-semibold text-slate-800 dark:text-slate-100">{cls.name}</td>
+                                    <td className="px-5 py-3.5 font-semibold text-slate-800 dark:text-slate-100">
+                                        <div className="flex items-center gap-2">
+                                            <span>{cls.name}</span>
+                                            {cls.promotion_status === 'promoted' && (
+                                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400">
+                                                    Dinaikkan
+                                                </span>
+                                            )}
+                                            {cls.promotion_status === 'graduated' && (
+                                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400">
+                                                    Diluluskan
+                                                </span>
+                                            )}
+                                        </div>
+                                    </td>
                                     <td className="px-5 py-3.5 hidden sm:table-cell text-slate-600 dark:text-slate-400">{cls.academic_year?.name ?? '—'}</td>
                                     <td className="px-5 py-3.5 hidden md:table-cell">
                                         {cls.homeroom_teacher
@@ -198,11 +212,19 @@ export default function ClassIndex({ classes, filters, academicYears, teachers, 
                                     </td>
                                     <td className="px-5 py-3.5 text-right">
                                         <div className="flex items-center justify-end gap-1">
-                                            <button onClick={() => openPromote(cls)} className="p-2 rounded-lg text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-500/10 transition-colors" title="Kenaikan / Kelulusan Kelas">
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8L6 21" />
-                                                </svg>
-                                            </button>
+                                            {cls.promotion_status ? (
+                                                <span className="p-2 text-slate-400 dark:text-slate-500/50 cursor-not-allowed flex items-center justify-center" title={`Rombel ini sudah ${cls.promotion_status === 'promoted' ? 'dinaikkan' : 'diluluskan'}`}>
+                                                    <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                </span>
+                                            ) : (
+                                                <button onClick={() => openPromote(cls)} className="p-2 rounded-lg text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-500/10 transition-colors" title="Kenaikan / Kelulusan Kelas">
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8L6 21" />
+                                                    </svg>
+                                                </button>
+                                            )}
                                             <button onClick={() => openEdit(cls)} className="p-2 rounded-lg text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-500/10 transition-colors" title="Edit">
                                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                                             </button>
