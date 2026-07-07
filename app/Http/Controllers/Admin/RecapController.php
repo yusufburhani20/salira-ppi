@@ -29,7 +29,9 @@ class RecapController extends Controller
     public function index()
     {
         $classes = AcademicClass::withoutGlobalScope('active_year')->with('academicYear')->get();
-        $subjects = Subject::with('academicClasses:id')->orderBy('name')->get();
+        $subjects = Subject::with(['academicClasses' => function($q) {
+            $q->withoutGlobalScope('active_year')->select('academic_classes.id');
+        }])->orderBy('name')->get();
         $semesters = Semester::with('academicYear')
             ->get()
             ->map(function($sem) {
