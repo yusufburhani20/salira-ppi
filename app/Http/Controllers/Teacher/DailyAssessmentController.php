@@ -14,8 +14,12 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use App\Notifications\PortalNotification;
 
+use App\Http\Controllers\Concerns\ResolvesActiveSemester;
+
 class DailyAssessmentController extends Controller
 {
+    use ResolvesActiveSemester;
+
     public function index(Request $request)
     {
         $query = DailyAssessment::with(['academicClass']);
@@ -23,10 +27,10 @@ class DailyAssessmentController extends Controller
             $query->where('teacher_id', Auth::id());
         }
 
-        // Default to active semester if no date filters and no semester filter specified
+        // Default to active semester (scoped to active academic year)
         $semesterId = $request->input('semester_id');
         if (!$semesterId && !$request->has('start_date') && !$request->has('end_date')) {
-            $activeSemester = Semester::where('is_active', true)->first();
+            $activeSemester = $this->getActiveSemester();
             $semesterId = $activeSemester?->id;
         }
 
@@ -52,24 +56,10 @@ class DailyAssessmentController extends Controller
             }
         }
 
-        $assessments = $query->latest()
-            ->paginate(15)
-            ->withQueryString();
+        $assessments = $query->latest()->paginate(15)->withQueryString();
 
-        $classes = AcademicClass::all();
+        $classes = AcademicClass::all(); // global scope = active year only
         $subjects = Subject::orderBy('name')->get();
-
-        $semesters = Semester::with('academicYear')
-            ->get()
-            ->map(function($sem) {
-                return [
-                    'id' => $sem->id,
-                    'name' => 'TA ' . $sem->academicYear->name . ' - ' . $sem->name,
-                    'start_date' => $sem->start_date,
-                    'end_date' => $sem->end_date,
-                    'is_active' => $sem->is_active,
-                ];
-            });
 
         $filters = $request->only(['academic_class_id', 'subject_id', 'start_date', 'end_date', 'semester_id']);
         if (!$request->has('semester_id') && !$request->has('start_date') && !$request->has('end_date')) {
@@ -78,10 +68,10 @@ class DailyAssessmentController extends Controller
 
         return Inertia::render('Teacher/Assessments/Index', [
             'assessments' => $assessments,
-            'classes' => $classes,
-            'subjects' => $subjects,
-            'semesters' => $semesters,
-            'filters' => $filters
+            'classes'     => $classes,
+            'subjects'    => $subjects,
+            'semesters'   => $this->getSemesterOptions(),
+            'filters'     => $filters,
         ]);
     }
 

@@ -20,43 +20,24 @@ use App\Exports\EveningStudyRecapExport;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Maatwebsite\Excel\Facades\Excel;
 
+use App\Http\Controllers\Concerns\ResolvesActiveSemester;
+
 class EveningStudyController extends Controller
 {
-    private function resolveSemesterDates(Request $request)
-    {
-        if ($request->filled('semester_id')) {
-            $sem = Semester::find($request->semester_id);
-            if ($sem) {
-                $request->merge([
-                    'start_date' => $sem->start_date,
-                    'end_date' => $sem->end_date,
-                ]);
-            }
-        } elseif (!$request->has('start_date') && !$request->has('end_date')) {
-            $activeSem = Semester::where('is_active', true)->first();
-            if ($activeSem) {
-                $request->merge([
-                    'semester_id' => $activeSem->id,
-                    'start_date' => $activeSem->start_date,
-                    'end_date' => $activeSem->end_date,
-                ]);
-            }
-        }
-    }
+    use ResolvesActiveSemester;
 
     /**
      * Display a listing of evening study logs.
      */
     public function index(Request $request)
     {
-        $this->resolveSemesterDates($request);
+        $this->resolveActiveSemesterIntoRequest($request);
 
         $query = EveningStudy::with(['academicClass', 'supervisor']);
 
         if ($request->academic_class_id) {
             $query->where('academic_class_id', $request->academic_class_id);
         }
-
         if ($request->start_date) {
             $query->whereDate('date', '>=', $request->start_date);
         }
@@ -64,36 +45,23 @@ class EveningStudyController extends Controller
             $query->whereDate('date', '<=', $request->end_date);
         }
 
-        $eveningStudies = $query->latest('date')
-            ->latest('id')
-            ->paginate(15)
-            ->withQueryString();
-
-        $semesters = Semester::with('academicYear')
-            ->get()
-            ->map(function($sem) {
-                return [
-                    'id' => $sem->id,
-                    'name' => 'TA ' . $sem->academicYear->name . ' - ' . $sem->name,
-                    'start_date' => $sem->start_date,
-                    'end_date' => $sem->end_date,
-                    'is_active' => $sem->is_active,
-                ];
-            });
+        $eveningStudies = $query->latest('date')->latest('id')->paginate(15)->withQueryString();
 
         $filters = $request->only(['academic_class_id', 'start_date', 'end_date', 'semester_id']);
 
         return Inertia::render('Teacher/EveningStudies/Index', [
             'eveningStudies' => $eveningStudies,
-            'classes' => AcademicClass::all(),
-            'semesters' => $semesters,
-            'filters' => $filters
+            'classes'        => AcademicClass::all(), // global scope = active year only
+            'semesters'      => $this->getSemesterOptions(),
+            'filters'        => $filters,
         ]);
     }
 
+
+
     public function exportExcel(Request $request)
     {
-        $this->resolveSemesterDates($request);
+        $this->resolveActiveSemesterIntoRequest($request);
         Carbon::setLocale('id');
         $data = $this->getExportQuery($request)->get()->toArray();
 
@@ -125,7 +93,7 @@ class EveningStudyController extends Controller
 
     public function exportPdf(Request $request)
     {
-        $this->resolveSemesterDates($request);
+        $this->resolveActiveSemesterIntoRequest($request);
         Carbon::setLocale('id');
         $data = $this->getExportQuery($request)->get()->toArray();
 

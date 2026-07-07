@@ -16,8 +16,12 @@ use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
 use App\Notifications\PortalNotification;
 
+use App\Http\Controllers\Concerns\ResolvesActiveSemester;
+
 class ConsultationController extends Controller
 {
+    use ResolvesActiveSemester;
+
     public function index(Request $request)
     {
         $query = StudentConsultation::with(['student', 'academicClass']);
@@ -25,10 +29,10 @@ class ConsultationController extends Controller
             $query->where('teacher_id', Auth::id());
         }
 
-        // Default to active semester if no date filters and no semester filter specified
+        // Default to active semester (scoped to active academic year)
         $semesterId = $request->input('semester_id');
         if (!$semesterId && !$request->has('start_date') && !$request->has('end_date')) {
-            $activeSemester = Semester::where('is_active', true)->first();
+            $activeSemester = $this->getActiveSemester();
             $semesterId = $activeSemester?->id;
         }
 
@@ -54,12 +58,10 @@ class ConsultationController extends Controller
             }
         }
 
-        $consultations = $query->latest()
-            ->paginate(15)
-            ->withQueryString();
+        $consultations = $query->latest()->paginate(15)->withQueryString();
 
-        $classes = AcademicClass::all();
-        
+        $classes = AcademicClass::all(); // global scope = active year only
+
         $categories = [];
         foreach(ConsultationCategory::cases() as $case) {
             $categories[] = ['value' => $case->value, 'label' => $case->label()];
@@ -70,18 +72,6 @@ class ConsultationController extends Controller
             $statuses[] = ['value' => $case->value, 'label' => $case->label()];
         }
 
-        $semesters = Semester::with('academicYear')
-            ->get()
-            ->map(function($sem) {
-                return [
-                    'id' => $sem->id,
-                    'name' => 'TA ' . $sem->academicYear->name . ' - ' . $sem->name,
-                    'start_date' => $sem->start_date,
-                    'end_date' => $sem->end_date,
-                    'is_active' => $sem->is_active,
-                ];
-            });
-
         $filters = $request->only(['academic_class_id', 'category', 'start_date', 'end_date', 'semester_id']);
         if (!$request->has('semester_id') && !$request->has('start_date') && !$request->has('end_date')) {
             $filters['semester_id'] = $semesterId;
@@ -89,11 +79,11 @@ class ConsultationController extends Controller
 
         return Inertia::render('Teacher/Consultations/Index', [
             'consultations' => $consultations,
-            'classes' => $classes,
-            'categories' => $categories,
-            'statuses' => $statuses,
-            'semesters' => $semesters,
-            'filters' => $filters
+            'classes'       => $classes,
+            'categories'    => $categories,
+            'statuses'      => $statuses,
+            'semesters'     => $this->getSemesterOptions(),
+            'filters'       => $filters,
         ]);
     }
 

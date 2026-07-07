@@ -21,36 +21,20 @@ use Illuminate\Support\Facades\Cache;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Maatwebsite\Excel\Facades\Excel;
 
+use App\Http\Controllers\Concerns\ResolvesActiveSemester;
+
 class ClassAgendaController extends Controller
 {
-    private function resolveSemesterDates(Request $request)
-    {
-        if ($request->filled('semester_id')) {
-            $sem = Semester::find($request->semester_id);
-            if ($sem) {
-                $request->merge([
-                    'start_date' => $sem->start_date,
-                    'end_date' => $sem->end_date,
-                ]);
-            }
-        } elseif (!$request->has('start_date') && !$request->has('end_date')) {
-            $activeSem = Semester::where('is_active', true)->first();
-            if ($activeSem) {
-                $request->merge([
-                    'semester_id' => $activeSem->id,
-                    'start_date' => $activeSem->start_date,
-                    'end_date' => $activeSem->end_date,
-                ]);
-            }
-        }
-    }
+    use ResolvesActiveSemester;
 
     public function index(Request $request)
     {
-        $this->resolveSemesterDates($request);
+        $semesterId = $this->resolveActiveSemesterIntoRequest($request);
 
-        $query = ClassAgenda::with('academicClass')
-            ->where('teacher_id', Auth::id());
+        $query = ClassAgenda::with('academicClass');
+        if (!Auth::user()->hasAnyRole(['Super Admin', 'Kepala Sekolah', 'Staff/TU'])) {
+            $query->where('teacher_id', Auth::id());
+        }
 
         // Apply filters
         if ($request->academic_class_id) {
@@ -59,7 +43,6 @@ class ClassAgendaController extends Controller
         if ($request->subject_id) {
             $query->where('subject_id', $request->subject_id);
         }
-
         if ($request->start_date) {
             $query->whereDate('date', '>=', $request->start_date);
         }
@@ -67,30 +50,17 @@ class ClassAgendaController extends Controller
             $query->whereDate('date', '<=', $request->end_date);
         }
 
-        $agendas = $query->latest('date')
-            ->latest('id')
-            ->get();
-
-        $semesters = Semester::with('academicYear')
-            ->get()
-            ->map(function($sem) {
-                return [
-                    'id' => $sem->id,
-                    'name' => 'TA ' . $sem->academicYear->name . ' - ' . $sem->name,
-                    'start_date' => $sem->start_date,
-                    'end_date' => $sem->end_date,
-                    'is_active' => $sem->is_active,
-                ];
-            });
+        $agendas = $query->latest('date')->latest('id')->get();
 
         $filters = $request->only(['academic_class_id', 'start_date', 'end_date', 'subject_id', 'semester_id']);
 
         return Inertia::render('Teacher/Agendas/Index', [
-            'agendas' => $agendas,
-            'classes' => AcademicClass::all(),
-            'subjects' => Subject::all(),
-            'semesters' => $semesters,
-            'filters' => $filters
+            'agendas'    => $agendas,
+            'classes'    => AcademicClass::all(),      // global scope = active year only
+            'subjects'   => Subject::all(),
+            'semesters'  => $this->getSemesterOptions(),
+            'filters'    => $filters,
+            'activeSemesterId' => $semesterId,
         ]);
     }
 
@@ -478,7 +448,7 @@ class ClassAgendaController extends Controller
 
     public function exportExcel(Request $request)
     {
-        $this->resolveSemesterDates($request);
+        $this->resolveActiveSemesterIntoRequest($request);
         Carbon::setLocale('id');
         $data = $this->getExportData($request);
         
@@ -509,7 +479,7 @@ class ClassAgendaController extends Controller
 
     public function exportPdf(Request $request)
     {
-        $this->resolveSemesterDates($request);
+        $this->resolveActiveSemesterIntoRequest($request);
         Carbon::setLocale('id');
         $data = $this->getExportData($request);
         
@@ -564,7 +534,7 @@ class ClassAgendaController extends Controller
 
     private function getExportData(Request $request)
     {
-        $this->resolveSemesterDates($request);
+        $this->resolveActiveSemesterIntoRequest($request);
 
         $query = ClassAgenda::with(['teacher', 'subject', 'academicClass', 'attendances.student'])
             ->where('teacher_id', Auth::id());
@@ -635,7 +605,7 @@ class ClassAgendaController extends Controller
 
     private function prepareDetailedAttendanceReport(Request $request)
     {
-        $this->resolveSemesterDates($request);
+        $this->resolveActiveSemesterIntoRequest($request);
 
         $request->validate([
             'academic_class_id' => 'required|exists:academic_classes,id',

@@ -20,8 +20,12 @@ use Maatwebsite\Excel\Facades\Excel;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\Setting;
 
+use App\Http\Controllers\Concerns\ResolvesActiveSemester;
+
 class RecapController extends Controller
 {
+    use ResolvesActiveSemester;
+
     public function index()
     {
         $classes = AcademicClass::withoutGlobalScope('active_year')->with('academicYear')->get();
@@ -38,7 +42,7 @@ class RecapController extends Controller
                     'academic_year_id' => $sem->academic_year_id,
                 ];
             });
-        $activeSemester = Semester::where('is_active', true)->first();
+        $activeSemester = $this->getActiveSemester();
         $teachers = \App\Models\User::role(['Guru', 'Wali Kelas', 'Super Admin'])->orderBy('name')->get(['id', 'name']);
         
         return Inertia::render('Admin/Reports/Index', [
@@ -57,16 +61,17 @@ class RecapController extends Controller
             if ($sem) {
                 $request->merge([
                     'start_date' => $sem->start_date,
-                    'end_date' => $sem->end_date,
+                    'end_date'   => $sem->end_date,
                 ]);
             }
         } elseif (!$request->has('start_date') && !$request->has('end_date')) {
-            $activeSem = Semester::where('is_active', true)->first();
+            // Recap: default to the active semester (scoped to active academic year)
+            $activeSem = $this->getActiveSemester();
             if ($activeSem) {
                 $request->merge([
                     'semester_id' => $activeSem->id,
-                    'start_date' => $activeSem->start_date,
-                    'end_date' => $activeSem->end_date,
+                    'start_date'  => $activeSem->start_date,
+                    'end_date'    => $activeSem->end_date,
                 ]);
             }
         }

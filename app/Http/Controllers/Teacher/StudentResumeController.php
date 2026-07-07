@@ -16,8 +16,12 @@ use Inertia\Inertia;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
 
+use App\Http\Controllers\Concerns\ResolvesActiveSemester;
+
 class StudentResumeController extends Controller
 {
+    use ResolvesActiveSemester;
+
     private function ensureIsMyStudent(Student $student)
     {
         $user = auth()->user();
@@ -78,7 +82,7 @@ class StudentResumeController extends Controller
                     'is_active' => $sem->is_active,
                 ];
             });
-        $activeSemester = Semester::where('is_active', true)->first();
+        $activeSemester = $this->getActiveSemester();
 
         return Inertia::render('Teacher/MyStudents/Resume', [
             'student' => $student,
@@ -87,33 +91,13 @@ class StudentResumeController extends Controller
         ]);
     }
 
-    private function resolveSemesterDates(Request $request)
-    {
-        if ($request->filled('semester_id')) {
-            $sem = Semester::find($request->semester_id);
-            if ($sem) {
-                $request->merge([
-                    'start_date' => $sem->start_date,
-                    'end_date' => $sem->end_date,
-                ]);
-            }
-        } elseif (!$request->has('start_date') && !$request->has('end_date')) {
-            $activeSem = Semester::where('is_active', true)->first();
-            if ($activeSem) {
-                $request->merge([
-                    'semester_id' => $activeSem->id,
-                    'start_date' => $activeSem->start_date,
-                    'end_date' => $activeSem->end_date,
-                ]);
-            }
-        }
-    }
+    // resolveActiveSemesterIntoRequest is provided by ResolvesActiveSemester trait
 
     public function data(Request $request, Student $student)
     {
         $this->ensureIsMyStudent($student);
 
-        $this->resolveSemesterDates($request);
+        $this->resolveActiveSemesterIntoRequest($request);
 
         $request->validate([
             'start_date' => 'required|date',
@@ -198,7 +182,7 @@ class StudentResumeController extends Controller
     {
         $this->ensureIsMyStudent($student);
 
-        $this->resolveSemesterDates($request);
+        $this->resolveActiveSemesterIntoRequest($request);
 
         // Fetch data using the data method internally
         $dataResponse = $this->data($request, $student);
@@ -225,7 +209,7 @@ class StudentResumeController extends Controller
     {
         $this->ensureIsMyStudent($student);
 
-        $this->resolveSemesterDates($request);
+        $this->resolveActiveSemesterIntoRequest($request);
 
         $request->validate([
             'start_date' => 'required|date',
@@ -252,7 +236,7 @@ class StudentResumeController extends Controller
     }
     public function sendBulkReport(Request $request)
     {
-        $this->resolveSemesterDates($request);
+        $this->resolveActiveSemesterIntoRequest($request);
 
         $request->validate([
             'student_ids'   => 'required|array|min:1',
