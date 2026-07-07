@@ -24,7 +24,7 @@ class RecapController extends Controller
 {
     public function index()
     {
-        $classes = AcademicClass::with('academicYear')->get();
+        $classes = AcademicClass::withoutGlobalScope('active_year')->with('academicYear')->get();
         $subjects = Subject::with('academicClasses:id')->orderBy('name')->get();
         $semesters = Semester::with('academicYear')
             ->get()
@@ -35,6 +35,7 @@ class RecapController extends Controller
                     'start_date' => $sem->start_date,
                     'end_date' => $sem->end_date,
                     'is_active' => $sem->is_active,
+                    'academic_year_id' => $sem->academic_year_id,
                 ];
             });
         $activeSemester = Semester::where('is_active', true)->first();

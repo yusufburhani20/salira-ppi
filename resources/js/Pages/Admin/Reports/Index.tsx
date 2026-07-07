@@ -17,6 +17,7 @@ import axios from 'axios';
 interface AcademicClass {
     id: number;
     name: string;
+    academic_year_id: number;
 }
 
 interface Subject {
@@ -48,6 +49,17 @@ export default function ReportIndex({ auth, classes, subjects, semesters = [], a
         end_date: activeSemesterId ? '' : todayLocal(),
         student_id: '',
         teacher_id: '',
+    });
+
+    const selectedSemester = semesters.find((s: any) => s.id.toString() === data.semester_id.toString());
+    const activeSemester = semesters.find((s: any) => s.is_active);
+    const activeYearId = activeSemester?.academic_year_id;
+
+    const filteredClasses = classes.filter((c: any) => {
+        if (selectedSemester) {
+            return c.academic_year_id === selectedSemester.academic_year_id;
+        }
+        return c.academic_year_id === activeYearId;
     });
 
     const fetchReport = async () => {
@@ -140,7 +152,7 @@ export default function ReportIndex({ auth, classes, subjects, semesters = [], a
                                                 style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")` }}
                                             >
                                                 <option value="">-- Pilih Kelas --</option>
-                                                {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                                {filteredClasses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                             </select>
                                         </div>
                                     )}
@@ -168,7 +180,7 @@ export default function ReportIndex({ auth, classes, subjects, semesters = [], a
                                                 style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")` }}
                                             >
                                                 <option value="">-- Semua Kelas --</option>
-                                                {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                                {filteredClasses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                             </select>
                                         </div>
                                     )}
