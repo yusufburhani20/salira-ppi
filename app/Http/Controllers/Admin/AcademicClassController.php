@@ -142,7 +142,10 @@ class AcademicClassController extends Controller
 
         \Illuminate\Support\Facades\DB::transaction(function () use ($class, $actionType, $validated, $studentIds) {
             // 1. Nonaktifkan keanggotaan di kelas lama (is_active => false)
-            $class->students()->whereIn('student_id', $studentIds)->updateExistingPivot($studentIds, ['is_active' => false]);
+            \Illuminate\Support\Facades\DB::table('class_members')
+                ->where('class_id', $class->id)
+                ->whereIn('student_id', $studentIds)
+                ->update(['is_active' => false]);
 
             if ($actionType === 'promote') {
                 $targetClassId = $validated['target_class_id'];

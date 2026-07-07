@@ -111,7 +111,10 @@ class StudentsImport extends DefaultValueBinder implements ToCollection, WithHea
                 // Jika kelas baru berbeda dengan kelas aktif saat ini, nonaktifkan kelas lama
                 if (!in_array($classId, $activeClassIds)) {
                     if (!empty($activeClassIds)) {
-                        $student->academicClasses()->updateExistingPivot($activeClassIds, ['is_active' => false]);
+                        \Illuminate\Support\Facades\DB::table('class_members')
+                            ->where('student_id', $student->id)
+                            ->whereIn('class_id', $activeClassIds)
+                            ->update(['is_active' => false]);
                     }
                     
                     // Hubungkan ke kelas baru
