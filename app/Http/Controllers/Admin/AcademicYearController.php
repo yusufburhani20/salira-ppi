@@ -128,6 +128,7 @@ class AcademicYearController extends Controller
         DB::transaction(function () use ($academicYear) {
             AcademicYear::where('is_active', true)->update(['is_active' => false]);
             $academicYear->update(['is_active' => true]);
+            \Illuminate\Support\Facades\Cache::forget('active_academic_year_id');
         });
 
         return redirect()->back()->with('success', 'Tahun ajaran aktif berhasil diubah.');

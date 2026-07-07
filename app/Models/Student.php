@@ -38,7 +38,7 @@ class Student extends Authenticatable
 
     public function academicClasses()
     {
-        return $this->belongsToMany(AcademicClass::class, 'class_members', 'student_id', 'class_id')->withPivot('is_active')->withTimestamps();
+        return $this->belongsToMany(AcademicClass::class, 'class_members', 'student_id', 'class_id')->withoutGlobalScope('active_year')->withPivot('is_active')->withTimestamps();
     }
 
     public function attendances()

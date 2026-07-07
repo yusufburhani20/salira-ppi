@@ -19,7 +19,7 @@ class AcademicClassController extends Controller
         $activeYear = AcademicYear::where('is_active', true)->first();
         $showArchive = $request->boolean('archive', false);
 
-        $query = AcademicClass::with(['academicYear', 'homeroomTeacher'])->withCount('students');
+        $query = AcademicClass::withoutGlobalScope('active_year')->with(['academicYear', 'homeroomTeacher'])->withCount('students');
 
         if ($activeYear) {
             if ($showArchive) {

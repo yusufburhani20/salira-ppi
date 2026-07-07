@@ -8,6 +8,27 @@ class AcademicClass extends Model
 {
     protected $guarded = ['id'];
 
+    protected static function booted()
+    {
+        static::addGlobalScope('active_year', function ($builder) {
+            // Find active academic year ID
+            $activeYearId = \Illuminate\Support\Facades\Cache::remember('active_academic_year_id', 3600, function () {
+                return \Illuminate\Support\Facades\DB::table('academic_years')->where('is_active', true)->value('id');
+            });
+
+            if ($activeYearId) {
+                $builder->where($builder->getQuery()->from . '.academic_year_id', $activeYearId);
+            }
+        });
+    }
+
+    public function resolveRouteBinding($value, $field = null)
+    {
+        return $this->withoutGlobalScope('active_year')
+            ->where($field ?? $this->getRouteKeyName(), $value)
+            ->firstOrFail();
+    }
+
     public function academicYear()
     {
         return $this->belongsTo(AcademicYear::class);
