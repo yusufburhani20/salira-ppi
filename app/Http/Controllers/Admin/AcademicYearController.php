@@ -137,11 +137,9 @@ class AcademicYearController extends Controller
     public function toggleSemester(Semester $semester)
     {
         DB::transaction(function () use ($semester) {
-            // Deactivate all semesters in the SAME academic year
-            Semester::where('academic_year_id', $semester->academic_year_id)
-                ->where('is_active', true)
-                ->update(['is_active' => false]);
-            
+            // Deactivate ALL semesters across ALL academic years first
+            Semester::where('is_active', true)->update(['is_active' => false]);
+
             $semester->update(['is_active' => true]);
         });
 

@@ -27,8 +27,16 @@ class FinalAssessmentController extends Controller
         // Load all academic years with their semesters for the filter dropdown
         $academicYears = AcademicYear::with('semesters')->orderByDesc('id')->get();
 
-        // Find the active semester by default
-        $activeSemester = Semester::where('is_active', true)->with('academicYear')->first();
+        // Find the active semester - prioritize semester within the active academic year
+        $activeSemester = Semester::where('is_active', true)
+            ->whereHas('academicYear', fn($q) => $q->where('is_active', true))
+            ->with('academicYear')
+            ->first();
+
+        // Fallback: any active semester
+        if (!$activeSemester) {
+            $activeSemester = Semester::where('is_active', true)->with('academicYear')->first();
+        }
 
         // Apply semester filter — default to active semester
         $semesterId = $request->semester_id ?? ($activeSemester?->id);
@@ -73,7 +81,16 @@ class FinalAssessmentController extends Controller
      */
     public function create(Request $request)
     {
-        $activeSemester = Semester::where('is_active', true)->with('academicYear')->first();
+        // Prioritize semester within the active academic year
+        $activeSemester = Semester::where('is_active', true)
+            ->whereHas('academicYear', fn($q) => $q->where('is_active', true))
+            ->with('academicYear')
+            ->first();
+
+        // Fallback: any active semester
+        if (!$activeSemester) {
+            $activeSemester = Semester::where('is_active', true)->with('academicYear')->first();
+        }
 
         if (!$activeSemester) {
             return redirect()->route('teacher.final-assessments.index')
@@ -121,7 +138,10 @@ class FinalAssessmentController extends Controller
      */
     public function store(Request $request)
     {
-        $activeSemester = Semester::where('is_active', true)->first();
+        $activeSemester = Semester::where('is_active', true)
+            ->whereHas('academicYear', fn($q) => $q->where('is_active', true))
+            ->first()
+            ?? Semester::where('is_active', true)->first();
 
         if (!$activeSemester) {
             return back()->with('error', 'Tidak ada semester aktif.');
