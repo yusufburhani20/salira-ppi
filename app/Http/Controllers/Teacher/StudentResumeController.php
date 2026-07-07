@@ -21,7 +21,7 @@ class StudentResumeController extends Controller
     private function ensureIsMyStudent(Student $student)
     {
         $user = auth()->user();
-        if ($user->hasAnyRole(['Super Admin'])) {
+        if ($user->hasAnyRole(['Super Admin', 'Kepala Sekolah', 'Staff/TU'])) {
             return true;
         }
 
@@ -48,7 +48,7 @@ class StudentResumeController extends Controller
             $q->wherePivot('is_active', true)->orderBy('name');
         }]);
 
-        if (!$user->hasAnyRole(['Super Admin'])) {
+        if (!$user->hasAnyRole(['Super Admin', 'Kepala Sekolah', 'Staff/TU'])) {
             $query->where('homeroom_teacher_id', $user->id);
         }
 

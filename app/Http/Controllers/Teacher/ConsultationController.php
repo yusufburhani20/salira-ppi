@@ -20,8 +20,10 @@ class ConsultationController extends Controller
 {
     public function index(Request $request)
     {
-        $query = StudentConsultation::with(['student', 'academicClass'])
-            ->where('teacher_id', Auth::id());
+        $query = StudentConsultation::with(['student', 'academicClass']);
+        if (!Auth::user()->hasAnyRole(['Super Admin', 'Kepala Sekolah', 'Staff/TU'])) {
+            $query->where('teacher_id', Auth::id());
+        }
 
         // Default to active semester if no date filters and no semester filter specified
         $semesterId = $request->input('semester_id');

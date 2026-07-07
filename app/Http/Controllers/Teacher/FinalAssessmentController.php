@@ -33,8 +33,10 @@ class FinalAssessmentController extends Controller
         // Apply semester filter — default to active semester
         $semesterId = $request->semester_id ?? ($activeSemester?->id);
 
-        $query = FinalAssessment::with(['semester.academicYear', 'academicClass', 'subject'])
-            ->where('teacher_id', Auth::id());
+        $query = FinalAssessment::with(['semester.academicYear', 'academicClass', 'subject']);
+        if (!Auth::user()->hasAnyRole(['Super Admin', 'Kepala Sekolah', 'Staff/TU'])) {
+            $query->where('teacher_id', Auth::id());
+        }
 
         if ($semesterId) {
             $query->where('semester_id', $semesterId);
