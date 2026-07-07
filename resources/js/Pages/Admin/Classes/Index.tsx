@@ -33,18 +33,24 @@ function Field({ label, error, children }: { label: string; error?: string; chil
 
 const ic = "w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700/50 text-slate-800 dark:text-slate-100 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 transition";
 
-export default function ClassIndex({ classes, filters, academicYears, teachers }: any) {
+export default function ClassIndex({ classes, filters, academicYears, teachers, allClasses }: any) {
     const [showForm, setShowForm]         = useState(false);
     const [showDelete, setShowDelete]     = useState(false);
     const [showImport, setShowImport]     = useState(false);
+    const [showPromoteModal, setShowPromoteModal] = useState(false);
     const [editTarget, setEditTarget]     = useState<any>(null);
     const [deleteTarget, setDeleteTarget] = useState<any>(null);
+    const [promoteTarget, setPromoteTarget] = useState<any>(null);
 
     const { data, setData, post, put, processing, errors, reset } = useForm({
         academic_year_id: '', name: '', homeroom_teacher_id: '',
     });
 
     const importForm = useForm({ file: null as File | null });
+    const promoteForm = useForm({
+        action_type: 'promote',
+        target_class_id: '',
+    });
 
     const openCreate = () => { reset(); setEditTarget(null); setShowForm(true); };
     const openEdit = (cls: any) => {
@@ -57,6 +63,27 @@ export default function ClassIndex({ classes, filters, academicYears, teachers }
         setShowForm(true);
     };
     const openDelete = (cls: any) => { setDeleteTarget(cls); setShowDelete(true); };
+
+    const openPromote = (cls: any) => {
+        setPromoteTarget(cls);
+        promoteForm.reset();
+        promoteForm.setData({
+            action_type: cls.name.startsWith('XII') ? 'graduate' : 'promote',
+            target_class_id: '',
+        });
+        setShowPromoteModal(true);
+    };
+
+    const handlePromoteSubmit = (e: FormEvent) => {
+        e.preventDefault();
+        promoteForm.post(route('admin.classes.promote', promoteTarget.id), {
+            onSuccess: () => {
+                setShowPromoteModal(false);
+                setPromoteTarget(null);
+                promoteForm.reset();
+            }
+        });
+    };
 
     const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
@@ -154,6 +181,11 @@ export default function ClassIndex({ classes, filters, academicYears, teachers }
                                     </td>
                                     <td className="px-5 py-3.5 text-right">
                                         <div className="flex items-center justify-end gap-1">
+                                            <button onClick={() => openPromote(cls)} className="p-2 rounded-lg text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-500/10 transition-colors" title="Kenaikan / Kelulusan Kelas">
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8L6 21" />
+                                                </svg>
+                                            </button>
                                             <button onClick={() => openEdit(cls)} className="p-2 rounded-lg text-indigo-600 hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-500/10 transition-colors" title="Edit">
                                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                                             </button>
@@ -259,6 +291,61 @@ export default function ClassIndex({ classes, filters, academicYears, teachers }
                         <button onClick={handleDelete} className="flex-1 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-semibold transition-colors">Ya, Hapus</button>
                     </div>
                 </div>
+            </Modal>
+
+            {/* ── Promote Modal ── */}
+            <Modal show={showPromoteModal} onClose={() => setShowPromoteModal(false)} title={`Proses Kenaikan / Kelulusan: ${promoteTarget?.name}`}>
+                <form onSubmit={handlePromoteSubmit} className="space-y-4">
+                    <div className="bg-amber-50 dark:bg-amber-500/10 rounded-xl p-4 text-xs text-amber-700 dark:text-amber-300 leading-relaxed animate-pulse">
+                        <p className="font-semibold mb-1">Penting:</p>
+                        Aksi ini akan memproses seluruh <strong>{promoteTarget?.students_count ?? 0} siswa aktif</strong> di kelas <strong>{promoteTarget?.name}</strong>. Relasi keanggotaan kelas mereka saat ini akan dinonaktifkan (di-set tidak aktif) untuk merekam riwayat, kemudian mereka akan dipindahkan ke kelas tujuan atau statusnya diubah menjadi Lulus.
+                    </div>
+
+                    <Field label="Pilih Jenis Aksi" error={promoteForm.errors.action_type}>
+                        <div className="grid grid-cols-2 gap-3 mt-1">
+                            <label className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition ${promoteForm.data.action_type === 'promote' ? 'border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/20' : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50'}`}>
+                                <div className="flex items-center gap-2">
+                                    <input type="radio" name="action_type" value="promote" checked={promoteForm.data.action_type === 'promote'} onChange={e => promoteForm.setData('action_type', e.target.value)} className="text-emerald-600 focus:ring-emerald-500" />
+                                    <span className="text-sm font-medium text-slate-800 dark:text-slate-200">Naik Kelas</span>
+                                </div>
+                            </label>
+                            <label className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition ${promoteForm.data.action_type === 'graduate' ? 'border-emerald-500 bg-emerald-50/50 dark:bg-emerald-950/20' : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/50'}`}>
+                                <div className="flex items-center gap-2">
+                                    <input type="radio" name="action_type" value="graduate" checked={promoteForm.data.action_type === 'graduate'} onChange={e => promoteForm.setData('action_type', e.target.value)} className="text-emerald-600 focus:ring-emerald-500" />
+                                    <span className="text-sm font-medium text-slate-800 dark:text-slate-200">Luluskan Kelas</span>
+                                </div>
+                            </label>
+                        </div>
+                    </Field>
+
+                    {promoteForm.data.action_type === 'promote' && (
+                        <Field label="Pilih Kelas Tujuan *" error={promoteForm.errors.target_class_id}>
+                            <select 
+                                className={ic} 
+                                value={promoteForm.data.target_class_id} 
+                                onChange={e => promoteForm.setData('target_class_id', e.target.value)}
+                                required
+                            >
+                                <option value="">— Pilih Kelas Tujuan —</option>
+                                {allClasses
+                                    ?.filter((cls: any) => cls.id !== promoteTarget?.id)
+                                    ?.map((cls: any) => (
+                                        <option key={cls.id} value={cls.id}>
+                                            {cls.name} ({cls.academic_year?.name ?? 'Tanpa Tahun Ajaran'})
+                                        </option>
+                                    ))
+                                }
+                            </select>
+                        </Field>
+                    )}
+
+                    <div className="flex gap-3 pt-2">
+                        <button type="button" onClick={() => setShowPromoteModal(false)} className="flex-1 px-4 py-2.5 rounded-xl border border-slate-300 dark:border-slate-600 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors">Batal</button>
+                        <button type="submit" disabled={promoteForm.processing} className="flex-1 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold transition-colors disabled:opacity-60">
+                            {promoteForm.processing ? 'Memproses...' : 'Konfirmasi Aksi'}
+                        </button>
+                    </div>
+                </form>
             </Modal>
         </AuthenticatedLayout>
     );

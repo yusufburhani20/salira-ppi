@@ -110,9 +110,27 @@ class StudentController extends Controller
 
         if ($request->has('academic_class_id')) {
             if (!empty($validated['academic_class_id'])) {
-                $student->academicClasses()->sync([$validated['academic_class_id'] => ['is_active' => true]]);
+                $activeClassIds = $student->academicClasses()
+                    ->wherePivot('is_active', true)
+                    ->pluck('academic_classes.id')
+                    ->toArray();
+
+                if (!in_array($validated['academic_class_id'], $activeClassIds)) {
+                    if (!empty($activeClassIds)) {
+                        $student->academicClasses()->updateExistingPivot($activeClassIds, ['is_active' => false]);
+                    }
+                    $student->academicClasses()->syncWithoutDetaching([
+                        $validated['academic_class_id'] => ['is_active' => true]
+                    ]);
+                }
             } else {
-                $student->academicClasses()->detach();
+                $activeClassIds = $student->academicClasses()
+                    ->wherePivot('is_active', true)
+                    ->pluck('academic_classes.id')
+                    ->toArray();
+                if (!empty($activeClassIds)) {
+                    $student->academicClasses()->updateExistingPivot($activeClassIds, ['is_active' => false]);
+                }
             }
         }
 

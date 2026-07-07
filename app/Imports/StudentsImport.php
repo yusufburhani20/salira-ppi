@@ -102,8 +102,23 @@ class StudentsImport extends DefaultValueBinder implements ToCollection, WithHea
             }
 
             if ($classId) {
-                // Attach or update active class
-                $student->academicClasses()->syncWithoutDetaching([$classId => ['is_active' => true]]);
+                // Ambil semua ID kelas yang saat ini aktif untuk siswa ini
+                $activeClassIds = $student->academicClasses()
+                    ->wherePivot('is_active', true)
+                    ->pluck('academic_classes.id')
+                    ->toArray();
+
+                // Jika kelas baru berbeda dengan kelas aktif saat ini, nonaktifkan kelas lama
+                if (!in_array($classId, $activeClassIds)) {
+                    if (!empty($activeClassIds)) {
+                        $student->academicClasses()->updateExistingPivot($activeClassIds, ['is_active' => false]);
+                    }
+                    
+                    // Hubungkan ke kelas baru
+                    $student->academicClasses()->syncWithoutDetaching([
+                        $classId => ['is_active' => true]
+                    ]);
+                }
             }
         }
     }

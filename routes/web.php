@@ -45,6 +45,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/classes', [\App\Http\Controllers\Admin\AcademicClassController::class, 'store'])->name('classes.store');
         Route::put('/classes/{class}', [\App\Http\Controllers\Admin\AcademicClassController::class, 'update'])->name('classes.update');
         Route::delete('/classes/{class}', [\App\Http\Controllers\Admin\AcademicClassController::class, 'destroy'])->name('classes.destroy');
+        Route::post('/classes/{class}/promote', [\App\Http\Controllers\Admin\AcademicClassController::class, 'promote'])->name('classes.promote');
         Route::get('/classes/export', [\App\Http\Controllers\Admin\AcademicClassController::class, 'export'])->name('classes.export');
         Route::post('/classes/import', [\App\Http\Controllers\Admin\AcademicClassController::class, 'import'])->name('classes.import');
         Route::get('/classes/template', [\App\Http\Controllers\Admin\AcademicClassController::class, 'template'])->name('classes.template');

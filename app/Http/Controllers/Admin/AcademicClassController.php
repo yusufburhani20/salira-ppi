@@ -26,6 +26,7 @@ class AcademicClassController extends Controller
 
         return Inertia::render('Admin/Classes/Index', [
             'classes'       => $classes,
+            'allClasses'    => AcademicClass::with('academicYear')->orderBy('name')->get(),
             'academicYears' => AcademicYear::orderBy('name', 'desc')->get(),
             'teachers'      => User::role(['Guru', 'Wali Kelas'])->get(['id', 'name', 'nip']),
             'filters'       => $request->only(['search']),
@@ -109,5 +110,50 @@ class AcademicClassController extends Controller
         return response()->streamDownload($callback, 'template-kelas.csv', [
             'Content-Type' => 'text/csv',
         ]);
+    }
+
+    public function promote(Request $request, AcademicClass $class)
+    {
+        $validated = $request->validate([
+            'action_type'     => 'required|in:promote,graduate',
+            'target_class_id' => 'required_if:action_type,promote|nullable|exists:academic_classes,id',
+        ]);
+
+        $actionType = $validated['action_type'];
+        $students = $class->students()->wherePivot('is_active', true)->get();
+
+        if ($students->isEmpty()) {
+            return redirect()->back()->with('error', 'Tidak ada siswa aktif di kelas ini.');
+        }
+
+        $studentIds = $students->pluck('id')->toArray();
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($class, $actionType, $validated, $studentIds) {
+            // 1. Nonaktifkan keanggotaan di kelas lama (is_active => false)
+            $class->students()->whereIn('student_id', $studentIds)->updateExistingPivot($studentIds, ['is_active' => false]);
+
+            if ($actionType === 'promote') {
+                $targetClassId = $validated['target_class_id'];
+                $targetClass = AcademicClass::findOrFail($targetClassId);
+                
+                // 2. Hubungkan siswa ke kelas baru (is_active => true)
+                $syncData = [];
+                foreach ($studentIds as $id) {
+                    $syncData[$id] = ['is_active' => true];
+                }
+                $targetClass->students()->syncWithoutDetaching($syncData);
+            } else {
+                // 2. Jika kelulusan, ubah status siswa di tabel students menjadi 'graduated'
+                \App\Models\Student::whereIn('id', $studentIds)->update([
+                    'status' => \App\Enums\StudentStatus::graduated
+                ]);
+            }
+        });
+
+        $message = $actionType === 'promote'
+            ? "Berhasil menaikkan {$students->count()} siswa ke kelas tujuan."
+            : "Berhasil meluluskan {$students->count()} siswa.";
+
+        return redirect()->back()->with('success', $message);
     }
 }
