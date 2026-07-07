@@ -11,13 +11,20 @@ class AcademicClass extends Model
     protected static function booted()
     {
         static::addGlobalScope('active_year', function ($builder) {
+            // Skip global scope if we are querying specific class ID(s) (eager/lazy loading, find, etc.)
+            foreach ($builder->getQuery()->wheres as $where) {
+                if (isset($where['column']) && is_string($where['column']) && in_array(basename(str_replace('`', '', $where['column'])), ['id'])) {
+                    return;
+                }
+            }
+
             // Find active academic year ID
             $activeYearId = \Illuminate\Support\Facades\Cache::remember('active_academic_year_id', 3600, function () {
                 return \Illuminate\Support\Facades\DB::table('academic_years')->where('is_active', true)->value('id');
             });
 
             if ($activeYearId) {
-                $builder->where($builder->getQuery()->from . '.academic_year_id', $activeYearId);
+                $builder->where($builder->getModel()->getTable() . '.academic_year_id', $activeYearId);
             }
         });
     }
