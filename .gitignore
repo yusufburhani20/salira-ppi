@@ -16,6 +16,8 @@
 /public/build
 /public/hot
 /public/storage
+/.npm-cache
+/.npm_cache
 /storage/*.key
 /storage/pail
 /vendor
