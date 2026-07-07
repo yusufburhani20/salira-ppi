@@ -13,8 +13,12 @@ class AcademicClass extends Model
         static::addGlobalScope('active_year', function ($builder) {
             // Skip global scope if we are querying specific class ID(s) (eager/lazy loading, find, etc.)
             foreach ($builder->getQuery()->wheres as $where) {
-                if (isset($where['column']) && is_string($where['column']) && in_array(basename(str_replace('`', '', $where['column'])), ['id'])) {
-                    return;
+                if (isset($where['column']) && is_string($where['column'])) {
+                    $columnWithoutBackticks = str_replace('`', '', $where['column']);
+                    $segments = explode('.', $columnWithoutBackticks);
+                    if (end($segments) === 'id') {
+                        return;
+                    }
                 }
             }
 
