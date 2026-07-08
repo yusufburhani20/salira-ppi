@@ -602,7 +602,7 @@ export default function Login({
                                         <button
                                             type="submit"
                                             disabled={processingEvent || activeEvents.length === 0 || !eventData.proof || isCompressing}
-                                            className="flex-1 py-2.5 rounded-xl bg-emerald-650 hover:bg-emerald-700 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white font-bold text-sm shadow-md shadow-emerald-500/10 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                            className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white font-bold text-sm shadow-md shadow-emerald-500/10 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                         >
                                             {processingEvent ? (
                                                 <>
