@@ -6,7 +6,7 @@
 //   • Inertia XHR & API calls                → Network Only (auth sensitive)
 // ─────────────────────────────────────────────────────────────────────────────
 
-const CACHE_VERSION = 'salira-pwa-v2';
+const CACHE_VERSION = 'salira-pwa-v3';
 const STATIC_CACHE  = `${CACHE_VERSION}-static`;
 const FONT_CACHE    = `${CACHE_VERSION}-fonts`;
 
