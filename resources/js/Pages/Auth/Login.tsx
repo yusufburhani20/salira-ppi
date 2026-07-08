@@ -38,6 +38,9 @@ export default function Login({
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [showUserDropdown, setShowUserDropdown] = useState(false);
     const [selectedUserName, setSelectedUserName] = useState('');
+    const [attendanceSuccess, setAttendanceSuccess] = useState(false);
+    const [successMessage, setSuccessMessage] = useState('');
+    const [modalError, setModalError] = useState<string | null>(null);
 
     const { data: eventData, setData: setEventData, post: postEvent, processing: processingEvent, errors: eventErrors, reset: resetEvent } = useForm({
         event_id: '',
@@ -147,6 +150,31 @@ export default function Login({
         }
     }, [flash?.success, flash?.error]);
 
+    // Bersihkan seluruh state form dan error saat modal ditutup
+    useEffect(() => {
+        if (!showEventModal) {
+            setAttendanceSuccess(false);
+            setSuccessMessage('');
+            setModalError(null);
+            resetEvent();
+            setPreviewUrl(null);
+            setSearchUser('');
+            setSelectedUserName('');
+        }
+    }, [showEventModal]);
+
+    // Kelola pesan error modal secara reaktif
+    useEffect(() => {
+        const errorKeys = Object.keys(eventErrors);
+        if (errorKeys.length > 0) {
+            setModalError('Gagal mengirim absensi. Silakan periksa kembali data Anda.');
+        } else if (flash?.error) {
+            setModalError(flash.error);
+        } else {
+            setModalError(null);
+        }
+    }, [eventErrors, flash?.error]);
+
     const filteredUsers = users.filter(u =>
         u.name.toLowerCase().includes(searchUser.toLowerCase()) ||
         (u.nip ?? '').toLowerCase().includes(searchUser.toLowerCase())
@@ -161,14 +189,20 @@ export default function Login({
 
     const handleEventSubmit = (e: React.FormEvent) => {
         e.preventDefault();
+        setModalError(null);
         postEvent(route('event-attendance.store'), {
-            onSuccess: () => {
-                resetEvent();
-                setPreviewUrl(null);
-                setSearchUser('');
-                setSelectedUserName('');
-                setShowEventModal(false);
+            onSuccess: (page) => {
+                const flashProps = page.props.flash as any;
+                if (flashProps?.success) {
+                    setAttendanceSuccess(true);
+                    setSuccessMessage(flashProps.success);
+                } else if (flashProps?.error) {
+                    setModalError(flashProps.error);
+                }
             },
+            onError: (errs) => {
+                setModalError('Gagal mengirim absensi. Silakan periksa kembali data Anda.');
+            }
         });
     };
 
@@ -364,197 +398,233 @@ export default function Login({
                         <div className="absolute top-0 right-0 -mt-6 -mr-6 w-24 h-24 bg-emerald-500/10 rounded-full blur-xl pointer-events-none"></div>
                         <div className="absolute bottom-0 left-0 -mb-6 -ml-6 w-24 h-24 bg-teal-500/10 rounded-full blur-xl pointer-events-none"></div>
 
-                        <div className="flex justify-between items-start mb-6">
-                            <div>
-                                <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">Absen Event / Rapat</h3>
-                                <p className="text-xs text-slate-500 mt-0.5">Silakan isi data kehadiran Anda di bawah.</p>
-                            </div>
-                            <button
-                                type="button"
-                                onClick={() => setShowEventModal(false)}
-                                className="text-slate-400 hover:text-slate-650 dark:hover:text-white p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
-                            >
-                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                            </button>
-                        </div>
-
-                        <form onSubmit={handleEventSubmit} className="space-y-4">
-                            <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Pilih Event *</label>
-                                {activeEvents.length === 0 ? (
-                                    <div className="p-3.5 bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-450 rounded-xl text-xs font-bold border border-rose-100 dark:border-rose-900/30">
-                                        Tidak ada event aktif yang sedang berlangsung saat ini.
-                                    </div>
-                                ) : (
-                                    <select
-                                        value={eventData.event_id}
-                                        onChange={e => setEventData('event_id', e.target.value)}
-                                        className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-emerald-500 focus:border-emerald-500 shadow-sm text-sm p-3"
-                                        required
-                                    >
-                                        <option value="">-- Pilih Event --</option>
-                                        {activeEvents.map(ev => (
-                                            <option key={ev.id} value={ev.id}>
-                                                {ev.name} ({new Date(ev.date).toLocaleDateString('id-ID', {day: '2-digit', month: '2-digit'})})
-                                            </option>
-                                        ))}
-                                    </select>
-                                )}
-                                <InputError message={eventErrors.event_id} className="mt-1" />
-                            </div>
-
-                            {/* Searchable User Dropdown */}
-                            <div className="relative">
-                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Pilih Nama Anda *</label>
-                                <div className="relative">
-                                    <input
-                                        type="text"
-                                        value={searchUser}
-                                        onChange={e => {
-                                            setSearchUser(e.target.value);
-                                            setShowUserDropdown(true);
-                                            if (e.target.value !== selectedUserName) {
-                                                setEventData('user_id', '');
-                                            }
-                                        }}
-                                        onFocus={() => setShowUserDropdown(true)}
-                                        onClick={e => { e.stopPropagation(); setShowUserDropdown(true); }}
-                                        className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-emerald-500 focus:border-emerald-500 shadow-sm text-sm p-3 pr-10"
-                                        placeholder="Ketik nama atau NIP Anda..."
-                                        required
-                                    />
-                                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                                    </div>
+                        {attendanceSuccess ? (
+                            <div className="text-center py-6 space-y-4">
+                                <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 rounded-full flex items-center justify-center mx-auto animate-bounce-in">
+                                    <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                    </svg>
                                 </div>
-                                <InputError message={eventErrors.user_id} className="mt-1" />
+                                <div className="space-y-1">
+                                    <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">Absensi Berhasil!</h3>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400 px-4">
+                                        {successMessage || 'Kehadiran Anda telah berhasil dicatat oleh sistem.'}
+                                    </p>
+                                </div>
+                                <div className="pt-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowEventModal(false)}
+                                        className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm shadow-md shadow-emerald-500/10 transition-colors"
+                                    >
+                                        Selesai
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <>
+                                <div className="flex justify-between items-start mb-6">
+                                    <div>
+                                        <h3 className="text-xl font-bold text-slate-800 dark:text-slate-100">Absen Event / Rapat</h3>
+                                        <p className="text-xs text-slate-500 mt-0.5">Silakan isi data kehadiran Anda di bawah.</p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowEventModal(false)}
+                                        className="text-slate-400 hover:text-slate-650 dark:hover:text-white p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                                    >
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                    </button>
+                                </div>
 
-                                {showUserDropdown && (
-                                    <div className="absolute left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-20 divide-y divide-slate-100 dark:divide-slate-800">
-                                        {filteredUsers.length === 0 ? (
-                                            <div className="p-3 text-slate-400 text-xs italic">Nama tidak ditemukan</div>
+                                {modalError && (
+                                    <div className="mb-4 p-3.5 bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-450 rounded-xl text-xs font-bold border border-rose-100 dark:border-rose-900/30 flex items-start gap-2 animate-fade-in">
+                                        <svg className="w-4 h-4 flex-shrink-0 mt-0.5 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                        </svg>
+                                        <span>{modalError}</span>
+                                    </div>
+                                )}
+
+                                <form onSubmit={handleEventSubmit} className="space-y-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Pilih Event *</label>
+                                        {activeEvents.length === 0 ? (
+                                            <div className="p-3.5 bg-rose-50 dark:bg-rose-950/30 text-rose-600 dark:text-rose-450 rounded-xl text-xs font-bold border border-rose-100 dark:border-rose-900/30">
+                                                Tidak ada event aktif yang sedang berlangsung saat ini.
+                                            </div>
                                         ) : (
-                                            filteredUsers.map(u => (
-                                                <button
-                                                    key={u.id}
-                                                    type="button"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleSelectUser(u);
-                                                    }}
-                                                    className="w-full text-left p-3 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold text-slate-750 dark:text-slate-200 transition-colors flex justify-between items-center"
-                                                >
-                                                    <span>{u.name}</span>
-                                                    <span className="text-[10px] text-slate-400 font-mono">NIP: {u.nip}</span>
-                                                </button>
-                                            ))
+                                            <select
+                                                value={eventData.event_id}
+                                                onChange={e => setEventData('event_id', e.target.value)}
+                                                className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-emerald-500 focus:border-emerald-500 shadow-sm text-sm p-3"
+                                                required
+                                            >
+                                                <option value="">-- Pilih Event --</option>
+                                                {activeEvents.map(ev => (
+                                                    <option key={ev.id} value={ev.id}>
+                                                        {ev.name} ({new Date(ev.date).toLocaleDateString('id-ID', {day: '2-digit', month: '2-digit'})})
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        )}
+                                        <InputError message={eventErrors.event_id} className="mt-1" />
+                                    </div>
+
+                                    {/* Searchable User Dropdown */}
+                                    <div className="relative">
+                                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Pilih Nama Anda *</label>
+                                        <div className="relative">
+                                            <input
+                                                type="text"
+                                                value={searchUser}
+                                                onChange={e => {
+                                                    setSearchUser(e.target.value);
+                                                    setShowUserDropdown(true);
+                                                    if (e.target.value !== selectedUserName) {
+                                                        setEventData('user_id', '');
+                                                    }
+                                                }}
+                                                onFocus={() => setShowUserDropdown(true)}
+                                                onClick={e => { e.stopPropagation(); setShowUserDropdown(true); }}
+                                                className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-emerald-500 focus:border-emerald-500 shadow-sm text-sm p-3 pr-10"
+                                                placeholder="Ketik nama atau NIP Anda..."
+                                                required
+                                            />
+                                            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
+                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                                            </div>
+                                        </div>
+                                        <InputError message={eventErrors.user_id} className="mt-1" />
+
+                                        {showUserDropdown && (
+                                            <div className="absolute left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-20 divide-y divide-slate-100 dark:divide-slate-800">
+                                                {filteredUsers.length === 0 ? (
+                                                    <div className="p-3 text-slate-400 text-xs italic">Nama tidak ditemukan</div>
+                                                ) : (
+                                                    filteredUsers.map(u => (
+                                                        <button
+                                                            key={u.id}
+                                                            type="button"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                handleSelectUser(u);
+                                                            }}
+                                                            className="w-full text-left p-3 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold text-slate-750 dark:text-slate-200 transition-colors flex justify-between items-center"
+                                                        >
+                                                            <span>{u.name}</span>
+                                                            <span className="text-[10px] text-slate-400 font-mono">NIP: {u.nip}</span>
+                                                        </button>
+                                                    ))
+                                                )}
+                                            </div>
                                         )}
                                     </div>
-                                )}
-                            </div>
 
-                            <div>
-                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Bukti Hadir (Foto) *</label>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Bukti Hadir (Foto) *</label>
 
-                                {isCompressing ? (
-                                    <div className="border-2 border-dashed border-emerald-300 dark:border-emerald-700 rounded-2xl p-6 bg-emerald-50/40 dark:bg-emerald-950/5 flex flex-col items-center justify-center gap-3 h-[148px]">
-                                        <svg className="w-8 h-8 text-emerald-600 dark:text-emerald-400 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18" />
-                                        </svg>
-                                        <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 animate-pulse">Mengompres foto Anda...</span>
+                                        {isCompressing ? (
+                                            <div className="border-2 border-dashed border-emerald-300 dark:border-emerald-700 rounded-2xl p-6 bg-emerald-50/40 dark:bg-emerald-950/5 flex flex-col items-center justify-center gap-3 h-[148px]">
+                                                <svg className="w-8 h-8 text-emerald-600 dark:text-emerald-400 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18" />
+                                                </svg>
+                                                <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 animate-pulse">Mengompres foto Anda...</span>
+                                            </div>
+                                        ) : previewUrl ? (
+                                            <div className="border-2 border-emerald-300 dark:border-emerald-700 rounded-2xl p-3 bg-emerald-50/40 dark:bg-emerald-950/10 flex flex-col items-center gap-2">
+                                                <img
+                                                    src={previewUrl}
+                                                    alt="Preview Bukti Hadir"
+                                                    className="max-h-36 rounded-xl object-contain shadow-md border border-slate-200 dark:border-slate-700"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setPreviewUrl(null);
+                                                        setEventData('proof', null);
+                                                    }}
+                                                    className="text-xs text-rose-500 hover:text-rose-700 font-bold flex items-center gap-1 transition-colors"
+                                                >
+                                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                                                    Hapus &amp; Ganti Foto
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="grid grid-cols-2 gap-2.5">
+                                                {/* Tombol Kamera */}
+                                                <label className="flex flex-col items-center justify-center gap-2 p-4 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/10 transition-all group">
+                                                    <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-950/40 flex items-center justify-center group-hover:bg-emerald-200 dark:group-hover:bg-emerald-900/50 transition-colors">
+                                                        <svg className="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                        </svg>
+                                                    </div>
+                                                    <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300 text-center leading-tight">Ambil Foto<br/><span className="text-[9px] font-normal text-slate-400">Gunakan Kamera</span></span>
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*"
+                                                        capture="environment"
+                                                        className="hidden"
+                                                        onChange={handleFileChange}
+                                                    />
+                                                </label>
+
+                                                {/* Tombol Pilih File / Galeri */}
+                                                <label className="flex flex-col items-center justify-center gap-2 p-4 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/10 transition-all group">
+                                                    <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-950/40 flex items-center justify-center group-hover:bg-indigo-200 dark:group-hover:bg-indigo-900/50 transition-colors">
+                                                        <svg className="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                        </svg>
+                                                    </div>
+                                                    <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300 text-center leading-tight">Pilih Foto<br/><span className="text-[9px] font-normal text-slate-400">Dari Galeri / File</span></span>
+                                                    <input
+                                                        type="file"
+                                                        accept="image/*"
+                                                        className="hidden"
+                                                        onChange={handleFileChange}
+                                                    />
+                                                </label>
+                                            </div>
+                                        )}
+                                        <InputError message={eventErrors.proof} className="mt-1" />
                                     </div>
-                                ) : previewUrl ? (
-                                    <div className="border-2 border-emerald-300 dark:border-emerald-700 rounded-2xl p-3 bg-emerald-50/40 dark:bg-emerald-950/10 flex flex-col items-center gap-2">
-                                        <img
-                                            src={previewUrl}
-                                            alt="Preview Bukti Hadir"
-                                            className="max-h-36 rounded-xl object-contain shadow-md border border-slate-200 dark:border-slate-700"
-                                        />
+
+                                    {/* Footer Buttons */}
+                                    <div className="flex items-center gap-3 pt-4 border-t border-slate-100 dark:border-slate-700/80">
                                         <button
                                             type="button"
-                                            onClick={() => {
-                                                setPreviewUrl(null);
-                                                setEventData('proof', null);
-                                            }}
-                                            className="text-xs text-rose-500 hover:text-rose-700 font-bold flex items-center gap-1 transition-colors"
+                                            onClick={() => setShowEventModal(false)}
+                                            className="flex-shrink-0 px-5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-bold text-sm hover:bg-slate-100 dark:hover:bg-slate-900/40 transition-colors"
                                         >
-                                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                                            Hapus &amp; Ganti Foto
+                                            Batal
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            disabled={processingEvent || activeEvents.length === 0 || !eventData.proof || isCompressing}
+                                            className="flex-1 py-2.5 rounded-xl bg-emerald-650 hover:bg-emerald-700 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white font-bold text-sm shadow-md shadow-emerald-500/10 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                        >
+                                            {processingEvent ? (
+                                                <>
+                                                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18" /></svg>
+                                                    Mengirim...
+                                                </>
+                                            ) : isCompressing ? (
+                                                <>
+                                                    <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18" /></svg>
+                                                    Mengompres...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
+                                                    Kirim Absen
+                                                </>
+                                            )}
                                         </button>
                                     </div>
-                                ) : (
-                                    <div className="grid grid-cols-2 gap-2.5">
-                                        {/* Tombol Kamera */}
-                                        <label className="flex flex-col items-center justify-center gap-2 p-4 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl cursor-pointer hover:border-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/10 transition-all group">
-                                            <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-950/40 flex items-center justify-center group-hover:bg-emerald-200 dark:group-hover:bg-emerald-900/50 transition-colors">
-                                                <svg className="w-5 h-5 text-emerald-600 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                </svg>
-                                            </div>
-                                            <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300 text-center leading-tight">Ambil Foto<br/><span className="text-[9px] font-normal text-slate-400">Gunakan Kamera</span></span>
-                                            <input
-                                                type="file"
-                                                accept="image/*"
-                                                capture="environment"
-                                                className="hidden"
-                                                onChange={handleFileChange}
-                                            />
-                                        </label>
-
-                                        {/* Tombol Pilih File / Galeri */}
-                                        <label className="flex flex-col items-center justify-center gap-2 p-4 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl cursor-pointer hover:border-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/10 transition-all group">
-                                            <div className="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-950/40 flex items-center justify-center group-hover:bg-indigo-200 dark:group-hover:bg-indigo-900/50 transition-colors">
-                                                <svg className="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                </svg>
-                                            </div>
-                                            <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300 text-center leading-tight">Pilih Foto<br/><span className="text-[9px] font-normal text-slate-400">Dari Galeri / File</span></span>
-                                            <input
-                                                type="file"
-                                                accept="image/*"
-                                                className="hidden"
-                                                onChange={handleFileChange}
-                                            />
-                                        </label>
-                                    </div>
-                                )}
-                                <InputError message={eventErrors.proof} className="mt-1" />
-                            </div>
-
-                            {/* Footer Buttons */}
-                            <div className="flex items-center gap-3 pt-4 border-t border-slate-100 dark:border-slate-700/80">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowEventModal(false)}
-                                    className="flex-shrink-0 px-5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-bold text-sm hover:bg-slate-100 dark:hover:bg-slate-900/40 transition-colors"
-                                >
-                                    Batal
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={processingEvent || activeEvents.length === 0 || !eventData.proof || isCompressing}
-                                    className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white font-bold text-sm shadow-md shadow-emerald-500/10 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                                >
-                                    {processingEvent ? (
-                                        <>
-                                            <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18" /></svg>
-                                            Mengirim...
-                                        </>
-                                    ) : isCompressing ? (
-                                        <>
-                                            <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18" /></svg>
-                                            Mengompres...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
-                                            Kirim Absen
-                                        </>
-                                    )}
-                                </button>
-                            </div>
-                        </form>
+                                </form>
+                            </>
+                        )}
                     </div>
                 </div>
             )}
