@@ -217,11 +217,12 @@ Route::middleware('auth')->group(function () {
             Route::resource('users', \App\Http\Controllers\Admin\UserController::class)->except(['show']);
         });
 
-        // Event Management (Accessible to Super Admin, Staff/TU, and Kepala Program)
-        Route::middleware(['role:Super Admin|Staff/TU|Kepala Program'])->group(function () {
-            Route::resource('events', \App\Http\Controllers\Admin\EventController::class);
-            Route::get('events/{event}/attendances', [\App\Http\Controllers\Admin\EventController::class, 'attendances'])->name('events.attendances');
-        });
+    });
+
+    // Event Management (Accessible to Super Admin, Staff/TU, and Kepala Program)
+    Route::middleware(['role:Super Admin|Staff/TU|Kepala Program'])->prefix('admin')->name('admin.')->group(function () {
+        Route::resource('events', \App\Http\Controllers\Admin\EventController::class);
+        Route::get('events/{event}/attendances', [\App\Http\Controllers\Admin\EventController::class, 'attendances'])->name('events.attendances');
     });
 
     // Staff / User Routes
