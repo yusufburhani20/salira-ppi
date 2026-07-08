@@ -36,6 +36,8 @@ return Application::configure(basePath: dirname(__DIR__))
             'public/computer-issues/report',
             '/public/computer-issues/report*',
             'public/computer-issues/report*',
+            '/event-attendance',
+            'event-attendance',
         ]);
 
         $middleware->alias([
