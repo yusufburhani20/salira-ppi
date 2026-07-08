@@ -41,6 +41,11 @@ class User extends Authenticatable
         return $this->hasMany(StudentAttendance::class, 'recorded_by');
     }
 
+    public function eventAttendances()
+    {
+        return $this->hasMany(EventAttendance::class);
+    }
+
     public function classAgendas()
     {
         return $this->hasMany(ClassAgenda::class, 'teacher_id');

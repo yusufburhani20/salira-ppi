@@ -4,6 +4,9 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Models\Event;
+use App\Models\User;
+use App\Enums\UserStatus;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -22,9 +25,20 @@ class AuthenticatedSessionController extends Controller
             return redirect()->route('portal.dashboard');
         }
 
+        $activeEvents = Event::where('is_active', true)
+            ->orderBy('date', 'desc')
+            ->orderBy('start_time', 'desc')
+            ->get(['id', 'name', 'date', 'start_time', 'end_time']);
+
+        $users = User::where('status', UserStatus::active)
+            ->orderBy('name', 'asc')
+            ->get(['id', 'name', 'nip']);
+
         return Inertia::render('Auth/Login', [
             'canResetPassword' => Route::has('password.request'),
             'status' => session('status'),
+            'activeEvents' => $activeEvents,
+            'users' => $users,
         ]);
     }
 
