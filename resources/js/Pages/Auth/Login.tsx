@@ -45,6 +45,95 @@ export default function Login({
         proof: null as File | null,
     });
 
+    const [isCompressing, setIsCompressing] = useState(false);
+
+    const compressImage = (file: File): Promise<File> => {
+        return new Promise((resolve) => {
+            if (!file.type.startsWith('image/')) {
+                resolve(file);
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = (event) => {
+                const img = new Image();
+                img.src = event.target?.result as string;
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 1024;
+                    const MAX_HEIGHT = 1024;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height = Math.round((height * MAX_WIDTH) / width);
+                            width = MAX_WIDTH;
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width = Math.round((width * MAX_HEIGHT) / height);
+                            height = MAX_HEIGHT;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    if (!ctx) {
+                        resolve(file);
+                        return;
+                    }
+
+                    ctx.drawImage(img, 0, 0, width, height);
+                    canvas.toBlob(
+                        (blob) => {
+                            if (blob) {
+                                const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + "_compressed.jpg", {
+                                    type: 'image/jpeg',
+                                    lastModified: Date.now(),
+                                });
+                                resolve(compressedFile);
+                            } else {
+                                resolve(file);
+                            }
+                        },
+                        'image/jpeg',
+                        0.75
+                    );
+                };
+                img.onerror = () => resolve(file);
+            };
+            reader.onerror = () => resolve(file);
+        });
+    };
+
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files ? e.target.files[0] : null;
+        if (!file) return;
+
+        setIsCompressing(true);
+        try {
+            const compressed = await compressImage(file);
+            setEventData('proof', compressed);
+            
+            const reader = new FileReader();
+            reader.onloadend = () => setPreviewUrl(reader.result as string);
+            reader.readAsDataURL(compressed);
+        } catch (error) {
+            console.error('Compression error:', error);
+            setEventData('proof', file);
+            const reader = new FileReader();
+            reader.onloadend = () => setPreviewUrl(reader.result as string);
+            reader.readAsDataURL(file);
+        } finally {
+            setIsCompressing(false);
+            // Reset input value so same file can be selected again
+            e.target.value = '';
+        }
+    };
+
     useEffect(() => {
         if (flash?.success) {
             setToast({ message: flash.success, type: 'success' });
@@ -367,7 +456,14 @@ export default function Login({
                             <div>
                                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Bukti Hadir (Foto) *</label>
 
-                                {previewUrl ? (
+                                {isCompressing ? (
+                                    <div className="border-2 border-dashed border-emerald-300 dark:border-emerald-700 rounded-2xl p-6 bg-emerald-50/40 dark:bg-emerald-950/5 flex flex-col items-center justify-center gap-3 h-[148px]">
+                                        <svg className="w-8 h-8 text-emerald-600 dark:text-emerald-400 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18" />
+                                        </svg>
+                                        <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 animate-pulse">Mengompres foto Anda...</span>
+                                    </div>
+                                ) : previewUrl ? (
                                     <div className="border-2 border-emerald-300 dark:border-emerald-700 rounded-2xl p-3 bg-emerald-50/40 dark:bg-emerald-950/10 flex flex-col items-center gap-2">
                                         <img
                                             src={previewUrl}
@@ -402,15 +498,7 @@ export default function Login({
                                                 accept="image/*"
                                                 capture="environment"
                                                 className="hidden"
-                                                onChange={e => {
-                                                    const file = e.target.files ? e.target.files[0] : null;
-                                                    setEventData('proof', file);
-                                                    if (file) {
-                                                        const reader = new FileReader();
-                                                        reader.onloadend = () => setPreviewUrl(reader.result as string);
-                                                        reader.readAsDataURL(file);
-                                                    }
-                                                }}
+                                                onChange={handleFileChange}
                                             />
                                         </label>
 
@@ -426,15 +514,7 @@ export default function Login({
                                                 type="file"
                                                 accept="image/*"
                                                 className="hidden"
-                                                onChange={e => {
-                                                    const file = e.target.files ? e.target.files[0] : null;
-                                                    setEventData('proof', file);
-                                                    if (file) {
-                                                        const reader = new FileReader();
-                                                        reader.onloadend = () => setPreviewUrl(reader.result as string);
-                                                        reader.readAsDataURL(file);
-                                                    }
-                                                }}
+                                                onChange={handleFileChange}
                                             />
                                         </label>
                                     </div>
@@ -453,13 +533,18 @@ export default function Login({
                                 </button>
                                 <button
                                     type="submit"
-                                    disabled={processingEvent || activeEvents.length === 0 || !eventData.proof}
+                                    disabled={processingEvent || activeEvents.length === 0 || !eventData.proof || isCompressing}
                                     className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white font-bold text-sm shadow-md shadow-emerald-500/10 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                 >
                                     {processingEvent ? (
                                         <>
                                             <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18" /></svg>
                                             Mengirim...
+                                        </>
+                                    ) : isCompressing ? (
+                                        <>
+                                            <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18" /></svg>
+                                            Mengompres...
                                         </>
                                     ) : (
                                         <>
