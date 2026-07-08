@@ -2,6 +2,7 @@ import Checkbox from '@/Components/Checkbox';
 import InputError from '@/Components/InputError';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { FormEventHandler, useState, useEffect } from 'react';
+import axios from 'axios';
 
 export default function Login({
     status,
@@ -49,6 +50,7 @@ export default function Login({
     });
 
     const [isCompressing, setIsCompressing] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const compressImage = (file: File): Promise<File> => {
         return new Promise((resolve) => {
@@ -113,7 +115,8 @@ export default function Login({
     };
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files ? e.target.files[0] : null;
+        const target = e.target;
+        const file = target.files ? target.files[0] : null;
         if (!file) return;
 
         setIsCompressing(true);
@@ -133,7 +136,7 @@ export default function Login({
         } finally {
             setIsCompressing(false);
             // Reset input value so same file can be selected again
-            e.target.value = '';
+            target.value = '';
         }
     };
 
@@ -187,23 +190,48 @@ export default function Login({
         setShowUserDropdown(false);
     };
 
-    const handleEventSubmit = (e: React.FormEvent) => {
+    const handleEventSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setModalError(null);
-        postEvent('/event-attendance', {
-            onSuccess: (page) => {
-                const flashProps = page.props.flash as any;
-                if (flashProps?.success) {
-                    setAttendanceSuccess(true);
-                    setSuccessMessage(flashProps.success);
-                } else if (flashProps?.error) {
-                    setModalError(flashProps.error);
-                }
-            },
-            onError: (errs) => {
-                setModalError('Gagal mengirim absensi. Silakan periksa kembali data Anda.');
+        setIsSubmitting(true);
+
+        try {
+            const formData = new FormData();
+            formData.append('event_id', eventData.event_id);
+            formData.append('user_id', eventData.user_id);
+            if (eventData.proof) {
+                formData.append('proof', eventData.proof);
             }
-        });
+
+            const response = await axios.post('/event-attendance', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            if (response.data.success) {
+                setAttendanceSuccess(true);
+                setSuccessMessage(response.data.success);
+            } else if (response.data.error) {
+                setModalError(response.data.error);
+            } else {
+                setAttendanceSuccess(true);
+                setSuccessMessage('Absensi Anda telah berhasil dicatat oleh sistem.');
+            }
+        } catch (error: any) {
+            console.error('Submission error:', error);
+            if (error.response?.status === 422) {
+                const validationErrors = error.response.data.errors;
+                const firstError = Object.values(validationErrors)[0] as string[];
+                setModalError(firstError?.[0] || 'Data yang Anda masukkan tidak valid.');
+            } else {
+                const errMsg = error.response?.data?.error || error.response?.data?.message || 'Gagal mengirim absensi. Silakan periksa kembali data Anda.';
+                setModalError(errMsg);
+            }
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -601,10 +629,10 @@ export default function Login({
                                         </button>
                                         <button
                                             type="submit"
-                                            disabled={processingEvent || activeEvents.length === 0 || !eventData.proof || isCompressing}
+                                            disabled={isSubmitting || activeEvents.length === 0 || !eventData.proof || isCompressing}
                                             className="flex-1 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 dark:disabled:bg-slate-700 text-white font-bold text-sm shadow-md shadow-emerald-500/10 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                         >
-                                            {processingEvent ? (
+                                            {isSubmitting ? (
                                                 <>
                                                     <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 8H18" /></svg>
                                                     Mengirim...

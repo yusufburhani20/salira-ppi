@@ -49,9 +49,22 @@ class EventAttendanceController extends Controller
                 'status' => 'hadir',
             ]);
 
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => 'Absensi event berhasil dikirim!'
+                ]);
+            }
+
             return back()->with('success', 'Absensi event berhasil dikirim!');
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             \Log::error('Event Attendance Error: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+            
+            if ($request->expectsJson() || $request->ajax()) {
+                return response()->json([
+                    'error' => 'Gagal memproses absensi: ' . $e->getMessage()
+                ], 500);
+            }
+
             return back()->with('error', 'Gagal memproses absensi: ' . $e->getMessage());
         }
     }
