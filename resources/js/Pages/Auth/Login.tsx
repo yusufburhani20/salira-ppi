@@ -190,7 +190,7 @@ export default function Login({
     const handleEventSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         setModalError(null);
-        postEvent(route('event-attendance.store'), {
+        postEvent('/event-attendance', {
             onSuccess: (page) => {
                 const flashProps = page.props.flash as any;
                 if (flashProps?.success) {
