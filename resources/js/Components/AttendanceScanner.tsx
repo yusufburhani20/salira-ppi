@@ -93,57 +93,94 @@ export default function AttendanceScanner({ existingRecord, geofences = [] }: { 
     const [isRefreshingLocation, setIsRefreshingLocation] = useState(false);
     const [accuracy, setAccuracy] = useState<number | null>(null);
 
-    // Fetch / Sharpen Geolocation coordinates
+    // Apply geofence validation logic from a position
+    const applyPosition = useCallback((position: GeolocationPosition) => {
+        const lat = position.coords.latitude;
+        const lng = position.coords.longitude;
+        const acc = position.coords.accuracy;
+
+        setLocation({ lat, lng });
+        setAccuracy(acc);
+
+        if (geofences.length > 0) {
+            let closest: number | null = null;
+            let minInfo: { name: string; distance: number; radius: number; valid: boolean } | null = null;
+
+            for (const gf of geofences) {
+                const d = calculateDistance(lat, lng, parseFloat(gf.latitude), parseFloat(gf.longitude));
+                if (closest === null || d < closest) {
+                    closest = d;
+                    minInfo = { name: gf.name, distance: d, radius: gf.radius, valid: d <= gf.radius };
+                }
+            }
+            setNearestGeofence(minInfo);
+        } else {
+            setNearestGeofence({ name: 'Tanpa Pembatasan', distance: 0, radius: 999999, valid: true });
+        }
+
+        setData(d => ({
+            ...d,
+            latitude: String(lat),
+            longitude: String(lng),
+        }));
+    }, [geofences]);
+
+    // Format error message by error code
+    const formatLocationError = (error: GeolocationPositionError): string => {
+        switch (error.code) {
+            case error.PERMISSION_DENIED:
+                return 'Izin lokasi ditolak. Buka Pengaturan > Aplikasi > Browser > Izin > Lokasi, lalu aktifkan.';
+            case error.POSITION_UNAVAILABLE:
+                return 'Sinyal GPS tidak tersedia. Coba ke luar ruangan atau aktifkan Wi-Fi untuk membantu GPS.';
+            case error.TIMEOUT:
+                return 'GPS timeout. Perangkat Anda butuh lebih lama mendapatkan sinyal. Coba lagi atau pindah ke area terbuka.';
+            default:
+                return 'Gagal mendapatkan lokasi: ' + error.message;
+        }
+    };
+
+    // Fetch / Sharpen Geolocation coordinates — Two-phase strategy:
+    // Phase 1: Network/Low-Accuracy (fast, works indoors via WiFi/Cell Tower)
+    // Phase 2: Upgrade to High-Accuracy GPS in background if accuracy improves
     const getCurrentLocation = useCallback(() => {
         if (!navigator.geolocation) {
-            setLocationError("Browser ini tidak mendukung Geolocation.");
+            setLocationError('Browser ini tidak mendukung Geolocation.');
             return;
         }
 
         setIsRefreshingLocation(true);
         setLocationError(null);
 
+        // --- Phase 1: Network / Low-Accuracy (fast response, indoor-friendly) ---
         navigator.geolocation.getCurrentPosition(
-            (position) => {
-                const lat = position.coords.latitude;
-                const lng = position.coords.longitude;
-                const acc = position.coords.accuracy;
-                
-                setLocation({ lat, lng });
-                setAccuracy(acc);
-                
-                // Trigger distance update
-                if (geofences.length > 0) {
-                    let closest = null;
-                    let minInfo = null;
-                    
-                    for (const gf of geofences) {
-                        const d = calculateDistance(lat, lng, parseFloat(gf.latitude), parseFloat(gf.longitude));
-                        if (closest === null || d < closest) {
-                            closest = d;
-                            minInfo = { name: gf.name, distance: d, radius: gf.radius, valid: d <= gf.radius };
-                        }
-                    }
-                    setNearestGeofence(minInfo);
-                } else {
-                    setNearestGeofence({ name: 'Tanpa Pembatasan', distance: 0, radius: 999999, valid: true });
-                }
-
-                setData(d => ({
-                    ...d,
-                    latitude: String(lat),
-                    longitude: String(lng)
-                }));
-                
+            (networkPosition) => {
+                // Apply network fix immediately so user sees a location fast
+                applyPosition(networkPosition);
                 setIsRefreshingLocation(false);
+
+                // --- Phase 2: Try to upgrade to GPS high-accuracy in background ---
+                navigator.geolocation.getCurrentPosition(
+                    (gpsPosition) => {
+                        // Only replace if GPS gives better accuracy
+                        if (gpsPosition.coords.accuracy < networkPosition.coords.accuracy) {
+                            applyPosition(gpsPosition);
+                        }
+                    },
+                    () => {
+                        // Phase 2 failed silently — we already have a phase-1 fix, so it's fine
+                    },
+                    { enableHighAccuracy: true, timeout: 30000, maximumAge: 0 }
+                );
             },
             (error) => {
-                setLocationError("Gagal mendapatkan lokasi GPS: " + error.message);
+                // Phase 1 also failed — show descriptive error
+                setLocationError(formatLocationError(error));
                 setIsRefreshingLocation(false);
             },
-            { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+            // Phase 1 options: allow 60s cache, low accuracy = fast & works indoors
+            { enableHighAccuracy: false, timeout: 15000, maximumAge: 60000 }
         );
-    }, [geofences]);
+    }, [geofences, applyPosition]);
 
     // Initial Geolocation
     useEffect(() => {

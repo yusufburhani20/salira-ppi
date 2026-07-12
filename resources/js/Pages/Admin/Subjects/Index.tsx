@@ -1,7 +1,7 @@
 import { PageProps } from '@/types';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, useForm, Link, router } from '@inertiajs/react';
-import React, { useState } from 'react';
+import { Head, useForm, router } from '@inertiajs/react';
+import React, { useState, useRef, useCallback } from 'react';
 import { 
     PlusIcon, 
     PencilSquareIcon, 
@@ -35,6 +35,11 @@ interface PaginationLinks {
 interface PaginatedData<T> {
     data: T[];
     links: PaginationLinks[];
+    current_page: number;
+    last_page: number;
+    from: number | null;
+    to: number | null;
+    total: number;
 }
 
 export default function SubjectIndex({ auth, subjects, classes, filters }: PageProps<{ subjects: PaginatedData<Subject>, classes: AcademicClass[], filters?: { search?: string } }>) {
@@ -123,9 +128,32 @@ export default function SubjectIndex({ auth, subjects, classes, filters }: PageP
         }
     };
 
-    const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
-        router.get(route('admin.subjects.index'), { search: e.target.value }, { preserveState: true, replace: true });
-    };
+    // Debounced search — prevents spamming requests while typing
+    const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const handleSearch = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        if (searchTimeout.current) clearTimeout(searchTimeout.current);
+        searchTimeout.current = setTimeout(() => {
+            router.get(
+                route('admin.subjects.index'),
+                { search: value },
+                { preserveState: true, preserveScroll: true, replace: true }
+            );
+        }, 400);
+    }, []);
+
+    // Navigate to a pagination page while preserving the active search filter
+    const handlePageChange = useCallback((url: string | null) => {
+        if (!url) return;
+        // Extract the page number from the Laravel pagination URL
+        const urlObj = new URL(url);
+        const page = urlObj.searchParams.get('page');
+        router.get(
+            route('admin.subjects.index'),
+            { search: filters?.search || '', ...(page ? { page } : {}) },
+            { preserveState: true, preserveScroll: true }
+        );
+    }, [filters?.search]);
 
     return (
         <AuthenticatedLayout header={<h2 className="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">Master Data Mata Pelajaran</h2>}>
@@ -227,20 +255,30 @@ export default function SubjectIndex({ auth, subjects, classes, filters }: PageP
                     </div>
 
                     {/* Pagination */}
-                    {subjects.links.length > 3 && (
-                        <div className="flex justify-center mt-6 space-x-1">
-                            {subjects.links.map((link, i) => (
-                                <Link
-                                    key={i}
-                                    href={link.url || '#'}
-                                    className={`px-4 py-2 rounded-lg text-sm font-medium ${
-                                        link.active 
-                                            ? 'bg-primary text-white' 
-                                            : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'
-                                    } ${!link.url && 'opacity-50 cursor-not-allowed'}`}
-                                    dangerouslySetInnerHTML={{ __html: link.label }}
-                                />
-                            ))}
+                    {subjects.last_page > 1 && (
+                        <div className="flex flex-col items-center gap-3 mt-6">
+                            <div className="flex flex-wrap justify-center gap-1">
+                                {subjects.links.map((link, i) => (
+                                    <button
+                                        key={i}
+                                        onClick={() => handlePageChange(link.url)}
+                                        disabled={!link.url || link.active}
+                                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                            link.active
+                                                ? 'bg-primary text-white cursor-default'
+                                                : link.url
+                                                    ? 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700'
+                                                    : 'bg-white dark:bg-gray-800 text-gray-400 dark:text-gray-600 border border-gray-200 dark:border-gray-700 opacity-50 cursor-not-allowed'
+                                        }`}
+                                        dangerouslySetInnerHTML={{ __html: link.label }}
+                                    />
+                                ))}
+                            </div>
+                            {subjects.from && subjects.to && (
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
+                                    Menampilkan {subjects.from}–{subjects.to} dari {subjects.total} mata pelajaran
+                                </p>
+                            )}
                         </div>
                     )}
                 </div>

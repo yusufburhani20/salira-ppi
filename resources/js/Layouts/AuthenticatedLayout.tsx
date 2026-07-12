@@ -32,10 +32,12 @@ export default function Authenticated({
     const [showPermissionModal, setShowPermissionModal] = useState(false);
 
     // Request Location Permission
+    // NOTE: This only triggers the OS permission prompt — NOT used for attendance coordinates.
+    // Using low-accuracy + large cache to avoid GPS hardware contention with AttendanceScanner.
     const handleRequestLocation = () => {
         if ('geolocation' in navigator) {
             navigator.geolocation.getCurrentPosition(
-                (position) => {
+                (_position) => {
                     setLocationPermissionState('granted');
                 },
                 (error) => {
@@ -46,7 +48,9 @@ export default function Authenticated({
                         alert("Gagal mengakses lokasi: " + error.message);
                     }
                 },
-                { enableHighAccuracy: true }
+                // Low accuracy is sufficient for a permission prompt.
+                // Large maximumAge avoids a second GPS cold-start on devices with slow GPS (e.g. Infonix).
+                { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 }
             );
         } else {
             alert("Browser Anda tidak mendukung Geolocation.");
