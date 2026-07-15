@@ -375,7 +375,7 @@ export default function Dashboard({
                         </div>
                         <div className="flex-1 min-h-0 p-4 space-y-1 overflow-y-auto custom-scrollbar">
                             {attendanceRanking?.length > 0 ? attendanceRanking.map((item: any, i: number) => (
-                                <RankingRow key={i} item={item} rank={i+1} unit="Sesi" />
+                                <RankingRow key={i} item={item} rank={i+1} unit="Hari" />
                             )) : <EmptyRanking />}
                         </div>
                     </div>

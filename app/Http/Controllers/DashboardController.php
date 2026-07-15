@@ -149,27 +149,35 @@ class DashboardController extends Controller
 
         // 3. Leaderboards / Rankings
         // a. Attendance Ranking (Top 5)
-        $attRankingQuery = StudentAttendance::where('status', 'hadir')
+        $subquery = \Illuminate\Support\Facades\DB::table('student_attendances')
+            ->select('student_id', 'date')
+            ->when($classId, fn($q) => $q->where('academic_class_id', $classId))
+            ->when($activeSemester, fn($q) => $q->whereBetween('date', [$activeSemester->start_date, $activeSemester->end_date]))
+            ->groupBy('student_id', 'date')
+            ->havingRaw("SUM(CASE WHEN status IN ('hadir', 'terlambat') THEN 1 ELSE 0 END) > 0")
+            ->havingRaw("SUM(CASE WHEN status IN ('sakit', 'izin') THEN 1 ELSE 0 END) = 0")
+            ->havingRaw("SUM(CASE WHEN status = 'alpha' THEN 1 ELSE 0 END) < 3");
+
+        $attRankingQuery = \Illuminate\Support\Facades\DB::table(\Illuminate\Support\Facades\DB::raw("({$subquery->toSql()}) as daily_presence"))
+            ->mergeBindings($subquery)
             ->select('student_id', \Illuminate\Support\Facades\DB::raw('count(*) as total'))
             ->groupBy('student_id')
-            ->orderByDesc('total')
-            ->with('student.academicClasses');
-        
-        if ($activeSemester) {
-            $attRankingQuery->whereBetween('date', [$activeSemester->start_date, $activeSemester->end_date]);
-        }
-        
-        if ($classId) {
-            $attRankingQuery->where('academic_class_id', $classId);
-        }
+            ->orderByDesc('total');
 
-        $attendanceRanking = $attRankingQuery->limit(5)->get()->map(function($item) {
-            $student = $item->student;
+        $topAttendanceItems = $attRankingQuery->limit(5)->get();
+        $topAttendanceStudentIds = $topAttendanceItems->pluck('student_id');
+        $topAttendanceStudents = Student::with('academicClasses')
+            ->whereIn('id', $topAttendanceStudentIds)
+            ->get()
+            ->keyBy('id');
+
+        $attendanceRanking = $topAttendanceItems->map(function($item) use ($topAttendanceStudents) {
+            $student = $topAttendanceStudents->get($item->student_id);
             $className = $student && $student->academic_class ? $student->academic_class->name : '';
             return [
                 'name' => $student->name ?? 'Unknown',
                 'class_name' => $className,
-                'value' => $item->total . ' Kehadiran',
+                'value' => (int) $item->total,
                 'avatar' => $student->avatar ?? null,
             ];
         });
