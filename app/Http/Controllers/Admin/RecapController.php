@@ -85,7 +85,7 @@ class RecapController extends Controller
         $this->resolveSemesterDates($request);
 
         $request->validate([
-            'academic_class_id' => 'required|exists:academic_classes,id',
+            'academic_class_id' => 'required',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
         ]);
@@ -94,19 +94,41 @@ class RecapController extends Controller
         $start = Carbon::parse($request->start_date)->startOfDay();
         $end = Carbon::parse($request->end_date)->endOfDay();
 
-        $attendances = StudentAttendance::where('academic_class_id', $classId)
-            ->whereNotNull('class_agenda_id')
-            ->whereBetween('date', [$start, $end])
-            ->get();
+        if ($classId === 'all') {
+            $activeSem = $this->getActiveSemester();
+            $classesQuery = AcademicClass::query();
+            if ($activeSem) {
+                $classesQuery->where('academic_year_id', $activeSem->academic_year_id);
+            }
+            $classes = $classesQuery->get();
+            $classIds = $classes->pluck('id')->toArray();
 
-        // Generate date range - Only show dates that have attendance data
-        $dates = $attendances->pluck('date')->map(function($d) {
-            return Carbon::parse($d)->format('Y-m-d');
-        })->unique()->sort()->values()->toArray();
+            $attendances = StudentAttendance::whereIn('academic_class_id', $classIds)
+                ->whereNotNull('class_agenda_id')
+                ->whereBetween('date', [$start, $end])
+                ->get();
 
-        $students = Student::whereHas('academicClasses', function($q) use ($classId) {
-            $q->withoutGlobalScope('active_year')->where('academic_classes.id', $classId);
-        })->orderBy('name')->get();
+            $dates = $attendances->pluck('date')->map(function($d) {
+                return Carbon::parse($d)->format('Y-m-d');
+            })->unique()->sort()->values()->toArray();
+
+            $students = Student::whereHas('academicClasses', function($q) use ($classIds) {
+                $q->withoutGlobalScope('active_year')->whereIn('academic_classes.id', $classIds);
+            })->orderBy('name')->get();
+        } else {
+            $attendances = StudentAttendance::where('academic_class_id', $classId)
+                ->whereNotNull('class_agenda_id')
+                ->whereBetween('date', [$start, $end])
+                ->get();
+
+            $dates = $attendances->pluck('date')->map(function($d) {
+                return Carbon::parse($d)->format('Y-m-d');
+            })->unique()->sort()->values()->toArray();
+
+            $students = Student::whereHas('academicClasses', function($q) use ($classId) {
+                $q->withoutGlobalScope('active_year')->where('academic_classes.id', $classId);
+            })->orderBy('name')->get();
+        }
 
         $report = [];
         foreach ($students as $student) {
@@ -137,6 +159,7 @@ class RecapController extends Controller
             $report[] = [
                 'id' => $student->id,
                 'name' => $student->name,
+                'class_name' => $student->academic_class ? $student->academic_class->name : '',
                 'daily' => $daily,
                 'summary' => $summary
             ];
@@ -145,7 +168,7 @@ class RecapController extends Controller
         return response()->json([
             'dates' => $dates,
             'report' => $report,
-            'class' => AcademicClass::find($classId)->name,
+            'class' => $classId === 'all' ? 'Semua Kelas' : AcademicClass::find($classId)->name,
             'range' => $start->format('d M Y') . ' - ' . $end->format('d M Y')
         ]);
     }
@@ -318,8 +341,38 @@ class RecapController extends Controller
     public function attendanceExport(Request $request)
     {
         $this->resolveSemesterDates($request);
-        $data = $this->attendanceData($request)->getData(true);
-        return Excel::download(new \App\Exports\AttendanceRecapExport($data), 'rekap_absensi.xlsx');
+        $classId = $request->academic_class_id;
+
+        if ($classId === 'all') {
+            $activeSem = $this->getActiveSemester();
+            $classesQuery = AcademicClass::query();
+            if ($activeSem) {
+                $classesQuery->where('academic_year_id', $activeSem->academic_year_id);
+            }
+            $classes = $classesQuery->get();
+
+            $sheetsData = [];
+            foreach ($classes as $class) {
+                $mockRequest = new Request($request->all());
+                $mockRequest->merge(['academic_class_id' => $class->id]);
+                
+                $classData = $this->attendanceData($mockRequest)->getData(true);
+                if (count($classData['report']) > 0) {
+                    $sheetsData[] = $classData;
+                }
+            }
+
+            if (empty($sheetsData)) {
+                $mockRequest = new Request($request->all());
+                $mockRequest->merge(['academic_class_id' => $classes->first()->id ?? 0]);
+                $sheetsData[] = $this->attendanceData($mockRequest)->getData(true);
+            }
+
+            return Excel::download(new \App\Exports\AttendanceMultiClassRecapExport($sheetsData), 'rekap_absensi_semua_kelas.xlsx');
+        } else {
+            $data = $this->attendanceData($request)->getData(true);
+            return Excel::download(new \App\Exports\AttendanceRecapExport($data), 'rekap_absensi.xlsx');
+        }
     }
 
     public function attendanceSubjectExport(Request $request)
@@ -413,15 +466,76 @@ class RecapController extends Controller
     public function attendancePdf(Request $request)
     {
         $this->resolveSemesterDates($request);
-        $data = $this->attendanceData($request)->getData(true);
-        $settings = $this->getPdfSettings('Rekap Absensi Siswa', $data['class'], $data['range']);
-        
-        $pdf = Pdf::loadView('reports.attendance_pdf', array_merge($settings, [
-            'dates' => $data['dates'],
-            'report' => $data['report']
-        ]))->setPaper('a4', 'landscape');
+        $classId = $request->academic_class_id;
 
-        return $pdf->stream('rekap_absensi.pdf');
+        if ($classId === 'all') {
+            $activeSem = $this->getActiveSemester();
+            $classesQuery = AcademicClass::query();
+            if ($activeSem) {
+                $classesQuery->where('academic_year_id', $activeSem->academic_year_id);
+            }
+            $classes = $classesQuery->get();
+
+            $classesData = [];
+            foreach ($classes as $class) {
+                $mockRequest = new Request($request->all());
+                $mockRequest->merge(['academic_class_id' => $class->id]);
+                
+                $classData = $this->attendanceData($mockRequest)->getData(true);
+                if (count($classData['report']) > 0) {
+                    $classesData[] = $classData;
+                }
+            }
+
+            if (empty($classesData)) {
+                $mockRequest = new Request($request->all());
+                $mockRequest->merge(['academic_class_id' => $classes->first()->id ?? 0]);
+                $classesData[] = $this->attendanceData($mockRequest)->getData(true);
+            }
+
+            $logo = Setting::get('school_logo');
+            $logoPath = null;
+            if ($logo) {
+                if (file_exists(public_path('storage/' . $logo))) {
+                    $logoPath = public_path('storage/' . $logo);
+                } elseif (file_exists(storage_path('app/public/' . $logo))) {
+                    $logoPath = storage_path('app/public/' . $logo);
+                } elseif (file_exists(public_path($logo))) {
+                    $logoPath = public_path($logo);
+                }
+            }
+
+            $pdf = Pdf::loadView('reports.attendance_multi_pdf', [
+                'classesData' => $classesData,
+                'school_name' => Setting::get('school_name', 'SALIRA ACADEMY'),
+                'school_address' => Setting::get('school_address'),
+                'logo' => $logoPath,
+            ])->setPaper('a4', 'landscape');
+
+            return $pdf->stream('rekap_absensi_semua_kelas.pdf');
+        } else {
+            $data = $this->attendanceData($request)->getData(true);
+            $logo = Setting::get('school_logo');
+            $logoPath = null;
+            if ($logo) {
+                if (file_exists(public_path('storage/' . $logo))) {
+                    $logoPath = public_path('storage/' . $logo);
+                } elseif (file_exists(storage_path('app/public/' . $logo))) {
+                    $logoPath = storage_path('app/public/' . $logo);
+                } elseif (file_exists(public_path($logo))) {
+                    $logoPath = public_path($logo);
+                }
+            }
+
+            $settings = $this->getPdfSettings('Rekap Absensi Siswa', $data['class'], $data['range']);
+            $pdf = Pdf::loadView('reports.attendance_pdf', array_merge($settings, [
+                'dates' => $data['dates'],
+                'report' => $data['report'],
+                'logo' => $logoPath
+            ]))->setPaper('a4', 'landscape');
+
+            return $pdf->stream('rekap_absensi.pdf');
+        }
     }
 
     public function attendanceSubjectPdf(Request $request)

@@ -164,6 +164,7 @@ export default function ReportIndex({ auth, classes, subjects, semesters = [], a
                                                 style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")` }}
                                             >
                                                 <option value="">-- Pilih Kelas --</option>
+                                                {activeTab === 'attendance' && <option value="all">Semua Kelas</option>}
                                                 {filteredClasses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                             </select>
                                         </div>
@@ -367,7 +368,12 @@ function AttendanceTable({ data }: { data: any }) {
                     {data.report.map((row: any, i: number) => (
                         <tr key={i} className="hover:bg-gray-50/50 dark:hover:bg-gray-700/20 transition-colors text-[11px]">
                             <td className="px-6 py-3 font-bold text-gray-900 dark:text-white sticky left-0 bg-white dark:bg-gray-800 z-10 shadow-[2px_0px_5px_rgba(0,0,0,0.05)] border-b dark:border-gray-700 uppercase">
-                                {row.name}
+                                <div>
+                                    <span>{row.name}</span>
+                                    {row.class_name && (
+                                        <div className="text-[9px] text-gray-400 font-semibold tracking-wider mt-0.5 normal-case">Kelas: {row.class_name}</div>
+                                    )}
+                                </div>
                             </td>
                             {data.dates.map((date: string) => {
                                 const status = row.daily?.[date] || '-';

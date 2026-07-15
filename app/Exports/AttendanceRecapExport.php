@@ -146,7 +146,8 @@ class AttendanceRecapExport implements FromCollection, WithHeadings, ShouldAutoS
 
     public function title(): string
     {
-        return 'Rekap Presensi';
+        $title = $this->data['class'] ?? 'Rekap Presensi';
+        return substr(str_replace(['*', ':', '?', '/', '\\', '[', ']'], '', $title), 0, 31);
     }
 
     public function drawings()
