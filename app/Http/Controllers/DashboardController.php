@@ -153,7 +153,7 @@ class DashboardController extends Controller
             ->select('student_id', \Illuminate\Support\Facades\DB::raw('count(*) as total'))
             ->groupBy('student_id')
             ->orderByDesc('total')
-            ->with('student');
+            ->with('student.academicClasses');
         
         if ($activeSemester) {
             $attRankingQuery->whereBetween('date', [$activeSemester->start_date, $activeSemester->end_date]);
@@ -164,10 +164,13 @@ class DashboardController extends Controller
         }
 
         $attendanceRanking = $attRankingQuery->limit(5)->get()->map(function($item) {
+            $student = $item->student;
+            $className = $student && $student->academic_class ? $student->academic_class->name : '';
             return [
-                'name' => $item->student->name ?? 'Unknown',
+                'name' => $student->name ?? 'Unknown',
+                'class_name' => $className,
                 'value' => $item->total . ' Kehadiran',
-                'avatar' => $item->student->avatar ?? null,
+                'avatar' => $student->avatar ?? null,
             ];
         });
 
@@ -178,7 +181,7 @@ class DashboardController extends Controller
             ->select('student_scores.student_id', \Illuminate\Support\Facades\DB::raw('AVG(score) as average'))
             ->groupBy('student_scores.student_id')
             ->orderByDesc('average')
-            ->with('student');
+            ->with('student.academicClasses');
 
         if ($activeSemester) {
             $scoreRankingQuery->whereBetween('daily_assessments.date', [$activeSemester->start_date, $activeSemester->end_date]);
@@ -189,10 +192,13 @@ class DashboardController extends Controller
         }
 
         $assessmentRanking = $scoreRankingQuery->limit(5)->get()->map(function($item) {
+            $student = $item->student;
+            $className = $student && $student->academic_class ? $student->academic_class->name : '';
             return [
-                'name' => $item->student->name ?? 'Unknown',
+                'name' => $student->name ?? 'Unknown',
+                'class_name' => $className,
                 'value' => round($item->average, 1),
-                'avatar' => $item->student->avatar ?? null,
+                'avatar' => $student->avatar ?? null,
             ];
         });
 

@@ -471,7 +471,14 @@ function RankingRow({ item, rank, unit }: { item: any; rank: number; unit: strin
                 {item.avatar ? <img src={`/storage/${item.avatar}`} className="w-full h-full object-cover" /> : item.name.charAt(0)}
             </div>
             <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{item.name}</p>
+                <div className="flex items-center gap-1.5">
+                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200 truncate">{item.name}</p>
+                    {item.class_name && (
+                        <span className="text-[9px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 px-1.5 py-0.5 rounded-md border border-indigo-100/50 dark:border-indigo-800/40 shrink-0">
+                            {item.class_name}
+                        </span>
+                    )}
+                </div>
                 <div className="w-full bg-slate-100 dark:bg-slate-700 h-1 mt-1.5 rounded-full overflow-hidden">
                     <div 
                         className="bg-gradient-to-r from-indigo-500 to-indigo-400 h-full rounded-full transition-all duration-1000" 
