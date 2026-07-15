@@ -60,14 +60,42 @@ class DashboardController extends Controller
             ];
         });
 
-        // 2. Attendance Chart (Custom Range or Last 7 Days)
+        // Resolve active semester
+        $activeSemester = \App\Models\Semester::where('is_active', true)
+            ->whereHas('academicYear', fn ($q) => $q->where('is_active', true))
+            ->first()
+            ?? \App\Models\Semester::where('is_active', true)->first();
+
+        // 2. Attendance Chart (Custom Range or Last 7 Days of active semester)
         $totalStudents = $classId 
             ? Student::whereHas('academicClasses', fn($q) => $q->where('academic_classes.id', $classId)->where('class_members.is_active', true))->count() 
             : Student::count();
         $totalStudents = $totalStudents ?: 1;
 
-        $startDate = $request->start_date ? Carbon::parse($request->start_date) : Carbon::today()->subDays(6);
-        $endDate = $request->end_date ? Carbon::parse($request->end_date) : Carbon::today();
+        if ($request->start_date) {
+            $startDate = Carbon::parse($request->start_date);
+        } else {
+            if ($activeSemester) {
+                $semEndDate = Carbon::parse($activeSemester->end_date);
+                $calcEndDate = $semEndDate->isFuture() ? Carbon::today() : $semEndDate;
+                $semStartDate = Carbon::parse($activeSemester->start_date);
+                $calcStartDate = $calcEndDate->copy()->subDays(6);
+                $startDate = $calcStartDate->greaterThan($semStartDate) ? $calcStartDate : $semStartDate;
+            } else {
+                $startDate = Carbon::today()->subDays(6);
+            }
+        }
+
+        if ($request->end_date) {
+            $endDate = Carbon::parse($request->end_date);
+        } else {
+            if ($activeSemester) {
+                $semEndDate = Carbon::parse($activeSemester->end_date);
+                $endDate = $semEndDate->isFuture() ? Carbon::today() : $semEndDate;
+            } else {
+                $endDate = Carbon::today();
+            }
+        }
         
         if ($startDate->greaterThan($endDate)) {
             $temp = $startDate;
@@ -127,6 +155,10 @@ class DashboardController extends Controller
             ->orderByDesc('total')
             ->with('student');
         
+        if ($activeSemester) {
+            $attRankingQuery->whereBetween('date', [$activeSemester->start_date, $activeSemester->end_date]);
+        }
+        
         if ($classId) {
             $attRankingQuery->where('academic_class_id', $classId);
         }
@@ -142,14 +174,18 @@ class DashboardController extends Controller
         // b. Assessment Ranking (Top 5)
         $scoreRankingQuery = \App\Models\StudentScore::query()
             ->join('students', 'student_scores.student_id', '=', 'students.id')
+            ->join('daily_assessments', 'student_scores.daily_assessment_id', '=', 'daily_assessments.id')
             ->select('student_scores.student_id', \Illuminate\Support\Facades\DB::raw('AVG(score) as average'))
             ->groupBy('student_scores.student_id')
             ->orderByDesc('average')
             ->with('student');
 
+        if ($activeSemester) {
+            $scoreRankingQuery->whereBetween('daily_assessments.date', [$activeSemester->start_date, $activeSemester->end_date]);
+        }
+
         if ($classId) {
-            $scoreRankingQuery->join('daily_assessments', 'student_scores.daily_assessment_id', '=', 'daily_assessments.id')
-                ->where('daily_assessments.academic_class_id', $classId);
+            $scoreRankingQuery->where('daily_assessments.academic_class_id', $classId);
         }
 
         $assessmentRanking = $scoreRankingQuery->limit(5)->get()->map(function($item) {
@@ -202,6 +238,7 @@ class DashboardController extends Controller
             'assessmentRanking' => $assessmentRanking,
             'inventoryStats' => $inventoryStats,
             'classes' => $classes,
+            'activeSemester' => $activeSemester,
             'filters' => [
                 'academic_class_id' => $request->academic_class_id,
                 'start_date' => $startDate->format('Y-m-d'),

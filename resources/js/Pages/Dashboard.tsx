@@ -26,7 +26,8 @@ export default function Dashboard({
     assessmentRanking,
     inventoryStats,
     classes,
-    filters 
+    filters,
+    activeSemester
 }: any) {
     const [classId, setClassId] = useState(filters?.academic_class_id || '');
     const [startDate, setStartDate] = useState(filters?.start_date || '');
@@ -367,7 +368,9 @@ export default function Dashboard({
                             </div>
                             <div>
                                 <h3 className="text-sm font-bold text-slate-900 dark:text-white">Ranking Kehadiran</h3>
-                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Seluruh data siswa</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                    {activeSemester ? `Semester ${activeSemester.name}` : 'Seluruh data siswa'}
+                                </p>
                             </div>
                         </div>
                         <div className="flex-1 min-h-0 p-4 space-y-1 overflow-y-auto custom-scrollbar">
@@ -385,7 +388,9 @@ export default function Dashboard({
                             </div>
                             <div>
                                 <h3 className="text-sm font-bold text-slate-900 dark:text-white">Ranking Penilaian</h3>
-                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Seluruh data siswa</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                    {activeSemester ? `Semester ${activeSemester.name}` : 'Seluruh data siswa'}
+                                </p>
                             </div>
                         </div>
                         <div className="flex-1 min-h-0 p-4 space-y-1 overflow-y-auto custom-scrollbar">
