@@ -81,7 +81,4 @@ echo "$LOG_PREFIX 🧹 Membersihkan cache sistem..."
 /www/server/php/83/bin/php artisan cache:clear 2>&1
 
 echo "$LOG_PREFIX ✅ DEPLOYMENT SELESAI SUKSES!"
-echo "$LOG_PREFIX 🔄 Merestart PHP-FPM untuk membersihkan OPcache..."
-/etc/init.d/php-fpm-83 restart 2>&1 || service php83-fpm restart 2>&1 || true
-echo "$LOG_PREFIX ✅ PHP-FPM restart selesai."
 echo "[PROCESS_COMPLETED]"
