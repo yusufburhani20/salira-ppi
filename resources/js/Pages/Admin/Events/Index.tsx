@@ -187,19 +187,30 @@ export default function EventIndex({ events }: { events: { data: Event[]; curren
                                                         {event.start_time.substring(0, 5)} - {event.end_time.substring(0, 5)} WIB
                                                     </div>
                                                 </td>
+                                                {/* Status Column - badge display + dedicated toggle button */}
                                                 <td className="px-6 py-4 text-center">
-                                                    <button
-                                                        onClick={() => toggleStatus(event)}
-                                                        title={event.is_active ? 'Klik untuk menutup event' : 'Klik untuk mengaktifkan event'}
-                                                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider transition-all duration-200 ${
+                                                    <div className="flex flex-col items-center gap-1.5">
+                                                        {/* Static status badge */}
+                                                        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
                                                             event.is_active
-                                                                ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-900/30 hover:bg-emerald-100'
-                                                                : 'bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400 border border-rose-200/50 dark:border-rose-900/30 hover:bg-rose-100'
-                                                        }`}
-                                                    >
-                                                        <span className={`w-1.5 h-1.5 rounded-full ${event.is_active ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`}></span>
-                                                        {event.is_active ? 'Aktif' : 'Ditutup'}
-                                                    </button>
+                                                                ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-900/30'
+                                                                : 'bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400 border border-rose-200/50 dark:border-rose-900/30'
+                                                        }`}>
+                                                            <span className={`w-1.5 h-1.5 rounded-full ${event.is_active ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`}></span>
+                                                            {event.is_active ? 'Aktif' : 'Ditutup'}
+                                                        </span>
+                                                        {/* Dedicated toggle button */}
+                                                        <button
+                                                            onClick={() => toggleStatus(event)}
+                                                            className={`text-[10px] font-semibold px-2.5 py-0.5 rounded-lg border transition-all active:scale-95 ${
+                                                                event.is_active
+                                                                    ? 'text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-900/40 hover:bg-amber-100 dark:hover:bg-amber-950/40'
+                                                                    : 'text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-900/40 hover:bg-emerald-100 dark:hover:bg-emerald-950/40'
+                                                            }`}
+                                                        >
+                                                            {event.is_active ? '⊘ Nonaktifkan' : '✓ Aktifkan'}
+                                                        </button>
+                                                    </div>
                                                 </td>
                                                 <td className="px-6 py-4 text-center">
                                                     <button
@@ -229,21 +240,6 @@ export default function EventIndex({ events }: { events: { data: Event[]; curren
                                                         >
                                                             <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9h1.5m1.5 0H15m-6 4h6m-6 4h4" /></svg>
                                                         </a>
-                                                        <button
-                                                            onClick={() => toggleStatus(event)}
-                                                            className={`p-2 rounded-xl transition-all ${
-                                                                event.is_active
-                                                                    ? 'text-amber-600 hover:text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30'
-                                                                    : 'text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30'
-                                                            }`}
-                                                            title={event.is_active ? 'Tutup Event' : 'Buka Event'}
-                                                        >
-                                                            {event.is_active ? (
-                                                                <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-                                                            ) : (
-                                                                <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" /></svg>
-                                                            )}
-                                                        </button>
                                                         <button
                                                             onClick={() => openEditModal(event)}
                                                             className="text-slate-500 hover:text-indigo-600 dark:text-slate-450 dark:hover:text-indigo-400 p-2 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 rounded-xl transition-all"
