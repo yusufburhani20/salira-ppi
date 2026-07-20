@@ -219,8 +219,8 @@ Route::middleware('auth')->group(function () {
 
     });
 
-    // Event Management (Accessible to Super Admin, Staff/TU, and Kepala Program)
-    Route::middleware(['role:Super Admin|Staff/TU|Kepala Program'])->prefix('admin')->name('admin.')->group(function () {
+    // Event Management (Accessible to Super Admin, Kepala Sekolah, Staff/TU, and Kepala Program)
+    Route::middleware(['role:Super Admin|Kepala Sekolah|Staff/TU|Kepala Program'])->prefix('admin')->name('admin.')->group(function () {
         Route::patch('events/{event}/toggle-status', [\App\Http\Controllers\Admin\EventController::class, 'toggleStatus'])->name('events.toggle-status');
         Route::get('events/{event}/export-excel', [\App\Http\Controllers\Admin\EventController::class, 'exportExcel'])->name('events.export-excel');
         Route::get('events/{event}/export-pdf', [\App\Http\Controllers\Admin\EventController::class, 'exportPdf'])->name('events.export-pdf');
