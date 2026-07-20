@@ -50,6 +50,7 @@
         </tr>
     </table>
 
+    @if(isset($range))
     <div class="meta">
         <table>
             <tr>
@@ -72,6 +73,7 @@
             @endif
         </table>
     </div>
+    @endif
 
     @yield('content')
 

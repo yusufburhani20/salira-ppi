@@ -119,13 +119,15 @@ class EventController extends Controller
         Carbon::setLocale('id');
         $event->load(['creator', 'attendances.user']);
 
-        $logo = \App\Models\Setting::get('school_logo');
+        $logoSetting = \App\Models\Setting::get('school_logo');
         $logoPath = null;
-        if ($logo) {
-            if (file_exists(public_path('storage/' . $logo))) {
-                $logoPath = public_path('storage/' . $logo);
-            } elseif (file_exists(storage_path('app/public/' . $logo))) {
-                $logoPath = storage_path('app/public/' . $logo);
+        if ($logoSetting) {
+            if (file_exists(public_path('storage/' . $logoSetting))) {
+                $logoPath = public_path('storage/' . $logoSetting);
+            } elseif (file_exists(storage_path('app/public/' . $logoSetting))) {
+                $logoPath = storage_path('app/public/' . $logoSetting);
+            } elseif (file_exists($logoSetting)) {
+                $logoPath = $logoSetting;
             }
         }
 
@@ -136,7 +138,12 @@ class EventController extends Controller
             'school_city'    => \App\Models\Setting::get('school_city', 'Tasikmalaya'),
             'logo'           => $logoPath,
             'event'          => $event,
-        ])->setPaper('a4', 'portrait');
+        ])
+        ->setPaper('a4', 'portrait')
+        ->setOption([
+            'isRemoteEnabled' => true,
+            'isHtml5ParserEnabled' => true,
+        ]);
 
         return $pdf->stream('laporan_event_' . Str::slug($event->name) . '.pdf');
     }
