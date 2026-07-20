@@ -67,8 +67,8 @@
         @endphp
         <tr>
             <td class="text-center">{{ $index + 1 }}</td>
-            <td>{{ $att->user->nip ?? '-' }}</td>
-            <td><strong>{{ $att->user->name ?? 'N/A' }}</strong></td>
+            <td>{{ $att->user->nip ?? (empty($att->user_id) ? 'Tamu / Eksternal' : '-') }}</td>
+            <td><strong>{{ $att->user->name ?? ($att->guest_name ?: 'Peserta / Tamu') }}</strong></td>
             <td class="text-center">{{ $att->created_at->timezone('Asia/Jakarta')->format('d/m/Y H:i:s') }} WIB</td>
             <td class="text-center" style="vertical-align: middle;">
                 @if($proofPath && file_exists($proofPath))

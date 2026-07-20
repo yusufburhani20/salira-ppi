@@ -89,8 +89,8 @@ class EventController extends Controller
             ->map(function ($att) {
                 return [
                     'id' => $att->id,
-                    'user_name' => $att->user->name ?? 'N/A',
-                    'user_nip' => $att->user->nip ?? 'N/A',
+                    'user_name' => $att->user->name ?? ($att->guest_name ?: 'Peserta / Tamu'),
+                    'user_nip' => $att->user->nip ?? (empty($att->user_id) ? 'Tamu / Eksternal' : '-'),
                     'check_in_time' => $att->created_at->timezone('Asia/Jakarta')->format('d/m/Y H:i:s'),
                     'proof_url' => asset('storage/' . $att->proof_path),
                 ];

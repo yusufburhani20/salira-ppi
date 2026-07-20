@@ -14,9 +14,14 @@ class EventAttendanceController extends Controller
     {
         $request->validate([
             'event_id' => 'required|exists:events,id',
-            'user_id' => 'required|exists:users,id',
+            'user_id' => 'nullable|exists:users,id',
+            'guest_name' => 'nullable|string|max:255',
             'proof' => 'required|image|mimes:jpeg,png,jpg,gif|max:5120',
         ]);
+
+        if (empty($request->user_id) && empty($request->guest_name)) {
+            return back()->withErrors(['user_id' => 'Silakan pilih nama Anda atau masukkan nama manual.']);
+        }
 
         try {
             $event = Event::findOrFail($request->event_id);
@@ -26,12 +31,15 @@ class EventAttendanceController extends Controller
             }
 
             // Pengecekan absen ganda
-            $exists = EventAttendance::where('event_id', $request->event_id)
-                ->where('user_id', $request->user_id)
-                ->exists();
+            $query = EventAttendance::where('event_id', $request->event_id);
+            if (!empty($request->user_id)) {
+                $query->where('user_id', $request->user_id);
+            } else {
+                $query->where('guest_name', trim($request->guest_name));
+            }
 
-            if ($exists) {
-                return back()->with('error', 'Anda sudah melakukan absensi untuk event ini.');
+            if ($query->exists()) {
+                return back()->with('error', 'Nama ini sudah melakukan absensi untuk event ini.');
             }
 
             // Simpan dan kompres foto bukti kehadiran menggunakan ImageCompressionService
@@ -44,7 +52,8 @@ class EventAttendanceController extends Controller
 
             EventAttendance::create([
                 'event_id' => $request->event_id,
-                'user_id' => $request->user_id,
+                'user_id' => $request->user_id ?: null,
+                'guest_name' => empty($request->user_id) ? trim($request->guest_name) : null,
                 'proof_path' => $path,
                 'status' => 'hadir',
             ]);

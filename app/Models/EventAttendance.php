@@ -12,6 +12,7 @@ class EventAttendance extends Model
     protected $fillable = [
         'event_id',
         'user_id',
+        'guest_name',
         'proof_path',
         'status',
     ];

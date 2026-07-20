@@ -1,7 +1,7 @@
 import Checkbox from '@/Components/Checkbox';
 import InputError from '@/Components/InputError';
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
-import { FormEventHandler, useState, useEffect } from 'react';
+import { FormEventHandler, useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 
 export default function Login({
@@ -39,15 +39,33 @@ export default function Login({
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [showUserDropdown, setShowUserDropdown] = useState(false);
     const [selectedUserName, setSelectedUserName] = useState('');
+    const [isManualGuest, setIsManualGuest] = useState(false);
+    const [guestName, setGuestName] = useState('');
     const [attendanceSuccess, setAttendanceSuccess] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
     const [modalError, setModalError] = useState<string | null>(null);
 
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
     const { data: eventData, setData: setEventData, post: postEvent, processing: processingEvent, errors: eventErrors, reset: resetEvent } = useForm({
         event_id: '',
         user_id: '',
+        guest_name: '',
         proof: null as File | null,
     });
+
+    // Close dropdown on click outside
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+                setShowUserDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
 
     const [isCompressing, setIsCompressing] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -163,6 +181,8 @@ export default function Login({
             setPreviewUrl(null);
             setSearchUser('');
             setSelectedUserName('');
+            setIsManualGuest(false);
+            setGuestName('');
         }
     }, [showEventModal]);
 
@@ -185,8 +205,20 @@ export default function Login({
 
     const handleSelectUser = (user: { id: number; name: string; nip: string }) => {
         setEventData('user_id', String(user.id));
+        setEventData('guest_name', '');
+        setIsManualGuest(false);
         setSelectedUserName(user.name);
         setSearchUser(user.name);
+        setShowUserDropdown(false);
+    };
+
+    const handleSelectManualGuest = (name: string) => {
+        setIsManualGuest(true);
+        setGuestName(name);
+        setEventData('user_id', '');
+        setEventData('guest_name', name);
+        setSelectedUserName(name);
+        setSearchUser(name);
         setShowUserDropdown(false);
     };
 
@@ -198,7 +230,11 @@ export default function Login({
         try {
             const formData = new FormData();
             formData.append('event_id', eventData.event_id);
-            formData.append('user_id', eventData.user_id);
+            if (isManualGuest || !eventData.user_id) {
+                formData.append('guest_name', guestName || searchUser);
+            } else {
+                formData.append('user_id', eventData.user_id);
+            }
             if (eventData.proof) {
                 formData.append('proof', eventData.proof);
             }
@@ -499,51 +535,118 @@ export default function Login({
                                         <InputError message={eventErrors.event_id} className="mt-1" />
                                     </div>
 
-                                    {/* Searchable User Dropdown */}
-                                    <div className="relative">
-                                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Pilih Nama Anda *</label>
-                                        <div className="relative">
-                                            <input
-                                                type="text"
-                                                value={searchUser}
-                                                onChange={e => {
-                                                    setSearchUser(e.target.value);
-                                                    setShowUserDropdown(true);
-                                                    if (e.target.value !== selectedUserName) {
+                                    {/* Searchable User Dropdown & Manual Guest Input */}
+                                    <div className="relative" ref={dropdownRef}>
+                                        <div className="flex justify-between items-center mb-1.5">
+                                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">
+                                                {isManualGuest ? 'Nama Peserta (Manual / Tamu) *' : 'Pilih Nama Anda *'}
+                                            </label>
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setIsManualGuest(!isManualGuest);
+                                                    setShowUserDropdown(false);
+                                                    if (!isManualGuest) {
                                                         setEventData('user_id', '');
+                                                        setGuestName(searchUser);
+                                                    } else {
+                                                        setEventData('guest_name', '');
+                                                        setGuestName('');
                                                     }
                                                 }}
-                                                onFocus={() => setShowUserDropdown(true)}
-                                                onClick={e => { e.stopPropagation(); setShowUserDropdown(true); }}
-                                                className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-emerald-500 focus:border-emerald-500 shadow-sm text-sm p-3 pr-10"
-                                                placeholder="Ketik nama atau NIP Anda..."
-                                                required
-                                            />
-                                            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
-                                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                                            </div>
+                                                className="text-[11px] font-bold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 hover:underline transition-all"
+                                            >
+                                                {isManualGuest ? '← Pilih dari Terdaftar' : '+ Tamu / Belum Terdaftar?'}
+                                            </button>
                                         </div>
-                                        <InputError message={eventErrors.user_id} className="mt-1" />
 
-                                        {showUserDropdown && (
-                                            <div className="absolute left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-20 divide-y divide-slate-100 dark:divide-slate-800">
+                                        {isManualGuest ? (
+                                            <div>
+                                                <input
+                                                    type="text"
+                                                    value={guestName}
+                                                    onChange={e => {
+                                                        setGuestName(e.target.value);
+                                                        setEventData('guest_name', e.target.value);
+                                                        setEventData('user_id', '');
+                                                        setSearchUser(e.target.value);
+                                                    }}
+                                                    className="w-full rounded-xl border border-indigo-300 dark:border-indigo-700 bg-indigo-50/20 dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-emerald-500 focus:border-emerald-500 shadow-sm text-sm p-3"
+                                                    placeholder="Ketikkan nama lengkap Anda (Tamu / Peserta Luar)..."
+                                                    required
+                                                />
+                                                <p className="text-[11px] text-amber-600 dark:text-amber-400 mt-1">
+                                                    Mode Manual: Anda mendaftar sebagai peserta eksternal / tamu.
+                                                </p>
+                                            </div>
+                                        ) : (
+                                            <div className="relative">
+                                                <input
+                                                    type="text"
+                                                    value={searchUser}
+                                                    onChange={e => {
+                                                        setSearchUser(e.target.value);
+                                                        setShowUserDropdown(true);
+                                                        if (e.target.value !== selectedUserName) {
+                                                            setEventData('user_id', '');
+                                                        }
+                                                    }}
+                                                    onFocus={() => setShowUserDropdown(true)}
+                                                    onClick={e => { e.stopPropagation(); setShowUserDropdown(true); }}
+                                                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-emerald-500 focus:border-emerald-500 shadow-sm text-sm p-3 pr-10"
+                                                    placeholder="Ketik nama atau NIP Anda..."
+                                                    required={!isManualGuest}
+                                                />
+                                                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
+                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                                                </div>
+                                            </div>
+                                        )}
+                                        <InputError message={eventErrors.user_id || eventErrors.guest_name} className="mt-1" />
+
+                                        {!isManualGuest && showUserDropdown && (
+                                            <div className="absolute left-0 right-0 mt-1 max-h-52 overflow-y-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-20 divide-y divide-slate-100 dark:divide-slate-800">
                                                 {filteredUsers.length === 0 ? (
-                                                    <div className="p-3 text-slate-400 text-xs italic">Nama tidak ditemukan</div>
+                                                    <div className="p-3 text-center">
+                                                        <p className="text-slate-400 text-xs italic mb-2">Nama tidak ditemukan di sistem SALIRA.</p>
+                                                        {searchUser.trim() !== '' && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleSelectManualGuest(searchUser)}
+                                                                className="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 rounded-lg text-xs font-bold hover:bg-indigo-100 transition-all"
+                                                            >
+                                                                + Gunakan "{searchUser}" sebagai Tamu / Manual
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 ) : (
-                                                    filteredUsers.map(u => (
-                                                        <button
-                                                            key={u.id}
-                                                            type="button"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                handleSelectUser(u);
-                                                            }}
-                                                            className="w-full text-left p-3 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold text-slate-750 dark:text-slate-200 transition-colors flex justify-between items-center"
-                                                        >
-                                                            <span>{u.name}</span>
-                                                            <span className="text-[10px] text-slate-400 font-mono">NIP: {u.nip}</span>
-                                                        </button>
-                                                    ))
+                                                    <>
+                                                        {filteredUsers.map(u => (
+                                                            <button
+                                                                key={u.id}
+                                                                type="button"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleSelectUser(u);
+                                                                }}
+                                                                className="w-full text-left p-3 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs font-semibold text-slate-750 dark:text-slate-200 transition-colors flex justify-between items-center"
+                                                            >
+                                                                <span>{u.name}</span>
+                                                                <span className="text-[10px] text-slate-400 font-mono">NIP: {u.nip}</span>
+                                                            </button>
+                                                        ))}
+                                                        {searchUser.trim() !== '' && (
+                                                            <div className="p-2 bg-slate-50 dark:bg-slate-800/50 text-center">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleSelectManualGuest(searchUser)}
+                                                                    className="text-indigo-600 dark:text-indigo-400 text-xs font-bold hover:underline"
+                                                                >
+                                                                    + Gunakan "{searchUser}" sebagai Peserta Tamu / Manual
+                                                                </button>
+                                                            </div>
+                                                        )}
+                                                    </>
                                                 )}
                                             </div>
                                         )}

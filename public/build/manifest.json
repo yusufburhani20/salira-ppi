@@ -867,7 +867,7 @@
     ]
   },
   "resources/js/Pages/Auth/Login.tsx": {
-    "file": "assets/Login-B6EvwoHl.js",
+    "file": "assets/Login-DrMHBQId.js",
     "name": "Login",
     "src": "resources/js/Pages/Auth/Login.tsx",
     "isDynamicEntry": true,
@@ -1405,7 +1405,7 @@
     ]
   },
   "resources/js/app.tsx": {
-    "file": "assets/app-D9WMK-T6.js",
+    "file": "assets/app-OgEPy3uF.js",
     "name": "app",
     "src": "resources/js/app.tsx",
     "isEntry": true,
@@ -1489,7 +1489,7 @@
       "resources/js/Pages/Welcome.tsx"
     ],
     "css": [
-      "assets/app-CuaIdK_N.css"
+      "assets/app-B7JqDC7r.css"
     ]
   }
 }

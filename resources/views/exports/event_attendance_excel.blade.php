@@ -54,8 +54,8 @@
         @forelse($event->attendances as $index => $att)
         <tr>
             <td style="text-align: center; border: 1px solid #d1d5db;">{{ $index + 1 }}</td>
-            <td style="text-align: left; border: 1px solid #d1d5db;">{{ $att->user->nip ?? '-' }}</td>
-            <td style="text-align: left; border: 1px solid #d1d5db;">{{ $att->user->name ?? 'N/A' }}</td>
+            <td style="text-align: left; border: 1px solid #d1d5db;">{{ $att->user->nip ?? (empty($att->user_id) ? 'Tamu / Eksternal' : '-') }}</td>
+            <td style="text-align: left; border: 1px solid #d1d5db;">{{ $att->user->name ?? ($att->guest_name ?: 'Peserta / Tamu') }}</td>
             <td style="text-align: center; border: 1px solid #d1d5db;">{{ $att->created_at->timezone('Asia/Jakarta')->format('d/m/Y H:i:s') }} WIB</td>
             <td style="text-align: left; border: 1px solid #d1d5db;">
                 {{ !empty($att->proof_path) ? url('storage/' . $att->proof_path) : '-' }}
