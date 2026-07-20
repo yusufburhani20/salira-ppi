@@ -39,6 +39,7 @@ export default function ReportIndex({ auth, classes, subjects, semesters = [], a
         agenda: null,
         consultation: null
     });
+    const [showTeacherDropdown, setShowTeacherDropdown] = useState(false);
     const [loading, setLoading] = useState(false);
 
     const { data, setData, errors } = useForm({
@@ -49,6 +50,7 @@ export default function ReportIndex({ auth, classes, subjects, semesters = [], a
         end_date: activeSemesterId ? '' : todayLocal(),
         student_id: '',
         teacher_id: '',
+        teacher_ids: [] as string[],
     });
 
     const selectedSemester = semesters.find((s: any) => s.id.toString() === data.semester_id.toString());
@@ -199,18 +201,58 @@ export default function ReportIndex({ auth, classes, subjects, semesters = [], a
                                     )}
 
                                     {activeTab === 'agenda' && (
-                                        <div className="relative">
-                                            <select
-                                                value={data.teacher_id}
-                                                onChange={e => setData('teacher_id', e.target.value)}
-                                                className="w-full h-12 pl-4 pr-10 rounded-xl border-gray-100 dark:border-gray-700 dark:bg-gray-900 dark:text-white focus:ring-primary focus:border-primary transition-all appearance-none bg-no-repeat bg-[right_1rem_center] bg-[length:1em_1em] font-bold text-sm"
-                                                style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")` }}
-                                            >
-                                                <option value="">-- Semua Guru --</option>
-                                                {teachers.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
-                                            </select>
-                                        </div>
-                                    )}
+                                         <div className="relative">
+                                             <button
+                                                 type="button"
+                                                 onClick={() => setShowTeacherDropdown(!showTeacherDropdown)}
+                                                 className="w-full h-12 px-4 rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900 dark:text-white focus:ring-primary focus:border-primary transition-all text-left flex items-center justify-between font-bold text-sm"
+                                             >
+                                                 <span className="truncate">
+                                                     {data.teacher_ids.length === 0
+                                                         ? '-- Semua Guru --'
+                                                         : `${data.teacher_ids.length} Guru Terpilih`}
+                                                 </span>
+                                                 <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"/></svg>
+                                             </button>
+
+                                             {showTeacherDropdown && (
+                                                 <>
+                                                     <div className="fixed inset-0 z-20" onClick={() => setShowTeacherDropdown(false)} />
+                                                     <div className="absolute z-30 mt-1 w-full max-h-60 overflow-y-auto rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-xl p-2 space-y-1">
+                                                         <label className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer font-bold text-xs text-gray-700 dark:text-gray-300">
+                                                             <input
+                                                                 type="checkbox"
+                                                                 checked={data.teacher_ids.length === 0}
+                                                                 onChange={() => setData('teacher_ids', [])}
+                                                                 className="rounded border-gray-300 text-primary focus:ring-primary h-4 w-4"
+                                                             />
+                                                             <span>-- Semua Guru --</span>
+                                                         </label>
+                                                         {teachers.map(t => {
+                                                             const isChecked = data.teacher_ids.includes(t.id.toString());
+                                                             return (
+                                                                 <label key={t.id} className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer font-semibold text-xs text-gray-700 dark:text-gray-300">
+                                                                     <input
+                                                                         type="checkbox"
+                                                                         checked={isChecked}
+                                                                         onChange={(e) => {
+                                                                             if (e.target.checked) {
+                                                                                 setData('teacher_ids', [...data.teacher_ids, t.id.toString()]);
+                                                                             } else {
+                                                                                 setData('teacher_ids', data.teacher_ids.filter(id => id !== t.id.toString()));
+                                                                             }
+                                                                         }}
+                                                                         className="rounded border-gray-300 text-primary focus:ring-primary h-4 w-4"
+                                                                     />
+                                                                     <span>{t.name}</span>
+                                                                 </label>
+                                                             );
+                                                         })}
+                                                     </div>
+                                                 </>
+                                             )}
+                                         </div>
+                                     )}
                                 </div>
                             </div>
 

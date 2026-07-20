@@ -92,16 +92,12 @@ export default function EventIndex({ events }: { events: { data: Event[]; curren
     };
 
     const toggleStatus = (event: Event) => {
-        router.put(route('admin.events.update', event.id), {
-            name: event.name,
-            description: event.description || '',
-            date: event.date,
-            start_time: event.start_time,
-            end_time: event.end_time,
-            is_active: !event.is_active,
-        }, {
-            preserveScroll: true
-        });
+        const actionText = event.is_active ? 'menutup' : 'mengaktifkan kembali';
+        if (confirm(`Apakah Anda yakin ingin ${actionText} event "${event.name}"?`)) {
+            router.patch(route('admin.events.toggle-status', event.id), {}, {
+                preserveScroll: true
+            });
+        }
     };
 
     const deleteEvent = (id: number) => {
@@ -194,13 +190,15 @@ export default function EventIndex({ events }: { events: { data: Event[]; curren
                                                 <td className="px-6 py-4 text-center">
                                                     <button
                                                         onClick={() => toggleStatus(event)}
-                                                        className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider transition-all duration-200 ${
+                                                        title={event.is_active ? 'Klik untuk menutup event' : 'Klik untuk mengaktifkan event'}
+                                                        className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider transition-all duration-200 ${
                                                             event.is_active
                                                                 ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-900/30 hover:bg-emerald-100'
-                                                                : 'bg-slate-100 text-slate-400 dark:bg-slate-900/50 dark:text-slate-500 border border-slate-200/50 dark:border-slate-700/50 hover:bg-slate-200'
+                                                                : 'bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400 border border-rose-200/50 dark:border-rose-900/30 hover:bg-rose-100'
                                                         }`}
                                                     >
-                                                        {event.is_active ? 'Aktif' : 'Non-Aktif'}
+                                                        <span className={`w-1.5 h-1.5 rounded-full ${event.is_active ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`}></span>
+                                                        {event.is_active ? 'Aktif' : 'Ditutup'}
                                                     </button>
                                                 </td>
                                                 <td className="px-6 py-4 text-center">
@@ -212,7 +210,40 @@ export default function EventIndex({ events }: { events: { data: Event[]; curren
                                                     </button>
                                                 </td>
                                                 <td className="px-6 py-4 text-right">
-                                                    <div className="flex justify-end gap-2">
+                                                    <div className="flex justify-end gap-1.5 items-center">
+                                                        <a
+                                                            href={route('admin.events.export-excel', event.id)}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            className="text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 p-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded-xl transition-all"
+                                                            title="Export Laporan Excel"
+                                                        >
+                                                            <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                                        </a>
+                                                        <a
+                                                            href={route('admin.events.export-pdf', event.id)}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            className="text-rose-600 hover:text-rose-700 dark:text-rose-400 p-2 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-xl transition-all"
+                                                            title="Export Laporan PDF"
+                                                        >
+                                                            <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9h1.5m1.5 0H15m-6 4h6m-6 4h4" /></svg>
+                                                        </a>
+                                                        <button
+                                                            onClick={() => toggleStatus(event)}
+                                                            className={`p-2 rounded-xl transition-all ${
+                                                                event.is_active
+                                                                    ? 'text-amber-600 hover:text-amber-700 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/30'
+                                                                    : 'text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/30'
+                                                            }`}
+                                                            title={event.is_active ? 'Tutup Event' : 'Buka Event'}
+                                                        >
+                                                            {event.is_active ? (
+                                                                <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                                                            ) : (
+                                                                <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" /></svg>
+                                                            )}
+                                                        </button>
                                                         <button
                                                             onClick={() => openEditModal(event)}
                                                             className="text-slate-500 hover:text-indigo-600 dark:text-slate-450 dark:hover:text-indigo-400 p-2 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 rounded-xl transition-all"
@@ -369,17 +400,41 @@ export default function EventIndex({ events }: { events: { data: Event[]; curren
             {/* ── Attendance List Modal ── */}
             <Modal show={isAttendanceModalOpen} onClose={() => setIsAttendanceModalOpen(false)} maxWidth="4xl">
                 <div className="p-6 sm:p-8 dark:bg-slate-800 dark:text-white">
-                    <div className="flex justify-between items-start mb-6">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 pb-4 border-b border-slate-100 dark:border-slate-700">
                         <div>
                             <h3 className="text-lg font-bold text-slate-900 dark:text-white">Daftar Kehadiran</h3>
                             <p className="text-xs text-slate-500 mt-0.5">{selectedEvent?.name}</p>
                         </div>
-                        <button
-                            onClick={() => setIsAttendanceModalOpen(false)}
-                            className="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 hover:bg-slate-150 dark:hover:bg-slate-700 rounded-lg transition-colors"
-                        >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                        </button>
+                        <div className="flex items-center gap-2">
+                            {selectedEvent && (
+                                <>
+                                    <a
+                                        href={route('admin.events.export-excel', selectedEvent.id)}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 py-1.5 rounded-xl font-bold text-xs shadow-sm transition-all flex items-center gap-1.5 active:scale-95"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                        Export Excel
+                                    </a>
+                                    <a
+                                        href={route('admin.events.export-pdf', selectedEvent.id)}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="bg-rose-600 hover:bg-rose-700 text-white px-3.5 py-1.5 rounded-xl font-bold text-xs shadow-sm transition-all flex items-center gap-1.5 active:scale-95"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9h1.5m1.5 0H15m-6 4h6m-6 4h4" /></svg>
+                                        Export PDF
+                                    </a>
+                                </>
+                            )}
+                            <button
+                                onClick={() => setIsAttendanceModalOpen(false)}
+                                className="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1.5 hover:bg-slate-150 dark:hover:bg-slate-700 rounded-lg transition-colors ml-2"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                            </button>
+                        </div>
                     </div>
 
                     {loadingAttendances ? (

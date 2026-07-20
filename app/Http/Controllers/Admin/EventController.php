@@ -2,10 +2,15 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Exports\EventAttendanceExport;
 use App\Http\Controllers\Controller;
 use App\Models\Event;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
+use Maatwebsite\Excel\Facades\Excel;
 
 class EventController extends Controller
 {
@@ -57,6 +62,17 @@ class EventController extends Controller
         return back()->with('success', 'Event berhasil diperbarui.');
     }
 
+    public function toggleStatus(Event $event)
+    {
+        $event->update([
+            'is_active' => !$event->is_active,
+        ]);
+
+        $message = $event->is_active ? 'Event berhasil dibuka / diaktifkan.' : 'Event berhasil ditutup.';
+
+        return back()->with('success', $message);
+    }
+
     public function destroy(Event $event)
     {
         $event->delete();
@@ -82,4 +98,47 @@ class EventController extends Controller
 
         return response()->json($attendances);
     }
+
+    public function exportExcel(Event $event)
+    {
+        Carbon::setLocale('id');
+        $event->load(['creator', 'attendances.user']);
+
+        $meta = [
+            'school_name' => \App\Models\Setting::get('school_name', 'SALIRA ACADEMY'),
+            'printed_at'  => Carbon::now()->timezone('Asia/Jakarta')->isoFormat('D MMMM YYYY HH:mm:ss') . ' WIB',
+        ];
+
+        $fileName = 'laporan_event_' . Str::slug($event->name) . '_' . date('Ymd') . '.xlsx';
+
+        return Excel::download(new EventAttendanceExport($event, $meta), $fileName);
+    }
+
+    public function exportPdf(Event $event)
+    {
+        Carbon::setLocale('id');
+        $event->load(['creator', 'attendances.user']);
+
+        $logo = \App\Models\Setting::get('school_logo');
+        $logoPath = null;
+        if ($logo) {
+            if (file_exists(public_path('storage/' . $logo))) {
+                $logoPath = public_path('storage/' . $logo);
+            } elseif (file_exists(storage_path('app/public/' . $logo))) {
+                $logoPath = storage_path('app/public/' . $logo);
+            }
+        }
+
+        $pdf = Pdf::loadView('reports.event_pdf', [
+            'title'          => 'LAPORAN KEHADIRAN EVENT / RAPAT',
+            'school_name'    => \App\Models\Setting::get('school_name', 'SALIRA ACADEMY'),
+            'school_address' => \App\Models\Setting::get('school_address'),
+            'school_city'    => \App\Models\Setting::get('school_city', 'Tasikmalaya'),
+            'logo'           => $logoPath,
+            'event'          => $event,
+        ])->setPaper('a4', 'portrait');
+
+        return $pdf->stream('laporan_event_' . Str::slug($event->name) . '.pdf');
+    }
 }
+

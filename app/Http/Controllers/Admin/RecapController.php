@@ -293,13 +293,19 @@ class RecapController extends Controller
             'academic_class_id' => 'required|exists:academic_classes,id',
             'start_date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:start_date',
-            'teacher_id' => 'nullable|exists:users,id',
+            'teacher_id' => 'nullable',
+            'teacher_ids' => 'nullable',
         ]);
 
         $query = ClassAgenda::where('academic_class_id', $request->academic_class_id)
             ->whereBetween('date', [$request->start_date, $request->end_date]);
 
-        if ($request->filled('teacher_id')) {
+        if ($request->filled('teacher_ids')) {
+            $teacherIds = is_array($request->teacher_ids) 
+                ? $request->teacher_ids 
+                : explode(',', $request->teacher_ids);
+            $query->whereIn('teacher_id', $teacherIds);
+        } elseif ($request->filled('teacher_id')) {
             $query->where('teacher_id', $request->teacher_id);
         }
 
@@ -415,7 +421,15 @@ class RecapController extends Controller
         $class = \App\Models\AcademicClass::find($request->academic_class_id);
         
         $teacherName = 'Semua Guru';
-        if ($request->filled('teacher_id')) {
+        if ($request->filled('teacher_ids')) {
+            $teacherIds = is_array($request->teacher_ids) 
+                ? $request->teacher_ids 
+                : explode(',', $request->teacher_ids);
+            $selectedTeachers = \App\Models\User::whereIn('id', $teacherIds)->pluck('name')->toArray();
+            if (!empty($selectedTeachers)) {
+                $teacherName = implode(', ', $selectedTeachers);
+            }
+        } elseif ($request->filled('teacher_id')) {
             $selectedTeacher = \App\Models\User::find($request->teacher_id);
             if ($selectedTeacher) {
                 $teacherName = $selectedTeacher->name;
@@ -589,7 +603,15 @@ class RecapController extends Controller
         $settings = $this->getPdfSettings('Rekap Jurnal / Agenda Mengajar', $className, "$start - $end");
 
         $teacherName = 'Semua Guru';
-        if ($request->filled('teacher_id')) {
+        if ($request->filled('teacher_ids')) {
+            $teacherIds = is_array($request->teacher_ids) 
+                ? $request->teacher_ids 
+                : explode(',', $request->teacher_ids);
+            $selectedTeachers = \App\Models\User::whereIn('id', $teacherIds)->pluck('name')->toArray();
+            if (!empty($selectedTeachers)) {
+                $teacherName = implode(', ', $selectedTeachers);
+            }
+        } elseif ($request->filled('teacher_id')) {
             $selectedTeacher = \App\Models\User::find($request->teacher_id);
             if ($selectedTeacher) {
                 $teacherName = $selectedTeacher->name;
