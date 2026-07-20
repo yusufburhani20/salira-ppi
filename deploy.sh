@@ -75,19 +75,6 @@ echo "$LOG_PREFIX 📦 Memperbarui paket PHP (composer install)..."
 echo "$LOG_PREFIX 🗄️  Menjalankan migrasi database..."
 /www/server/php/83/bin/php artisan migrate --force 2>&1 || die "Gagal menjalankan migrasi database"
 
-# 5. Menginstall dan Build Frontend (React/Vite)
-echo "$LOG_PREFIX 🎨 Membangun ulang aset frontend (Vite)..."
-npm install --legacy-peer-deps --cache .npm-cache 2>&1 || die "Gagal menginstall dependensi frontend (NPM)"
-
-# Fix permission folder build agar Vite bisa menghapus file lama (cegah EACCES)
-echo "$LOG_PREFIX 🔧 Membersihkan dan menyiapkan folder build..."
-rm -rf "$APP_DIR/public/build" 2>/dev/null || true
-mkdir -p "$APP_DIR/public/build"
-chmod -R 775 "$APP_DIR/public/build" 2>/dev/null || true
-
-# Gunakan path eksplisit agar vite ditemukan saat dijalankan sebagai background process
-./node_modules/.bin/vite build 2>&1 || die "Gagal mem-build aset frontend (Vite)"
-
 # 6. Membersihkan Cache Laravel
 echo "$LOG_PREFIX 🧹 Membersihkan cache sistem..."
 /www/server/php/83/bin/php artisan optimize:clear 2>&1
