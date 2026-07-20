@@ -221,38 +221,40 @@ export default function EventIndex({ events }: { events: { data: Event[]; curren
                                                     </button>
                                                 </td>
                                                 <td className="px-6 py-4 text-right">
-                                                    <div className="flex justify-end gap-1.5 items-center">
+                                                    <div className="flex justify-end gap-1.5 items-center flex-wrap">
                                                         <a
                                                             href={route('admin.events.export-excel', event.id)}
                                                             target="_blank"
                                                             rel="noreferrer"
-                                                            className="text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 p-2 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 rounded-xl transition-all"
+                                                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/50 rounded-lg text-xs font-bold transition-all shadow-sm active:scale-95"
                                                             title="Export Laporan Excel"
                                                         >
-                                                            <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                                            <svg className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                                            <span>Excel</span>
                                                         </a>
                                                         <a
                                                             href={route('admin.events.export-pdf', event.id)}
                                                             target="_blank"
                                                             rel="noreferrer"
-                                                            className="text-rose-600 hover:text-rose-700 dark:text-rose-400 p-2 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-xl transition-all"
+                                                            className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/50 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/50 rounded-lg text-xs font-bold transition-all shadow-sm active:scale-95"
                                                             title="Export Laporan PDF"
                                                         >
-                                                            <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9h1.5m1.5 0H15m-6 4h6m-6 4h4" /></svg>
+                                                            <svg className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9h1.5m1.5 0H15m-6 4h6m-6 4h4" /></svg>
+                                                            <span>PDF</span>
                                                         </a>
                                                         <button
                                                             onClick={() => openEditModal(event)}
-                                                            className="text-slate-500 hover:text-indigo-600 dark:text-slate-450 dark:hover:text-indigo-400 p-2 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 rounded-xl transition-all"
+                                                            className="p-1.5 text-slate-600 hover:text-indigo-600 dark:text-slate-300 dark:hover:text-indigo-400 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 border border-slate-200 dark:border-slate-600 rounded-lg transition-all shadow-sm active:scale-95"
                                                             title="Edit Event"
                                                         >
-                                                            <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                                                            <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                                                         </button>
                                                         <button
                                                             onClick={() => deleteEvent(event.id)}
-                                                            className="text-rose-600 hover:text-rose-800 p-2 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-xl transition-all"
+                                                            className="p-1.5 text-rose-600 hover:text-rose-700 dark:text-rose-400 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/50 border border-rose-200 dark:border-rose-800/50 rounded-lg transition-all shadow-sm active:scale-95"
                                                             title="Hapus Event"
                                                         >
-                                                            <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                                                            <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                                         </button>
                                                     </div>
                                                 </td>

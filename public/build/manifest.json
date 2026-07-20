@@ -555,7 +555,7 @@
     ]
   },
   "resources/js/Pages/Admin/Events/Index.tsx": {
-    "file": "assets/Index-BdRAAmAy.js",
+    "file": "assets/Index-i2zL058P.js",
     "name": "Index",
     "src": "resources/js/Pages/Admin/Events/Index.tsx",
     "isDynamicEntry": true,
@@ -1405,7 +1405,7 @@
     ]
   },
   "resources/js/app.tsx": {
-    "file": "assets/app-xJAyIxNS.js",
+    "file": "assets/app-D0-u58u7.js",
     "name": "app",
     "src": "resources/js/app.tsx",
     "isEntry": true,
@@ -1489,7 +1489,7 @@
       "resources/js/Pages/Welcome.tsx"
     ],
     "css": [
-      "assets/app-DXt0Zb9p.css"
+      "assets/app-CuaIdK_N.css"
     ]
   }
 }
