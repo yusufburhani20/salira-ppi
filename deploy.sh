@@ -27,10 +27,6 @@ cd "$APP_DIR" || die "Gagal masuk ke direktori $APP_DIR"
 # Mendukung repo privat via GITHUB_USER + GITHUB_TOKEN dari environment variable
 echo "$LOG_PREFIX 📥 Menarik kode terbaru dari GitHub..."
 
-# Buang perubahan lokal agar tidak konflik
-git checkout -- . 2>/dev/null || true
-git clean -fd 2>/dev/null || true
-
 if [ -n "$GITHUB_TOKEN" ] && [ -n "$GITHUB_USER" ]; then
     # Bersihkan whitespace dari variabel
     GITHUB_USER=$(echo "$GITHUB_USER" | tr -d '[:space:]')
@@ -59,7 +55,8 @@ if [ $? -ne 0 ]; then
     die "git fetch GAGAL! Pastikan Kredensial GitHub sudah diisi dengan benar di Pengaturan."
 fi
 
-# Reset hard ke FETCH_HEAD untuk menyelaraskan dengan repo tanpa prompt commit merge
+# Reset hard ke FETCH_HEAD — ini sudah menyelaraskan seluruh working tree dengan GitHub
+# (tidak perlu git clean -fd karena akan menghapus public/build yang sudah di-commit)
 git reset --hard FETCH_HEAD 2>&1 || die "Gagal melakukan git reset --hard ke kode terbaru."
 
 echo "$LOG_PREFIX ✅ git fetch dan reset berhasil."
