@@ -91,6 +91,10 @@ chmod -R 775 "$APP_DIR/public/build" 2>/dev/null || true
 # 6. Membersihkan Cache Laravel
 echo "$LOG_PREFIX 🧹 Membersihkan cache sistem..."
 /www/server/php/83/bin/php artisan optimize:clear 2>&1
+/www/server/php/83/bin/php artisan view:clear 2>&1
+/www/server/php/83/bin/php artisan route:clear 2>&1
+/www/server/php/83/bin/php artisan config:clear 2>&1
+/www/server/php/83/bin/php artisan cache:clear 2>&1
 
 echo "$LOG_PREFIX ✅ DEPLOYMENT SELESAI SUKSES!"
 echo "[PROCESS_COMPLETED]"
