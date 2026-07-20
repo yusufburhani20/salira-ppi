@@ -46,6 +46,7 @@
             <th style="font-weight: bold; background-color: #4f46e5; color: #ffffff; text-align: left; border: 1px solid #000000;">NIP / ID</th>
             <th style="font-weight: bold; background-color: #4f46e5; color: #ffffff; text-align: left; border: 1px solid #000000;">Nama Guru / Karyawan</th>
             <th style="font-weight: bold; background-color: #4f46e5; color: #ffffff; text-align: center; border: 1px solid #000000;">Waktu Absen</th>
+            <th style="font-weight: bold; background-color: #4f46e5; color: #ffffff; text-align: left; border: 1px solid #000000;">Link Foto Presensi</th>
             <th style="font-weight: bold; background-color: #4f46e5; color: #ffffff; text-align: center; border: 1px solid #000000;">Status</th>
         </tr>
     </thead>
@@ -56,11 +57,14 @@
             <td style="text-align: left; border: 1px solid #d1d5db;">{{ $att->user->nip ?? '-' }}</td>
             <td style="text-align: left; border: 1px solid #d1d5db;">{{ $att->user->name ?? 'N/A' }}</td>
             <td style="text-align: center; border: 1px solid #d1d5db;">{{ $att->created_at->timezone('Asia/Jakarta')->format('d/m/Y H:i:s') }} WIB</td>
+            <td style="text-align: left; border: 1px solid #d1d5db;">
+                {{ !empty($att->proof_path) ? url('storage/' . $att->proof_path) : '-' }}
+            </td>
             <td style="text-align: center; border: 1px solid #d1d5db;">Hadir</td>
         </tr>
         @empty
         <tr>
-            <td colspan="5" style="text-align: center; font-style: italic; border: 1px solid #d1d5db;">Belum ada data kehadiran untuk event ini.</td>
+            <td colspan="6" style="text-align: center; font-style: italic; border: 1px solid #d1d5db;">Belum ada data kehadiran untuk event ini.</td>
         </tr>
         @endforelse
     </tbody>

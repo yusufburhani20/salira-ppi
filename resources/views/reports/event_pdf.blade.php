@@ -43,25 +43,47 @@
 <table class="data">
     <thead>
         <tr>
-            <th width="30" class="text-center">No</th>
-            <th width="120">NIP / ID</th>
+            <th width="25" class="text-center">No</th>
+            <th width="100">NIP / ID</th>
             <th>Nama Guru / Karyawan</th>
-            <th width="120" class="text-center">Waktu Presensi</th>
-            <th width="70" class="text-center">Status</th>
+            <th width="110" class="text-center">Waktu Presensi</th>
+            <th width="80" class="text-center">Foto Presensi</th>
+            <th width="55" class="text-center">Status</th>
         </tr>
     </thead>
     <tbody>
         @forelse($event->attendances as $index => $att)
+        @php
+            $proofPath = null;
+            $proofUrl = null;
+            if (!empty($att->proof_path)) {
+                if (file_exists(storage_path('app/public/' . $att->proof_path))) {
+                    $proofPath = storage_path('app/public/' . $att->proof_path);
+                } elseif (file_exists(public_path('storage/' . $att->proof_path))) {
+                    $proofPath = public_path('storage/' . $att->proof_path);
+                }
+                $proofUrl = url('storage/' . $att->proof_path);
+            }
+        @endphp
         <tr>
             <td class="text-center">{{ $index + 1 }}</td>
             <td>{{ $att->user->nip ?? '-' }}</td>
             <td><strong>{{ $att->user->name ?? 'N/A' }}</strong></td>
             <td class="text-center">{{ $att->created_at->timezone('Asia/Jakarta')->format('d/m/Y H:i:s') }} WIB</td>
+            <td class="text-center" style="vertical-align: middle;">
+                @if($proofPath && file_exists($proofPath))
+                    <img src="{{ $proofPath }}" style="width: 55px; max-height: 45px; object-fit: cover; border: 1px solid #cbd5e1; border-radius: 4px; display: inline-block;">
+                @elseif($proofUrl)
+                    <a href="{{ $proofUrl }}" style="font-size: 8px; color: #2563eb; text-decoration: underline;">[Lihat Foto]</a>
+                @else
+                    <span style="color: #94a3b8; font-style: italic; font-size: 8px;">Tidak Ada Foto</span>
+                @endif
+            </td>
             <td class="text-center status-hadir">Hadir</td>
         </tr>
         @empty
         <tr>
-            <td colspan="5" class="text-center" style="font-style: italic; padding: 15px;">Belum ada peserta yang melakukan presensi untuk event ini.</td>
+            <td colspan="6" class="text-center" style="font-style: italic; padding: 15px;">Belum ada peserta yang melakukan presensi untuk event ini.</td>
         </tr>
         @endforelse
     </tbody>
