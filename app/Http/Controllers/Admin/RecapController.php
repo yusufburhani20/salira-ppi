@@ -133,7 +133,7 @@ class RecapController extends Controller
             $classIds = $classes->pluck('id')->toArray();
 
             // Fallback strategy untuk data lama: cari dari schedule_id, class_agenda_id, atau student_id
-            $scheduleIds = \App\Models\Schedule::whereIn('academic_class_id', $classIds)->pluck('id')->toArray();
+            $scheduleIds = \App\Models\Schedule::whereIn('class_id', $classIds)->pluck('id')->toArray();
             $agendaIds = \App\Models\ClassAgenda::whereIn('academic_class_id', $classIds)->orWhereIn('schedule_id', $scheduleIds)->pluck('id')->toArray();
             
             $students = Student::with(['academicClasses' => function($q) {
@@ -158,7 +158,7 @@ class RecapController extends Controller
             })->unique()->sort()->values()->toArray();
 
         } else {
-            $scheduleIds = \App\Models\Schedule::where('academic_class_id', $classId)->pluck('id')->toArray();
+            $scheduleIds = \App\Models\Schedule::where('class_id', $classId)->pluck('id')->toArray();
             $agendaIds = \App\Models\ClassAgenda::where('academic_class_id', $classId)->orWhereIn('schedule_id', $scheduleIds)->pluck('id')->toArray();
             
             $students = Student::with(['academicClasses' => function($q) {
@@ -248,7 +248,7 @@ class RecapController extends Controller
             ->where(function($q) use ($classId) {
                 $q->where('academic_class_id', $classId)
                   ->orWhereHas('schedule', function($sq) use ($classId) {
-                      $sq->withoutGlobalScope('active_year')->where('academic_class_id', $classId);
+                      $sq->where('class_id', $classId);
                   });
             })
             ->whereBetween('date', [$start, $end])
