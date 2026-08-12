@@ -58,6 +58,12 @@ class RecapController extends Controller
 
     private function resolveSemesterDates(Request $request)
     {
+        // Jika frontend sudah mengirimkan start_date dan end_date spesifik (misal dari filter bulan),
+        // jangan ditimpa dengan tanggal awal/akhir satu semester penuh.
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            return;
+        }
+
         if ($request->filled('semester_id')) {
             $sem = Semester::find($request->semester_id);
             if ($sem) {
