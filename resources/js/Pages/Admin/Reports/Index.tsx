@@ -10,7 +10,11 @@ import {
     UserGroupIcon,
     ArrowDownTrayIcon,
     FunnelIcon,
-    CalendarIcon
+    CalendarIcon,
+    InformationCircleIcon,
+    ChevronDownIcon,
+    ArchiveBoxIcon,
+    CheckCircleIcon,
 } from '@heroicons/react/24/outline';
 import axios from 'axios';
 
@@ -43,6 +47,64 @@ export default function ReportIndex({ auth, classes, subjects, semesters = [], a
     const [loading, setLoading] = useState(false);
     // Menyimpan konteks tahun ajaran saat ini agar tetap ada meskipun semester_id dikosongkan
     const [contextYearId, setContextYearId] = useState<number | null>(null);
+    const [showGuide, setShowGuide] = useState(true);
+
+    // Panduan per tab untuk menarik data arsip
+    const tabGuides: Record<string, { title: string; steps: string[]; note?: string }> = {
+        attendance: {
+            title: 'Rekap Absensi Umum (Harian)',
+            steps: [
+                'Pada "Periode Waktu", pilih semester arsip dari dropdown (contoh: TA 2025/2026 - Ganjil (Arsip)).',
+                'Dropdown "Pilih Kelas" otomatis memfilter kelas dari tahun ajaran semester tersebut.',
+                'Pilih kelas yang diinginkan, atau pilih "Semua Kelas" untuk semua kelas di semester itu.',
+                '(Opsional) Perjelas periode dengan memilih bulan dari dropdown "Berdasarkan Bulan" — tahun akan mengikuti semester.',
+                'Klik tombol "Filter" untuk menampilkan data.',
+            ],
+            note: 'Rekap ini mencakup semua sumber absensi: jurnal mengajar, scanner, maupun izin yang disetujui.'
+        },
+        attendance_subject: {
+            title: 'Rekap Absensi Per Mata Pelajaran',
+            steps: [
+                'Pilih semester arsip dari dropdown "Periode Waktu".',
+                'Pilih kelas dari semester tersebut.',
+                'Pilih mata pelajaran yang ingin dilihat rekap absensinya.',
+                '(Opsional) Atur rentang tanggal untuk mempersempit periode.',
+                'Klik "Filter".',
+            ],
+            note: 'Rekap ini hanya menampilkan absensi yang terhubung dengan jurnal mengajar (pertemuan yang tercatat oleh guru).'
+        },
+        assessment: {
+            title: 'Rekap Asesmen Harian',
+            steps: [
+                'Pilih semester arsip dari dropdown "Periode Waktu".',
+                'Pilih kelas dari semester tersebut.',
+                'Pilih mata pelajaran yang ingin dilihat nilai asesmen hariannya.',
+                '(Opsional) Persempit dengan rentang tanggal.',
+                'Klik "Filter".',
+            ],
+            note: 'Menampilkan daftar asesmen harian beserta nilai tiap siswa dalam periode yang dipilih.'
+        },
+        agenda: {
+            title: 'Jurnal / Agenda Mengajar',
+            steps: [
+                'Pilih semester arsip dari dropdown "Periode Waktu".',
+                'Pilih kelas dari semester tersebut.',
+                '(Opsional) Filter berdasarkan guru tertentu menggunakan dropdown multi-pilih guru.',
+                '(Opsional) Persempit dengan rentang tanggal atau pilih bulan.',
+                'Klik "Filter".',
+            ],
+            note: 'Menampilkan semua jurnal mengajar yang dicatat guru di kelas tersebut.'
+        },
+        consultation: {
+            title: 'Bimbingan Siswa (Konseling)',
+            steps: [
+                'Pilih semester arsip dari dropdown "Periode Waktu".',
+                '(Opsional) Pilih kelas tertentu atau biarkan kosong untuk semua kelas.',
+                'Klik "Filter".',
+            ],
+            note: 'Menampilkan catatan bimbingan siswa yang dibuat wali kelas atau guru BK dalam periode semester tersebut.'
+        },
+    };
 
     const { data, setData, errors } = useForm({
         academic_class_id: '',
@@ -158,6 +220,85 @@ export default function ReportIndex({ auth, classes, subjects, semesters = [], a
                                 {tab.label}
                             </button>
                         ))}
+                    </div>
+
+                    {/* ── Panduan Tarik Data Arsip ── */}
+                    <div className="rounded-2xl border border-indigo-100 dark:border-indigo-900/40 bg-indigo-50/60 dark:bg-indigo-950/30 overflow-hidden">
+                        {/* Header toggle */}
+                        <button
+                            onClick={() => setShowGuide(v => !v)}
+                            className="w-full flex items-center justify-between px-5 py-3.5 text-left group"
+                        >
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-7 h-7 rounded-lg bg-indigo-500/10 dark:bg-indigo-400/10 flex items-center justify-center shrink-0">
+                                    <ArchiveBoxIcon className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                                </div>
+                                <div>
+                                    <p className="text-xs font-black text-indigo-700 dark:text-indigo-300 uppercase tracking-widest">
+                                        Cara Tarik Data Arsip / Semester Lalu
+                                    </p>
+                                    <p className="text-[10px] text-indigo-500 dark:text-indigo-400 font-medium">
+                                        Panduan untuk: <span className="font-bold">{tabGuides[activeTab]?.title}</span>
+                                    </p>
+                                </div>
+                            </div>
+                            <ChevronDownIcon
+                                className={`w-4 h-4 text-indigo-500 transition-transform duration-200 ${
+                                    showGuide ? 'rotate-180' : ''
+                                }`}
+                            />
+                        </button>
+
+                        {/* Collapsible content */}
+                        {showGuide && (
+                            <div className="px-5 pb-5 border-t border-indigo-100 dark:border-indigo-800/40 pt-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                    {/* Steps */}
+                                    <div>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400 dark:text-indigo-500 mb-3">
+                                            Langkah-langkah
+                                        </p>
+                                        <ol className="space-y-2">
+                                            {tabGuides[activeTab]?.steps.map((step, i) => (
+                                                <li key={i} className="flex gap-2.5 items-start">
+                                                    <span className="shrink-0 w-5 h-5 rounded-full bg-indigo-500 text-white text-[10px] font-black flex items-center justify-center mt-0.5">
+                                                        {i + 1}
+                                                    </span>
+                                                    <span className="text-xs text-indigo-800 dark:text-indigo-200 leading-relaxed">{step}</span>
+                                                </li>
+                                            ))}
+                                        </ol>
+                                    </div>
+
+                                    {/* Tip + Catatan */}
+                                    <div className="space-y-3">
+                                        {tabGuides[activeTab]?.note && (
+                                            <div className="flex gap-2.5 bg-white/60 dark:bg-indigo-900/30 rounded-xl p-3.5 border border-indigo-100 dark:border-indigo-800/40">
+                                                <InformationCircleIcon className="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" />
+                                                <p className="text-xs text-indigo-700 dark:text-indigo-300 leading-relaxed">
+                                                    <span className="font-bold">Catatan: </span>
+                                                    {tabGuides[activeTab].note}
+                                                </p>
+                                            </div>
+                                        )}
+                                        <div className="flex gap-2.5 bg-amber-50/80 dark:bg-amber-900/20 rounded-xl p-3.5 border border-amber-100 dark:border-amber-800/40">
+                                            <CheckCircleIcon className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                                            <p className="text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
+                                                <span className="font-bold">Kunci utama: </span>
+                                                Selalu pilih <strong>semester arsip</strong> terlebih dahulu dari dropdown "Periode Waktu" sebelum memilih kelas. Jangan gunakan filter bulan/tanggal sebelum semester dipilih.
+                                            </p>
+                                        </div>
+                                        <div className="flex gap-2.5 bg-emerald-50/80 dark:bg-emerald-900/20 rounded-xl p-3.5 border border-emerald-100 dark:border-emerald-800/40">
+                                            <CalendarIcon className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                                            <p className="text-xs text-emerald-700 dark:text-emerald-300 leading-relaxed">
+                                                <span className="font-bold">Filter bulan (opsional): </span>
+                                                Setelah semester dipilih, Anda bisa mempersempit dengan memilih bulan. Rentang waktu akan otomatis menggunakan tahun dari semester tersebut.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Filters Section - 2 Rows */}

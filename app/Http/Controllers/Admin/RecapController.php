@@ -79,6 +79,17 @@ class RecapController extends Controller
         }
     }
 
+    /**
+     * Ambil AcademicClass berdasarkan ID, bypass global scope active_year.
+     * Diperlukan agar kelas dari tahun ajaran arsip tetap bisa ditemukan.
+     */
+    private function findClass($classId): ?AcademicClass
+    {
+        return AcademicClass::withoutGlobalScope('active_year')->find($classId);
+    }
+
+
+
     // --- Attendance Recap ---
     public function attendanceData(Request $request)
     {
@@ -114,8 +125,8 @@ class RecapController extends Controller
             $classes = $classesQuery->get();
             $classIds = $classes->pluck('id')->toArray();
 
+            // Ambil SEMUA absensi (termasuk dari scanner & izin, bukan hanya dari jurnal mengajar)
             $attendances = StudentAttendance::whereIn('academic_class_id', $classIds)
-                ->whereNotNull('class_agenda_id')
                 ->whereBetween('date', [$start, $end])
                 ->get();
 
@@ -127,8 +138,8 @@ class RecapController extends Controller
                 $q->withoutGlobalScope('active_year')->whereIn('academic_classes.id', $classIds);
             })->orderBy('name')->get();
         } else {
+            // Ambil SEMUA absensi (termasuk dari scanner & izin, bukan hanya dari jurnal mengajar)
             $attendances = StudentAttendance::where('academic_class_id', $classId)
-                ->whereNotNull('class_agenda_id')
                 ->whereBetween('date', [$start, $end])
                 ->get();
 
@@ -179,7 +190,7 @@ class RecapController extends Controller
         return response()->json([
             'dates' => $dates,
             'report' => $report,
-            'class' => $classId === 'all' ? 'Semua Kelas' : AcademicClass::find($classId)->name,
+            'class' => $classId === 'all' ? 'Semua Kelas' : ($this->findClass($classId)?->name ?? '-'),
             'range' => $start->format('d M Y') . ' - ' . $end->format('d M Y')
         ]);
     }
@@ -257,7 +268,7 @@ class RecapController extends Controller
         return response()->json([
             'dates' => $dates,
             'report' => $report,
-            'class' => AcademicClass::find($classId)->name,
+            'class' => $this->findClass($classId)?->name ?? '-',
             'subject' => $subjectName,
             'range' => $start->format('d M Y') . ' - ' . $end->format('d M Y')
         ]);
@@ -414,7 +425,7 @@ class RecapController extends Controller
         $data = $this->assessmentData($request)->getData(true);
         
         $subject = \App\Models\Subject::find($request->subject_id);
-        $class = \App\Models\AcademicClass::find($request->academic_class_id);
+        $class = $this->findClass($request->academic_class_id);
         $teacherName = auth()->user() ? auth()->user()->name : 'Guru';
         
         $meta = [
@@ -438,7 +449,7 @@ class RecapController extends Controller
             $matrix = $this->attendanceData($request)->getData(true);
         }
         
-        $class = \App\Models\AcademicClass::find($request->academic_class_id);
+        $class = $this->findClass($request->academic_class_id);
         
         $teacherName = 'Semua Guru';
         if ($request->filled('teacher_ids')) {
@@ -471,7 +482,7 @@ class RecapController extends Controller
         $this->resolveSemesterDates($request);
         $consultations = $this->consultationData($request)->getData(true);
         
-        $class = $request->academic_class_id ? \App\Models\AcademicClass::find($request->academic_class_id) : null;
+        $class = $request->academic_class_id ? $this->findClass($request->academic_class_id) : null;
         $teacherName = auth()->user() ? auth()->user()->name : 'Guru Wali/BK';
         
         $meta = [
@@ -600,8 +611,8 @@ class RecapController extends Controller
     {
         $this->resolveSemesterDates($request);
         $data = $this->assessmentData($request)->getData(true);
-        $subject = \App\Models\Subject::find($request->subject_id)->name;
-        $settings = $this->getPdfSettings('Rekap Asesmen Harian', \App\Models\AcademicClass::find($request->academic_class_id)->name, $data['range'], $subject);
+        $subject = \App\Models\Subject::find($request->subject_id)?->name ?? '-';
+        $settings = $this->getPdfSettings('Rekap Asesmen Harian', $this->findClass($request->academic_class_id)?->name ?? '-', $data['range'], $subject);
         
         // Collect students
         $students = collect($data['assessments'])->flatMap(function($a) {
@@ -626,7 +637,7 @@ class RecapController extends Controller
             $matrix = $this->attendanceData($request)->getData(true);
         }
         
-        $className = \App\Models\AcademicClass::find($request->academic_class_id)->name;
+        $className = $this->findClass($request->academic_class_id)?->name ?? '-';
         $start = Carbon::parse($request->start_date)->format('d/m/Y');
         $end = Carbon::parse($request->end_date)->format('d/m/Y');
         $settings = $this->getPdfSettings('Rekap Jurnal / Agenda Mengajar', $className, "$start - $end");
@@ -660,7 +671,7 @@ class RecapController extends Controller
     {
         $this->resolveSemesterDates($request);
         $data = $this->consultationData($request)->getData(true);
-        $className = $request->academic_class_id ? \App\Models\AcademicClass::find($request->academic_class_id)->name : 'Semua Kelas';
+        $className = $request->academic_class_id ? ($this->findClass($request->academic_class_id)?->name ?? 'Semua Kelas') : 'Semua Kelas';
         $start = Carbon::parse($request->start_date)->format('d/m/Y');
         $end = Carbon::parse($request->end_date)->format('d/m/Y');
         $settings = $this->getPdfSettings('Rekap Bimbingan Siswa (Konseling)', $className, "$start - $end");
