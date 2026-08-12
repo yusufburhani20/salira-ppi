@@ -95,10 +95,21 @@ class RecapController extends Controller
         $end = Carbon::parse($request->end_date)->endOfDay();
 
         if ($classId === 'all') {
-            $activeSem = $this->getActiveSemester();
-            $classesQuery = AcademicClass::query();
-            if ($activeSem) {
-                $classesQuery->where('academic_year_id', $activeSem->academic_year_id);
+            // Tentukan tahun ajaran dari semester yang diminta (bisa arsip),
+            // bukan selalu dari semester aktif saat ini.
+            $targetAcademicYearId = null;
+            if ($request->filled('semester_id')) {
+                $requestedSem = Semester::find($request->semester_id);
+                $targetAcademicYearId = $requestedSem?->academic_year_id;
+            }
+            if (!$targetAcademicYearId) {
+                $activeSem = $this->getActiveSemester();
+                $targetAcademicYearId = $activeSem?->academic_year_id;
+            }
+
+            $classesQuery = AcademicClass::withoutGlobalScope('active_year')->query();
+            if ($targetAcademicYearId) {
+                $classesQuery->where('academic_year_id', $targetAcademicYearId);
             }
             $classes = $classesQuery->get();
             $classIds = $classes->pluck('id')->toArray();
@@ -350,10 +361,19 @@ class RecapController extends Controller
         $classId = $request->academic_class_id;
 
         if ($classId === 'all') {
-            $activeSem = $this->getActiveSemester();
-            $classesQuery = AcademicClass::query();
-            if ($activeSem) {
-                $classesQuery->where('academic_year_id', $activeSem->academic_year_id);
+            // Tentukan tahun ajaran dari semester yang diminta (bisa arsip)
+            $targetAcademicYearId = null;
+            if ($request->filled('semester_id')) {
+                $requestedSem = Semester::find($request->semester_id);
+                $targetAcademicYearId = $requestedSem?->academic_year_id;
+            }
+            if (!$targetAcademicYearId) {
+                $activeSem = $this->getActiveSemester();
+                $targetAcademicYearId = $activeSem?->academic_year_id;
+            }
+            $classesQuery = AcademicClass::withoutGlobalScope('active_year')->query();
+            if ($targetAcademicYearId) {
+                $classesQuery->where('academic_year_id', $targetAcademicYearId);
             }
             $classes = $classesQuery->get();
 
@@ -483,10 +503,19 @@ class RecapController extends Controller
         $classId = $request->academic_class_id;
 
         if ($classId === 'all') {
-            $activeSem = $this->getActiveSemester();
-            $classesQuery = AcademicClass::query();
-            if ($activeSem) {
-                $classesQuery->where('academic_year_id', $activeSem->academic_year_id);
+            // Tentukan tahun ajaran dari semester yang diminta (bisa arsip)
+            $targetAcademicYearId = null;
+            if ($request->filled('semester_id')) {
+                $requestedSem = Semester::find($request->semester_id);
+                $targetAcademicYearId = $requestedSem?->academic_year_id;
+            }
+            if (!$targetAcademicYearId) {
+                $activeSem = $this->getActiveSemester();
+                $targetAcademicYearId = $activeSem?->academic_year_id;
+            }
+            $classesQuery = AcademicClass::withoutGlobalScope('active_year')->query();
+            if ($targetAcademicYearId) {
+                $classesQuery->where('academic_year_id', $targetAcademicYearId);
             }
             $classes = $classesQuery->get();
 

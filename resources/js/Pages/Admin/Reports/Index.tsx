@@ -41,6 +41,8 @@ export default function ReportIndex({ auth, classes, subjects, semesters = [], a
     });
     const [showTeacherDropdown, setShowTeacherDropdown] = useState(false);
     const [loading, setLoading] = useState(false);
+    // Menyimpan konteks tahun ajaran saat ini agar tetap ada meskipun semester_id dikosongkan
+    const [contextYearId, setContextYearId] = useState<number | null>(null);
 
     const { data, setData, errors } = useForm({
         academic_class_id: '',
@@ -57,16 +59,24 @@ export default function ReportIndex({ auth, classes, subjects, semesters = [], a
     const activeSemester = semesters.find((s: any) => s.is_active);
     const activeYearId = activeSemester?.academic_year_id;
 
-    // Filter classes based on selected semester's academic year (not just current active year)
+    // Filter classes based on selected semester's academic year.
+    // Falls back to contextYearId (set saat user memilih semester arsip) agar
+    // kelas arsip tidak menghilang ketika semester_id dikosongkan oleh filter bulan/tanggal.
     const filteredClasses = classes.filter((c: any) => {
         if (selectedSemester) {
             return c.academic_year_id === selectedSemester.academic_year_id;
         }
+        if (contextYearId) {
+            return c.academic_year_id === contextYearId;
+        }
         return c.academic_year_id === activeYearId;
     });
 
-    // Reset class selection when semester changes so stale class from old year is not kept
+    // Reset class selection when semester changes so stale class from old year is not kept.
+    // Simpan academic_year_id dari semester yang dipilih ke contextYearId.
     const handleSemesterChange = (semId: string) => {
+        const chosenSem = semesters.find((s: any) => s.id.toString() === semId);
+        setContextYearId(chosenSem ? chosenSem.academic_year_id : null);
         setData(d => ({
             ...d,
             semester_id: semId,
@@ -103,14 +113,19 @@ export default function ReportIndex({ auth, classes, subjects, semesters = [], a
     };
 
     const handleMonthChange = (month: string) => {
-        const year = new Date().getFullYear();
         if (month) {
             const m = parseInt(month) - 1;
+            // Gunakan tahun dari semester yang dipilih (termasuk arsip),
+            // bukan selalu tahun berjalan. Ini agar data historis bisa difilter per bulan.
+            const semesterYear = selectedSemester
+                ? new Date(selectedSemester.start_date).getFullYear()
+                : new Date().getFullYear();
+            // Pertahankan semester_id agar konteks kelas arsip tidak hilang.
+            // Tanggal akan di-override oleh start_date & end_date yang baru.
             setData(d => ({
                 ...d,
-                semester_id: '',
-                start_date: firstDayOfMonth(year, m),
-                end_date: lastDayOfMonth(year, m),
+                start_date: firstDayOfMonth(semesterYear, m),
+                end_date: lastDayOfMonth(semesterYear, m),
             }));
         }
     };
@@ -295,14 +310,14 @@ export default function ReportIndex({ auth, classes, subjects, semesters = [], a
                                         <input
                                             type="date"
                                             value={data.start_date}
-                                            onChange={e => setData(d => ({ ...d, start_date: e.target.value, semester_id: '' }))}
+                                            onChange={e => setData(d => ({ ...d, start_date: e.target.value }))}
                                             className="flex-1 h-full bg-transparent border-none text-[11px] focus:ring-0 dark:text-white"
                                         />
                                         <span className="text-gray-300 text-[10px] font-bold">SAMPAI</span>
                                         <input
                                             type="date"
                                             value={data.end_date}
-                                            onChange={e => setData(d => ({ ...d, end_date: e.target.value, semester_id: '' }))}
+                                            onChange={e => setData(d => ({ ...d, end_date: e.target.value }))}
                                             className="flex-1 h-full bg-transparent border-none text-[11px] focus:ring-0 dark:text-white"
                                         />
                                     </div>
