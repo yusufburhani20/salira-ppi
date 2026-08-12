@@ -132,31 +132,55 @@ class RecapController extends Controller
             $classes = $classesQuery->get();
             $classIds = $classes->pluck('id')->toArray();
 
-            // Ambil SEMUA absensi (termasuk dari scanner & izin, bukan hanya dari jurnal mengajar)
-            $attendances = StudentAttendance::whereIn('academic_class_id', $classIds)
-                ->whereBetween('date', [$start, $end])
-                ->get();
-
-            $dates = $attendances->pluck('date')->map(function($d) {
-                return Carbon::parse($d)->format('Y-m-d');
-            })->unique()->sort()->values()->toArray();
-
-            $students = Student::whereHas('academicClasses', function($q) use ($classIds) {
+            // Fallback strategy untuk data lama: cari dari schedule_id, class_agenda_id, atau student_id
+            $scheduleIds = \App\Models\Schedule::whereIn('academic_class_id', $classIds)->pluck('id')->toArray();
+            $agendaIds = \App\Models\ClassAgenda::whereIn('academic_class_id', $classIds)->orWhereIn('schedule_id', $scheduleIds)->pluck('id')->toArray();
+            
+            $students = Student::with(['academicClasses' => function($q) {
+                $q->withoutGlobalScope('active_year');
+            }])
+            ->whereHas('academicClasses', function($q) use ($classIds) {
                 $q->withoutGlobalScope('active_year')->whereIn('academic_classes.id', $classIds);
             })->orderBy('name')->get();
-        } else {
-            // Ambil SEMUA absensi (termasuk dari scanner & izin, bukan hanya dari jurnal mengajar)
-            $attendances = StudentAttendance::where('academic_class_id', $classId)
-                ->whereBetween('date', [$start, $end])
+            $studentIds = $students->pluck('id')->toArray();
+
+            $attendances = StudentAttendance::whereBetween('date', [$start, $end])
+                ->where(function($q) use ($classIds, $agendaIds, $scheduleIds, $studentIds) {
+                    $q->whereIn('academic_class_id', $classIds)
+                      ->orWhereIn('class_agenda_id', $agendaIds)
+                      ->orWhereIn('schedule_id', $scheduleIds)
+                      ->orWhereIn('student_id', $studentIds);
+                })
                 ->get();
 
             $dates = $attendances->pluck('date')->map(function($d) {
                 return Carbon::parse($d)->format('Y-m-d');
             })->unique()->sort()->values()->toArray();
 
-            $students = Student::whereHas('academicClasses', function($q) use ($classId) {
+        } else {
+            $scheduleIds = \App\Models\Schedule::where('academic_class_id', $classId)->pluck('id')->toArray();
+            $agendaIds = \App\Models\ClassAgenda::where('academic_class_id', $classId)->orWhereIn('schedule_id', $scheduleIds)->pluck('id')->toArray();
+            
+            $students = Student::with(['academicClasses' => function($q) {
+                $q->withoutGlobalScope('active_year');
+            }])
+            ->whereHas('academicClasses', function($q) use ($classId) {
                 $q->withoutGlobalScope('active_year')->where('academic_classes.id', $classId);
             })->orderBy('name')->get();
+            $studentIds = $students->pluck('id')->toArray();
+
+            $attendances = StudentAttendance::whereBetween('date', [$start, $end])
+                ->where(function($q) use ($classId, $agendaIds, $scheduleIds, $studentIds) {
+                    $q->where('academic_class_id', $classId)
+                      ->orWhereIn('class_agenda_id', $agendaIds)
+                      ->orWhereIn('schedule_id', $scheduleIds)
+                      ->orWhereIn('student_id', $studentIds);
+                })
+                ->get();
+
+            $dates = $attendances->pluck('date')->map(function($d) {
+                return Carbon::parse($d)->format('Y-m-d');
+            })->unique()->sort()->values()->toArray();
         }
 
         $report = [];
@@ -219,9 +243,14 @@ class RecapController extends Controller
         $start = Carbon::parse($request->start_date)->startOfDay();
         $end = Carbon::parse($request->end_date)->endOfDay();
 
-        // Ambil agenda kelas yang sesuai subject
-        $agendas = ClassAgenda::where('academic_class_id', $classId)
-            ->where('subject_id', $subjectId)
+        // Ambil agenda kelas yang sesuai subject, dukung juga data lama via schedule
+        $agendas = ClassAgenda::where('subject_id', $subjectId)
+            ->where(function($q) use ($classId) {
+                $q->where('academic_class_id', $classId)
+                  ->orWhereHas('schedule', function($sq) use ($classId) {
+                      $sq->withoutGlobalScope('active_year')->where('academic_class_id', $classId);
+                  });
+            })
             ->whereBetween('date', [$start, $end])
             ->pluck('id');
 
@@ -232,7 +261,10 @@ class RecapController extends Controller
             return Carbon::parse($d)->format('Y-m-d');
         })->unique()->sort()->values()->toArray();
 
-        $students = Student::whereHas('academicClasses', function($q) use ($classId) {
+        $students = Student::with(['academicClasses' => function($q) {
+            $q->withoutGlobalScope('active_year');
+        }])
+        ->whereHas('academicClasses', function($q) use ($classId) {
             $q->withoutGlobalScope('active_year')->where('academic_classes.id', $classId);
         })->orderBy('name')->get();
 
