@@ -133,9 +133,6 @@ class RecapController extends Controller
             $classIds = $classes->pluck('id')->toArray();
 
             // Fallback strategy untuk data lama: cari dari schedule_id, class_agenda_id, atau student_id
-            $scheduleIds = \App\Models\Schedule::whereIn('class_id', $classIds)->pluck('id')->toArray();
-            $agendaIds = \App\Models\ClassAgenda::whereIn('academic_class_id', $classIds)->orWhereIn('schedule_id', $scheduleIds)->pluck('id')->toArray();
-            
             $students = Student::with(['academicClasses' => function($q) {
                 $q->withoutGlobalScope('active_year');
             }])
@@ -144,13 +141,9 @@ class RecapController extends Controller
             })->orderBy('name')->get();
             $studentIds = $students->pluck('id')->toArray();
 
+            // Sangat sederhana: Ambil semua absensi milik siswa-siswa ini di rentang tanggal tersebut
             $attendances = StudentAttendance::whereBetween('date', [$start, $end])
-                ->where(function($q) use ($classIds, $agendaIds, $scheduleIds, $studentIds) {
-                    $q->whereIn('academic_class_id', $classIds)
-                      ->orWhereIn('class_agenda_id', $agendaIds)
-                      ->orWhereIn('schedule_id', $scheduleIds)
-                      ->orWhereIn('student_id', $studentIds);
-                })
+                ->whereIn('student_id', $studentIds)
                 ->get();
 
             $dates = $attendances->pluck('date')->map(function($d) {
@@ -158,9 +151,6 @@ class RecapController extends Controller
             })->unique()->sort()->values()->toArray();
 
         } else {
-            $scheduleIds = \App\Models\Schedule::where('class_id', $classId)->pluck('id')->toArray();
-            $agendaIds = \App\Models\ClassAgenda::where('academic_class_id', $classId)->orWhereIn('schedule_id', $scheduleIds)->pluck('id')->toArray();
-            
             $students = Student::with(['academicClasses' => function($q) {
                 $q->withoutGlobalScope('active_year');
             }])
@@ -169,13 +159,9 @@ class RecapController extends Controller
             })->orderBy('name')->get();
             $studentIds = $students->pluck('id')->toArray();
 
+            // Sangat sederhana: Ambil semua absensi milik siswa-siswa ini di rentang tanggal tersebut
             $attendances = StudentAttendance::whereBetween('date', [$start, $end])
-                ->where(function($q) use ($classId, $agendaIds, $scheduleIds, $studentIds) {
-                    $q->where('academic_class_id', $classId)
-                      ->orWhereIn('class_agenda_id', $agendaIds)
-                      ->orWhereIn('schedule_id', $scheduleIds)
-                      ->orWhereIn('student_id', $studentIds);
-                })
+                ->whereIn('student_id', $studentIds)
                 ->get();
 
             $dates = $attendances->pluck('date')->map(function($d) {
@@ -243,23 +229,15 @@ class RecapController extends Controller
         $start = Carbon::parse($request->start_date)->startOfDay();
         $end = Carbon::parse($request->end_date)->endOfDay();
 
+        $subject = \App\Models\Subject::find($subjectId);
+        $subjectName = $subject ? $subject->name : '';
+
         // Ambil agenda kelas yang sesuai subject, dukung juga data lama via schedule
         $agendas = ClassAgenda::where('subject_id', $subjectId)
-            ->where(function($q) use ($classId) {
-                $q->where('academic_class_id', $classId)
-                  ->orWhereHas('schedule', function($sq) use ($classId) {
-                      $sq->where('class_id', $classId);
-                  });
-            })
             ->whereBetween('date', [$start, $end])
-            ->pluck('id');
-
-        $attendances = StudentAttendance::whereIn('class_agenda_id', $agendas)->get();
-
-        // Generate date range - Only show dates that have attendance data for THIS SUBJECT
-        $dates = $attendances->pluck('date')->map(function($d) {
-            return Carbon::parse($d)->format('Y-m-d');
-        })->unique()->sort()->values()->toArray();
+            ->pluck('id')->toArray();
+            
+        $scheduleIds = \App\Models\Schedule::where('subject', $subjectName)->pluck('id')->toArray();
 
         $students = Student::with(['academicClasses' => function($q) {
             $q->withoutGlobalScope('active_year');
@@ -267,6 +245,19 @@ class RecapController extends Controller
         ->whereHas('academicClasses', function($q) use ($classId) {
             $q->withoutGlobalScope('active_year')->where('academic_classes.id', $classId);
         })->orderBy('name')->get();
+        
+        $studentIds = $students->pluck('id')->toArray();
+
+        $attendances = StudentAttendance::whereBetween('date', [$start, $end])
+            ->whereIn('student_id', $studentIds)
+            ->where(function($q) use ($agendas, $scheduleIds) {
+                $q->whereIn('class_agenda_id', $agendas)
+                  ->orWhereIn('schedule_id', $scheduleIds);
+            })->get();
+
+        $dates = $attendances->pluck('date')->map(function($d) {
+            return Carbon::parse($d)->format('Y-m-d');
+        })->unique()->sort()->values()->toArray();
 
         $report = [];
         foreach ($students as $student) {

@@ -75,7 +75,8 @@ class StudentAttendance extends Model
         }
 
         $firstStatus = $nonAlphaEntries->first()->status;
-        return $firstStatus->value ?? $firstStatus;
+        $finalStatus = $firstStatus->value ?? $firstStatus;
+        return strtolower($finalStatus);
     }
 }
 
