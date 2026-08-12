@@ -72,6 +72,11 @@ echo "$LOG_PREFIX 📦 Memperbarui paket PHP (composer install)..."
 echo "$LOG_PREFIX 🗄️  Menjalankan migrasi database..."
 /www/server/php/83/bin/php artisan migrate --force 2>&1 || die "Gagal menjalankan migrasi database"
 
+# 5. Build Aset Frontend (React/Vite)
+echo "$LOG_PREFIX 🏗️  Membangun aset frontend (npm run build)..."
+npm install 2>&1 || echo "$LOG_PREFIX ⚠️  Peringatan: npm install gagal atau npm tidak ditemukan di PATH aaPanel. Build frontend mungkin terlewat."
+npm run build 2>&1 || echo "$LOG_PREFIX ⚠️  Peringatan: npm run build gagal."
+
 # 6. Membersihkan Cache Laravel
 echo "$LOG_PREFIX 🧹 Membersihkan cache sistem..."
 /www/server/php/83/bin/php artisan optimize:clear 2>&1
