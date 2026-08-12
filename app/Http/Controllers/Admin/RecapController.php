@@ -61,19 +61,20 @@ class RecapController extends Controller
         if ($request->filled('semester_id')) {
             $sem = Semester::find($request->semester_id);
             if ($sem) {
+                // Cast ke string Y-m-d karena Semester cast start_date/end_date sebagai Carbon
                 $request->merge([
-                    'start_date' => $sem->start_date,
-                    'end_date'   => $sem->end_date,
+                    'start_date' => $sem->start_date->format('Y-m-d'),
+                    'end_date'   => $sem->end_date->format('Y-m-d'),
                 ]);
             }
-        } elseif (!$request->has('start_date') && !$request->has('end_date')) {
-            // Recap: default to the active semester (scoped to active academic year)
+        } elseif (!$request->filled('start_date') || !$request->filled('end_date')) {
+            // Jika salah satu tanggal kosong/tidak ada, fallback ke semester aktif
             $activeSem = $this->getActiveSemester();
             if ($activeSem) {
                 $request->merge([
                     'semester_id' => $activeSem->id,
-                    'start_date'  => $activeSem->start_date,
-                    'end_date'    => $activeSem->end_date,
+                    'start_date'  => $activeSem->start_date->format('Y-m-d'),
+                    'end_date'    => $activeSem->end_date->format('Y-m-d'),
                 ]);
             }
         }
