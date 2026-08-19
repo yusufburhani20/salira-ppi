@@ -85,4 +85,14 @@ class User extends Authenticatable
     {
         return $this->sessions()->where('last_activity', '>=', now()->subMinutes(5)->getTimestamp())->exists();
     }
+
+    public function driveFiles()
+    {
+        return $this->morphMany(DriveFile::class, 'owner');
+    }
+
+    public function sharedDriveFiles()
+    {
+        return $this->morphMany(DriveFileShare::class, 'shared_to');
+    }
 }

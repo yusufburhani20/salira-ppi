@@ -60,4 +60,14 @@ class Student extends Authenticatable
     {
         return $this->parent_email;
     }
+
+    public function driveFiles()
+    {
+        return $this->morphMany(DriveFile::class, 'owner');
+    }
+
+    public function sharedDriveFiles()
+    {
+        return $this->morphMany(DriveFileShare::class, 'shared_to');
+    }
 }

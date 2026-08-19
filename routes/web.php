@@ -217,6 +217,13 @@ Route::middleware('auth')->group(function () {
             Route::resource('users', \App\Http\Controllers\Admin\UserController::class)->except(['show']);
         });
 
+        // Drive Management
+        Route::prefix('drive')->name('drive.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\Admin\DriveManagementController::class, 'index'])->name('index');
+            Route::delete('/{id}', [\App\Http\Controllers\Admin\DriveManagementController::class, 'destroy'])->name('destroy');
+            Route::post('/{id}/revoke-link', [\App\Http\Controllers\Admin\DriveManagementController::class, 'revokeLink'])->name('revoke-link');
+        });
+
     });
 
     // Event Management (Accessible to Super Admin, Kepala Sekolah, Staff/TU, and Kepala Program)
@@ -323,6 +330,9 @@ Route::get('/invoice/{bill_number}', [\App\Http\Controllers\InvoiceController::c
 Route::get('/invoice/{bill_number}/pdf', [\App\Http\Controllers\InvoiceController::class, 'downloadPdf'])->name('invoice.pdf');
 Route::post('/invoice/{bill_number}/prepare-payment', [\App\Http\Controllers\InvoiceController::class, 'preparePayment'])->name('invoice.prepare-payment');
 
+// Public Drive Link
+Route::get('/drive/p/{token}', [\App\Http\Controllers\PublicDriveController::class, 'download'])->name('drive.public.download');
+
 // Public Computer Issue Report (Scan QR PC)
 Route::get('/public/computer-issues/report', [\App\Http\Controllers\Admin\ComputerIssueController::class, 'reportForm'])->name('public.computer-issues.report');
 Route::post('/public/computer-issues/report', [\App\Http\Controllers\Admin\ComputerIssueController::class, 'storeIssue'])->name('public.computer-issues.report.store');
@@ -370,6 +380,21 @@ Route::prefix('portal')->name('portal.')->group(function () {
 Route::middleware(['auth:web,student'])->group(function () {
     Route::post('/api/push-subscriptions', [\App\Http\Controllers\PushSubscriptionController::class, 'store'])->name('push-subscriptions.store');
     Route::post('/api/push-subscriptions/unsubscribe', [\App\Http\Controllers\PushSubscriptionController::class, 'destroy'])->name('push-subscriptions.destroy');
+    
+    // Drive Routes (Personal & Shared)
+    Route::prefix('drive')->name('drive.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\DriveController::class, 'index'])->name('index');
+        Route::post('/', [\App\Http\Controllers\DriveController::class, 'store'])->name('store');
+        Route::get('/{id}/download', [\App\Http\Controllers\DriveController::class, 'download'])->name('download');
+        Route::put('/{id}', [\App\Http\Controllers\DriveController::class, 'update'])->name('update');
+        Route::delete('/{id}', [\App\Http\Controllers\DriveController::class, 'destroy'])->name('destroy');
+        
+        // Drive Shares & Public Links
+        Route::post('/{id}/share', [\App\Http\Controllers\DriveShareController::class, 'store'])->name('share.store');
+        Route::delete('/{id}/share/{shareId}', [\App\Http\Controllers\DriveShareController::class, 'destroy'])->name('share.destroy');
+        Route::post('/{id}/public-link', [\App\Http\Controllers\DriveShareController::class, 'generatePublicLink'])->name('public-link.generate');
+        Route::delete('/{id}/public-link', [\App\Http\Controllers\DriveShareController::class, 'revokePublicLink'])->name('public-link.revoke');
+    });
 });
 
 // Public Event Attendance Submit
