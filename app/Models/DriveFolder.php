@@ -9,7 +9,12 @@ class DriveFolder extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['owner_type', 'owner_id', 'name', 'parent_id'];
+    protected $fillable = ['owner_type', 'owner_id', 'name', 'parent_id', 'is_public', 'public_token'];
+
+    public function generatePublicToken()
+    {
+        return \Illuminate\Support\Str::random(64);
+    }
 
     public function owner()
     {

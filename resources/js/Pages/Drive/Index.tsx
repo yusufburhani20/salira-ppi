@@ -149,6 +149,30 @@ export default function DriveIndex({ auth, initialFolders, initialFiles, sharedF
         });
     };
 
+    const handleRevokeFolderLink = (id: number) => {
+        router.delete(route('drive.folders.public-link.revoke', id), {
+            onSuccess: () => {
+                if (currentFolder) loadFolder(currentFolder.id);
+                else loadFolder(null);
+            }
+        });
+    };
+
+    const handleGenerateFolderLink = (id: number) => {
+        router.post(route('drive.folders.public-link.generate', id), {}, {
+            onSuccess: () => {
+                if (currentFolder) loadFolder(currentFolder.id);
+                else loadFolder(null);
+            }
+        });
+    };
+
+    const copyFolderToClipboard = (token: string) => {
+        const url = `${window.location.origin}/drive/f/${token}`;
+        navigator.clipboard.writeText(url);
+        alert('Tautan publik folder disalin ke clipboard!');
+    };
+
     const copyToClipboard = (token: string) => {
         const url = `${window.location.origin}/drive/p/${token}`;
         navigator.clipboard.writeText(url);
@@ -263,11 +287,19 @@ export default function DriveIndex({ auth, initialFolders, initialFiles, sharedF
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500" onClick={() => loadFolder(folder.id)}>-</td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500" onClick={() => loadFolder(folder.id)}>
-                                                    {/* We can check if folder has shares but for now just label as Folder */}
-                                                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-indigo-100 text-indigo-800">Folder</span>
+                                                    {folder.is_public ? (
+                                                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Publik</span>
+                                                    ) : (
+                                                        <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-indigo-100 text-indigo-800">Folder</span>
+                                                    )}
                                                 </td>
                                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                                                     <button onClick={(e) => { e.stopPropagation(); setSelectedFolder(folder); setShareFolderModalOpen(true); }} className="text-blue-600 hover:text-blue-900">Share</button>
+                                                    {folder.is_public ? (
+                                                        <button onClick={(e) => { e.stopPropagation(); copyFolderToClipboard(folder.public_token); }} className="text-green-600 hover:text-green-900">Salin Link</button>
+                                                    ) : (
+                                                        <button onClick={(e) => { e.stopPropagation(); handleGenerateFolderLink(folder.id); }} className="text-green-600 hover:text-green-900">Buat Link</button>
+                                                    )}
                                                     <button onClick={(e) => { e.stopPropagation(); setFolderToEdit(folder); setCreateFolderModalOpen(true); }} className="text-slate-600 hover:text-slate-900">Rename</button>
                                                     <button onClick={(e) => { e.stopPropagation(); setFolderToMove(folder); setMoveModalOpen(true); }} className="text-slate-600 hover:text-slate-900">Move</button>
                                                     <button onClick={(e) => { e.stopPropagation(); handleDeleteFolder(folder.id); }} className="text-red-600 hover:text-red-900">Hapus</button>

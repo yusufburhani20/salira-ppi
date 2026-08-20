@@ -15,7 +15,7 @@ interface DriveFile {
     };
 }
 
-export default function FilePreviewModal({ show, onClose, file }: { show: boolean, onClose: () => void, file: DriveFile | null }) {
+export default function FilePreviewModal({ show, onClose, file, downloadUrl }: { show: boolean, onClose: () => void, file: DriveFile | null, downloadUrl?: string }) {
     const [content, setContent] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -29,7 +29,7 @@ export default function FilePreviewModal({ show, onClose, file }: { show: boolea
 
         const mime = file.mime_type.toLowerCase();
         const ext = file.original_name.split('.').pop()?.toLowerCase();
-        const url = route('drive.download', file.id);
+        const url = downloadUrl || route('drive.download', file.id);
 
         if (mime.includes('pdf') || mime.includes('image') || mime.includes('text/plain') || ext === 'pdf') {
             // Can be previewed natively in iframe
@@ -91,7 +91,7 @@ export default function FilePreviewModal({ show, onClose, file }: { show: boolea
                         Preview: {file.original_name}
                     </h2>
                     <div className="flex gap-2">
-                        <a href={route('drive.download', file.id) + '?download=1'} className="px-3 py-1.5 bg-indigo-100 text-indigo-700 rounded text-sm hover:bg-indigo-200">
+                        <a href={(downloadUrl || route('drive.download', file.id)) + '&download=1'} className="px-3 py-1.5 bg-indigo-100 text-indigo-700 rounded text-sm hover:bg-indigo-200">
                             Unduh Asli
                         </a>
                         <button onClick={onClose} className="px-3 py-1.5 bg-slate-100 text-slate-700 rounded text-sm hover:bg-slate-200">
@@ -108,12 +108,12 @@ export default function FilePreviewModal({ show, onClose, file }: { show: boolea
                     {error && (
                         <div className="flex justify-center items-center h-full flex-col gap-2">
                             <span className="text-red-500">{error}</span>
-                            <a href={route('drive.download', file.id) + '?download=1'} className="text-indigo-600 underline">Unduh File Saja</a>
+                            <a href={(downloadUrl || route('drive.download', file.id)) + '&download=1'} className="text-indigo-600 underline">Unduh File Saja</a>
                         </div>
                     )}
                     {content === 'native' && !loading && !error && (
                         <iframe 
-                            src={route('drive.download', file.id)} 
+                            src={downloadUrl || route('drive.download', file.id)} 
                             className="w-full h-full border-0 bg-white" 
                             title="Preview"
                         />

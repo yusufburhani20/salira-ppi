@@ -332,6 +332,8 @@ Route::post('/invoice/{bill_number}/prepare-payment', [\App\Http\Controllers\Inv
 
 // Public Drive Link
 Route::get('/drive/p/{token}', [\App\Http\Controllers\PublicDriveController::class, 'download'])->name('drive.public.download');
+Route::get('/drive/f/{token}', [\App\Http\Controllers\PublicDriveFolderController::class, 'show'])->name('drive.public.folder');
+Route::get('/drive/f/{token}/download/{file_id}', [\App\Http\Controllers\PublicDriveFolderController::class, 'downloadFile'])->name('drive.public.folder.download');
 
 // Public Computer Issue Report (Scan QR PC)
 Route::get('/public/computer-issues/report', [\App\Http\Controllers\Admin\ComputerIssueController::class, 'reportForm'])->name('public.computer-issues.report');
@@ -398,6 +400,8 @@ Route::middleware(['auth:web,student'])->group(function () {
             Route::delete('/{id}', [\App\Http\Controllers\DriveFolderController::class, 'destroy'])->name('destroy');
             Route::post('/{id}/share', [\App\Http\Controllers\DriveFolderShareController::class, 'store'])->name('share.store');
             Route::delete('/{id}/share/{shareId}', [\App\Http\Controllers\DriveFolderShareController::class, 'destroy'])->name('share.destroy');
+            Route::post('/{id}/public-link', [\App\Http\Controllers\DriveFolderShareController::class, 'generatePublicLink'])->name('public-link.generate');
+            Route::delete('/{id}/public-link', [\App\Http\Controllers\DriveFolderShareController::class, 'revokePublicLink'])->name('public-link.revoke');
         });
 
         // Drive Shares & Public Links

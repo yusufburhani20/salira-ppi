@@ -1017,7 +1017,7 @@
     ]
   },
   "resources/js/Pages/Drive/Components/FilePreviewModal.tsx": {
-    "file": "assets/FilePreviewModal-GCNv2_qE.js",
+    "file": "assets/FilePreviewModal-BBwKT6C8.js",
     "name": "FilePreviewModal",
     "src": "resources/js/Pages/Drive/Components/FilePreviewModal.tsx",
     "isDynamicEntry": true,
@@ -1027,7 +1027,7 @@
     ]
   },
   "resources/js/Pages/Drive/Components/ShareFolderModal.tsx": {
-    "file": "assets/ShareFolderModal-CaiuPRnR.js",
+    "file": "assets/ShareFolderModal-CLB9JkRh.js",
     "name": "ShareFolderModal",
     "src": "resources/js/Pages/Drive/Components/ShareFolderModal.tsx",
     "isDynamicEntry": true,
@@ -1038,7 +1038,7 @@
     ]
   },
   "resources/js/Pages/Drive/Index.tsx": {
-    "file": "assets/Index-IisIorQV.js",
+    "file": "assets/Index-DhUtdoze.js",
     "name": "Index",
     "src": "resources/js/Pages/Drive/Index.tsx",
     "isDynamicEntry": true,
@@ -1053,8 +1053,20 @@
       "resources/js/Pages/Drive/Components/ShareFolderModal.tsx"
     ]
   },
+  "resources/js/Pages/Drive/PublicFolder.tsx": {
+    "file": "assets/PublicFolder-BAdgmsyV.js",
+    "name": "PublicFolder",
+    "src": "resources/js/Pages/Drive/PublicFolder.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_jsx-runtime-BwsvmyVi.js",
+      "_index.esm-W46diezd.js",
+      "resources/js/Pages/Drive/Components/FilePreviewModal.tsx",
+      "_GuestLayout-pp2Y7wa0.js"
+    ]
+  },
   "resources/js/Pages/Error.tsx": {
-    "file": "assets/Error-iN1W3kxE.js",
+    "file": "assets/Error-D-0wMpIt.js",
     "name": "Error",
     "src": "resources/js/Pages/Error.tsx",
     "isDynamicEntry": true,
@@ -1064,7 +1076,7 @@
     ]
   },
   "resources/js/Pages/Invoice/Show.tsx": {
-    "file": "assets/Show-D5M1gFW3.js",
+    "file": "assets/Show-DnFaEsm8.js",
     "name": "Show",
     "src": "resources/js/Pages/Invoice/Show.tsx",
     "isDynamicEntry": true,
@@ -1074,7 +1086,7 @@
     ]
   },
   "resources/js/Pages/Notifications/Index.tsx": {
-    "file": "assets/Index-Ci8kIE-C.js",
+    "file": "assets/Index-DKu56dYW2.js",
     "name": "Index",
     "src": "resources/js/Pages/Notifications/Index.tsx",
     "isDynamicEntry": true,
@@ -1085,7 +1097,7 @@
     ]
   },
   "resources/js/Pages/Portal/Attendance.tsx": {
-    "file": "assets/Attendance-BZNf8BNe.js",
+    "file": "assets/Attendance-KZDLtDis.js",
     "name": "Attendance",
     "src": "resources/js/Pages/Portal/Attendance.tsx",
     "isDynamicEntry": true,
@@ -1096,7 +1108,7 @@
     ]
   },
   "resources/js/Pages/Portal/Attendance/Scanner.tsx": {
-    "file": "assets/Scanner-C6F-7xJx.js",
+    "file": "assets/Scanner-FDkbHJ72.js",
     "name": "Scanner",
     "src": "resources/js/Pages/Portal/Attendance/Scanner.tsx",
     "isDynamicEntry": true,
@@ -1115,7 +1127,7 @@
     ]
   },
   "resources/js/Pages/Portal/Auth/Login.tsx": {
-    "file": "assets/Login-DkCuuyUU.js",
+    "file": "assets/Login-1XPJxtuk.js",
     "name": "Login",
     "src": "resources/js/Pages/Portal/Auth/Login.tsx",
     "isDynamicEntry": true,
@@ -1126,7 +1138,7 @@
     ]
   },
   "resources/js/Pages/Portal/Bills.tsx": {
-    "file": "assets/Bills-BbM-DmC8.js",
+    "file": "assets/Bills-Crd_4Dr8.js",
     "name": "Bills",
     "src": "resources/js/Pages/Portal/Bills.tsx",
     "isDynamicEntry": true,
@@ -1137,7 +1149,7 @@
     ]
   },
   "resources/js/Pages/Portal/Dashboard.tsx": {
-    "file": "assets/Dashboard-CsZO0M-4.js",
+    "file": "assets/Dashboard-BQHnkT5b.js",
     "name": "Dashboard",
     "src": "resources/js/Pages/Portal/Dashboard.tsx",
     "isDynamicEntry": true,
@@ -1150,7 +1162,7 @@
     ]
   },
   "resources/js/Pages/Portal/IdCard.tsx": {
-    "file": "assets/IdCard-Bbb62xeu.js",
+    "file": "assets/IdCard-1R8L6rf4.js",
     "name": "IdCard",
     "src": "resources/js/Pages/Portal/IdCard.tsx",
     "isDynamicEntry": true,
@@ -1162,7 +1174,7 @@
     ]
   },
   "resources/js/Pages/Portal/Notifications.tsx": {
-    "file": "assets/Notifications-HAzDXIXh.js",
+    "file": "assets/Notifications-CU5Fpffo.js",
     "name": "Notifications",
     "src": "resources/js/Pages/Portal/Notifications.tsx",
     "isDynamicEntry": true,
@@ -1173,7 +1185,7 @@
     ]
   },
   "resources/js/Pages/Portal/Permissions/Index.tsx": {
-    "file": "assets/Index-CmT--j0q.js",
+    "file": "assets/Index-CMo3JoPZ2.js",
     "name": "Index",
     "src": "resources/js/Pages/Portal/Permissions/Index.tsx",
     "isDynamicEntry": true,
@@ -1194,7 +1206,7 @@
     ]
   },
   "resources/js/Pages/Portal/Profile/Edit.tsx": {
-    "file": "assets/Edit-rB7utlli.js",
+    "file": "assets/Edit-DFg2MaaX.js",
     "name": "Edit",
     "src": "resources/js/Pages/Portal/Profile/Edit.tsx",
     "isDynamicEntry": true,
@@ -1205,7 +1217,7 @@
     ]
   },
   "resources/js/Pages/Portal/Scores.tsx": {
-    "file": "assets/Scores-BD8Xtc2R.js",
+    "file": "assets/Scores-Cjlen88A.js",
     "name": "Scores",
     "src": "resources/js/Pages/Portal/Scores.tsx",
     "isDynamicEntry": true,
@@ -1216,7 +1228,7 @@
     ]
   },
   "resources/js/Pages/Profile/Edit.tsx": {
-    "file": "assets/Edit-DimMBXv7.js",
+    "file": "assets/Edit-NXMEeiK3.js",
     "name": "Edit",
     "src": "resources/js/Pages/Profile/Edit.tsx",
     "isDynamicEntry": true,
@@ -1230,7 +1242,7 @@
     ]
   },
   "resources/js/Pages/Profile/Partials/DeleteUserForm.tsx": {
-    "file": "assets/DeleteUserForm-DLuZEpGA.js",
+    "file": "assets/DeleteUserForm-C1gjqCpn.js",
     "name": "DeleteUserForm",
     "src": "resources/js/Pages/Profile/Partials/DeleteUserForm.tsx",
     "isDynamicEntry": true,
@@ -1243,7 +1255,7 @@
     ]
   },
   "resources/js/Pages/Profile/Partials/UpdatePasswordForm.tsx": {
-    "file": "assets/UpdatePasswordForm-BLV0srrs.js",
+    "file": "assets/UpdatePasswordForm-DFH8mBrB.js",
     "name": "UpdatePasswordForm",
     "src": "resources/js/Pages/Profile/Partials/UpdatePasswordForm.tsx",
     "isDynamicEntry": true,
@@ -1257,7 +1269,7 @@
     ]
   },
   "resources/js/Pages/Profile/Partials/UpdateProfileInformationForm.tsx": {
-    "file": "assets/UpdateProfileInformationForm-qyYunWNt.js",
+    "file": "assets/UpdateProfileInformationForm-4ARnFUOn.js",
     "name": "UpdateProfileInformationForm",
     "src": "resources/js/Pages/Profile/Partials/UpdateProfileInformationForm.tsx",
     "isDynamicEntry": true,
@@ -1271,7 +1283,7 @@
     ]
   },
   "resources/js/Pages/Public/ComputerIssues/Report.tsx": {
-    "file": "assets/Report-CvbnesOT.js",
+    "file": "assets/Report-CPPmNkuN.js",
     "name": "Report",
     "src": "resources/js/Pages/Public/ComputerIssues/Report.tsx",
     "isDynamicEntry": true,
@@ -1285,7 +1297,7 @@
     ]
   },
   "resources/js/Pages/Teacher/Agendas/Create.tsx": {
-    "file": "assets/Create-TUtzI3aO.js",
+    "file": "assets/Create-Cj-qvIU4.js",
     "name": "Create",
     "src": "resources/js/Pages/Teacher/Agendas/Create.tsx",
     "isDynamicEntry": true,
@@ -1300,7 +1312,7 @@
     ]
   },
   "resources/js/Pages/Teacher/Agendas/Edit.tsx": {
-    "file": "assets/Edit-DZzHgtMu.js",
+    "file": "assets/Edit-D0F5KwDS.js",
     "name": "Edit",
     "src": "resources/js/Pages/Teacher/Agendas/Edit.tsx",
     "isDynamicEntry": true,
@@ -1314,7 +1326,7 @@
     ]
   },
   "resources/js/Pages/Teacher/Agendas/Index.tsx": {
-    "file": "assets/Index-4YDoxWmr.js",
+    "file": "assets/Index-9lqrbI9z.js",
     "name": "Index",
     "src": "resources/js/Pages/Teacher/Agendas/Index.tsx",
     "isDynamicEntry": true,
@@ -1336,7 +1348,7 @@
     ]
   },
   "resources/js/Pages/Teacher/Agendas/Show.tsx": {
-    "file": "assets/Show-BYDrL1CB.js",
+    "file": "assets/Show-BdtANSob.js",
     "name": "Show",
     "src": "resources/js/Pages/Teacher/Agendas/Show.tsx",
     "isDynamicEntry": true,
@@ -1355,7 +1367,7 @@
     ]
   },
   "resources/js/Pages/Teacher/Assessments/Form.tsx": {
-    "file": "assets/Form-Crdk6gQ2.js",
+    "file": "assets/Form-CH1pNUi7.js",
     "name": "Form",
     "src": "resources/js/Pages/Teacher/Assessments/Form.tsx",
     "isDynamicEntry": true,
@@ -1366,7 +1378,7 @@
     ]
   },
   "resources/js/Pages/Teacher/Assessments/Index.tsx": {
-    "file": "assets/Index-BeF7CTFw.js",
+    "file": "assets/Index-9L3LfBQU.js",
     "name": "Index",
     "src": "resources/js/Pages/Teacher/Assessments/Index.tsx",
     "isDynamicEntry": true,
@@ -1382,7 +1394,7 @@
     ]
   },
   "resources/js/Pages/Teacher/Consultations/Index.tsx": {
-    "file": "assets/Index-CvGF9_4Y.js",
+    "file": "assets/Index-BU8EEoCd.js",
     "name": "Index",
     "src": "resources/js/Pages/Teacher/Consultations/Index.tsx",
     "isDynamicEntry": true,
@@ -1397,7 +1409,7 @@
     ]
   },
   "resources/js/Pages/Teacher/EveningStudies/Form.tsx": {
-    "file": "assets/Form-BIVgSdLu.js",
+    "file": "assets/Form-Bld0L45C.js",
     "name": "Form",
     "src": "resources/js/Pages/Teacher/EveningStudies/Form.tsx",
     "isDynamicEntry": true,
@@ -1412,7 +1424,7 @@
     ]
   },
   "resources/js/Pages/Teacher/EveningStudies/Index.tsx": {
-    "file": "assets/Index-IA3qV107.js",
+    "file": "assets/Index-DlSoYeNL.js",
     "name": "Index",
     "src": "resources/js/Pages/Teacher/EveningStudies/Index.tsx",
     "isDynamicEntry": true,
@@ -1430,7 +1442,7 @@
     ]
   },
   "resources/js/Pages/Teacher/EveningStudies/Show.tsx": {
-    "file": "assets/Show-BUtjpaGh.js",
+    "file": "assets/Show-__os0fum.js",
     "name": "Show",
     "src": "resources/js/Pages/Teacher/EveningStudies/Show.tsx",
     "isDynamicEntry": true,
@@ -1449,7 +1461,7 @@
     ]
   },
   "resources/js/Pages/Teacher/FinalAssessments/Form.tsx": {
-    "file": "assets/Form-DXHrBfq7.js",
+    "file": "assets/Form-BYVIaDSV.js",
     "name": "Form",
     "src": "resources/js/Pages/Teacher/FinalAssessments/Form.tsx",
     "isDynamicEntry": true,
@@ -1462,7 +1474,7 @@
     ]
   },
   "resources/js/Pages/Teacher/FinalAssessments/Index.tsx": {
-    "file": "assets/Index-BNr7ji5g.js",
+    "file": "assets/Index-w3gkTCTn.js",
     "name": "Index",
     "src": "resources/js/Pages/Teacher/FinalAssessments/Index.tsx",
     "isDynamicEntry": true,
@@ -1479,7 +1491,7 @@
     ]
   },
   "resources/js/Pages/Teacher/MyStudents/Index.tsx": {
-    "file": "assets/Index-CbC3ukY6.js",
+    "file": "assets/Index-sLfy15Uw.js",
     "name": "Index",
     "src": "resources/js/Pages/Teacher/MyStudents/Index.tsx",
     "isDynamicEntry": true,
@@ -1492,7 +1504,7 @@
     ]
   },
   "resources/js/Pages/Teacher/MyStudents/Resume.tsx": {
-    "file": "assets/Resume-CfjMy7h1.js",
+    "file": "assets/Resume-DWhrdG7_.js",
     "name": "Resume",
     "src": "resources/js/Pages/Teacher/MyStudents/Resume.tsx",
     "isDynamicEntry": true,
@@ -1512,7 +1524,7 @@
     ]
   },
   "resources/js/Pages/User/Attendances/History.tsx": {
-    "file": "assets/History-BqAI7-75.js",
+    "file": "assets/History-ElnTH6xb.js",
     "name": "History",
     "src": "resources/js/Pages/User/Attendances/History.tsx",
     "isDynamicEntry": true,
@@ -1529,7 +1541,7 @@
     ]
   },
   "resources/js/Pages/User/Attendances/Scanner.tsx": {
-    "file": "assets/Scanner-DTIALIy4.js",
+    "file": "assets/Scanner-a6OFoi1a.js",
     "name": "Scanner",
     "src": "resources/js/Pages/User/Attendances/Scanner.tsx",
     "isDynamicEntry": true,
@@ -1544,7 +1556,7 @@
     ]
   },
   "resources/js/Pages/User/Permissions/Index.tsx": {
-    "file": "assets/Index-Bf4bo31I.js",
+    "file": "assets/Index-BzgKYQao.js",
     "name": "Index",
     "src": "resources/js/Pages/User/Permissions/Index.tsx",
     "isDynamicEntry": true,
@@ -1560,7 +1572,7 @@
     ]
   },
   "resources/js/Pages/Welcome.tsx": {
-    "file": "assets/Welcome-Cwo-2xtY.js",
+    "file": "assets/Welcome-D-m5whOu.js",
     "name": "Welcome",
     "src": "resources/js/Pages/Welcome.tsx",
     "isDynamicEntry": true,
@@ -1570,7 +1582,7 @@
     ]
   },
   "resources/js/app.tsx": {
-    "file": "assets/app-yhVqpf4r.js",
+    "file": "assets/app-E_-cOOyt.js",
     "name": "app",
     "src": "resources/js/app.tsx",
     "isEntry": true,
@@ -1623,6 +1635,7 @@
       "resources/js/Pages/Drive/Components/FilePreviewModal.tsx",
       "resources/js/Pages/Drive/Components/ShareFolderModal.tsx",
       "resources/js/Pages/Drive/Index.tsx",
+      "resources/js/Pages/Drive/PublicFolder.tsx",
       "resources/js/Pages/Error.tsx",
       "resources/js/Pages/Invoice/Show.tsx",
       "resources/js/Pages/Notifications/Index.tsx",

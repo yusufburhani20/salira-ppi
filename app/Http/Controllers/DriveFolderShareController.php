@@ -47,4 +47,34 @@ class DriveFolderShareController extends Controller
 
         return back()->with('success', 'Akses folder berhasil dicabut.');
     }
+
+    public function generatePublicLink(Request $request, $id)
+    {
+        $user = $request->user() ?? auth('student')->user();
+        $folder = DriveFolder::where('owner_type', get_class($user))
+            ->where('owner_id', $user->id)
+            ->findOrFail($id);
+
+        $folder->update([
+            'is_public' => true,
+            'public_token' => $folder->public_token ?? $folder->generatePublicToken(),
+        ]);
+
+        return back()->with('success', 'Tautan publik folder berhasil dibuat.');
+    }
+
+    public function revokePublicLink(Request $request, $id)
+    {
+        $user = $request->user() ?? auth('student')->user();
+        $folder = DriveFolder::where('owner_type', get_class($user))
+            ->where('owner_id', $user->id)
+            ->findOrFail($id);
+
+        $folder->update([
+            'is_public' => false,
+            'public_token' => null,
+        ]);
+
+        return back()->with('success', 'Tautan publik folder berhasil dicabut.');
+    }
 }

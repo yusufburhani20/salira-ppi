@@ -52,10 +52,28 @@ export default function ShareFolderModal({ show, onClose, folder, shareableUsers
                         </button>
                     </div>
                 </form>
-                <div className="mt-4 text-sm text-slate-500">
-                    *Membagikan folder ini akan otomatis memberikan akses ke seluruh isi file dan sub-folder di dalamnya.
+                    <div className="mt-4 text-sm text-slate-500">
+                        *Membagikan folder ini akan otomatis memberikan akses ke seluruh isi file dan sub-folder di dalamnya.
+                    </div>
+
+                    {folder?.is_public && (
+                        <div className="mt-6 pt-6 border-t border-slate-200">
+                            <h3 className="text-sm font-medium text-slate-900 dark:text-slate-100 mb-2">Tautan Publik</h3>
+                            <div className="flex gap-2">
+                                <input type="text" readOnly value={`${window.location.origin}/drive/f/${folder.public_token}`} className="flex-1 border-slate-300 rounded-md shadow-sm text-sm" />
+                                <button type="button" onClick={() => {
+                                    navigator.clipboard.writeText(`${window.location.origin}/drive/f/${folder.public_token}`);
+                                    alert('Tautan publik folder disalin ke clipboard!');
+                                }} className="px-3 py-2 bg-slate-100 text-slate-700 rounded-md hover:bg-slate-200">Salin</button>
+                                <button type="button" onClick={() => {
+                                    router.delete(route('drive.folders.public-link.revoke', folder.id), {
+                                        onSuccess: () => onClose()
+                                    });
+                                }} className="px-3 py-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200">Cabut Link</button>
+                            </div>
+                        </div>
+                    )}
                 </div>
-            </div>
-        </Modal>
-    );
-}
+            </Modal>
+        );
+    }
