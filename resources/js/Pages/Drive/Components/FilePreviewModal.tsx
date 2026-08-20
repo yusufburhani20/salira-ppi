@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import Modal from '@/Components/Modal';
+import { Dialog, DialogPanel, Transition, TransitionChild } from '@headlessui/react';
 import * as mammoth from 'mammoth';
 import * as XLSX from 'xlsx';
 
@@ -84,48 +84,79 @@ export default function FilePreviewModal({ show, onClose, file, downloadUrl }: {
     if (!show || !file) return null;
 
     return (
-        <Modal show={show} onClose={onClose} maxWidth="4xl">
-            <div className="flex flex-col h-[80vh]">
-                <div className="flex justify-between items-center p-4 border-b">
-                    <h2 className="text-lg font-medium text-slate-900 dark:text-slate-100 truncate pr-4">
-                        Preview: {file.original_name}
-                    </h2>
-                    <div className="flex gap-2">
-                        <a href={(downloadUrl || route('drive.download', file.id)) + '&download=1'} className="px-3 py-1.5 bg-indigo-100 text-indigo-700 rounded text-sm hover:bg-indigo-200">
-                            Unduh Asli
-                        </a>
-                        <button onClick={onClose} className="px-3 py-1.5 bg-slate-100 text-slate-700 rounded text-sm hover:bg-slate-200">
-                            Tutup
-                        </button>
-                    </div>
-                </div>
-                <div className="flex-1 overflow-auto bg-slate-50 dark:bg-slate-900 p-4">
-                    {loading && (
-                        <div className="flex justify-center items-center h-full">
-                            <span className="text-slate-500">Memuat preview...</span>
+        <Transition show={show} leave="duration-200">
+            <Dialog as="div" className="fixed inset-0 z-50 flex transform items-center justify-center overflow-y-auto sm:px-4 py-0 sm:py-8 transition-all" onClose={onClose}>
+                <TransitionChild
+                    enter="ease-out duration-300"
+                    enterFrom="opacity-0"
+                    enterTo="opacity-100"
+                    leave="ease-in duration-200"
+                    leaveFrom="opacity-100"
+                    leaveTo="opacity-0"
+                >
+                    <div className="absolute inset-0 bg-slate-900/90 sm:bg-slate-500/75 sm:dark:bg-slate-900/75" />
+                </TransitionChild>
+
+                <TransitionChild
+                    enter="ease-out duration-300"
+                    enterFrom="opacity-0 translate-y-full sm:translate-y-4 sm:translate-y-0 sm:scale-95"
+                    enterTo="opacity-100 translate-y-0 sm:scale-100"
+                    leave="ease-in duration-200"
+                    leaveFrom="opacity-100 translate-y-0 sm:scale-100"
+                    leaveTo="opacity-0 translate-y-full sm:translate-y-4 sm:translate-y-0 sm:scale-95"
+                >
+                    <DialogPanel className="transform overflow-hidden bg-white dark:bg-slate-800 shadow-xl transition-all w-full h-[100dvh] sm:h-auto sm:max-h-[90vh] sm:mx-auto sm:rounded-lg sm:max-w-4xl flex flex-col">
+                        <div className="flex justify-between items-center p-4 border-b dark:border-slate-700 bg-slate-50 dark:bg-slate-900 sticky top-0 z-10 shrink-0">
+                            <div className="flex items-center gap-3 overflow-hidden">
+                                <button onClick={onClose} className="sm:hidden p-2 -ml-2 text-slate-500 hover:bg-slate-200 rounded-full">
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                </button>
+                                <h2 className="text-lg font-medium text-slate-900 dark:text-slate-100 truncate pr-4">
+                                    {file.original_name}
+                                </h2>
+                            </div>
+                            <div className="flex gap-2 shrink-0">
+                                <a href={(downloadUrl || route('drive.download', file.id)) + '&download=1'} className="px-3 py-1.5 bg-indigo-100 text-indigo-700 rounded text-sm hover:bg-indigo-200 font-medium flex items-center gap-1">
+                                    <svg className="w-4 h-4 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                    Unduh
+                                </a>
+                                <button onClick={onClose} className="hidden sm:block px-3 py-1.5 bg-slate-100 text-slate-700 rounded text-sm hover:bg-slate-200">
+                                    Tutup
+                                </button>
+                            </div>
                         </div>
-                    )}
-                    {error && (
-                        <div className="flex justify-center items-center h-full flex-col gap-2">
-                            <span className="text-red-500">{error}</span>
-                            <a href={(downloadUrl || route('drive.download', file.id)) + '&download=1'} className="text-indigo-600 underline">Unduh File Saja</a>
+                        <div className="flex-1 overflow-auto bg-slate-100 dark:bg-slate-900 relative">
+                            {loading && (
+                                <div className="absolute inset-0 flex justify-center items-center">
+                                    <span className="text-slate-500 font-medium animate-pulse">Memuat pratinjau...</span>
+                                </div>
+                            )}
+                            {error && (
+                                <div className="absolute inset-0 flex flex-col justify-center items-center gap-4 p-6 text-center">
+                                    <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center">
+                                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    </div>
+                                    <span className="text-slate-700 dark:text-slate-300 font-medium">{error}</span>
+                                    <a href={(downloadUrl || route('drive.download', file.id)) + '&download=1'} className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium shadow hover:bg-indigo-700">Unduh File</a>
+                                </div>
+                            )}
+                            {content === 'native' && !loading && !error && (
+                                <iframe 
+                                    src={downloadUrl || route('drive.download', file.id)} 
+                                    className="w-full h-full border-0 bg-white" 
+                                    title="Preview"
+                                />
+                            )}
+                            {content && content !== 'native' && !loading && !error && (
+                                <div 
+                                    className="bg-white p-4 sm:p-8 shadow-sm min-h-full overflow-auto text-slate-800 prose max-w-none text-sm sm:text-base w-full"
+                                    dangerouslySetInnerHTML={{ __html: content }}
+                                />
+                            )}
                         </div>
-                    )}
-                    {content === 'native' && !loading && !error && (
-                        <iframe 
-                            src={downloadUrl || route('drive.download', file.id)} 
-                            className="w-full h-full border-0 bg-white" 
-                            title="Preview"
-                        />
-                    )}
-                    {content && content !== 'native' && !loading && !error && (
-                        <div 
-                            className="bg-white p-8 shadow-sm min-h-full overflow-auto text-slate-800 prose max-w-none"
-                            dangerouslySetInnerHTML={{ __html: content }}
-                        />
-                    )}
-                </div>
-            </div>
-        </Modal>
+                    </DialogPanel>
+                </TransitionChild>
+            </Dialog>
+        </Transition>
     );
 }
