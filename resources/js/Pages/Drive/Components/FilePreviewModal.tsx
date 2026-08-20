@@ -31,7 +31,10 @@ export default function FilePreviewModal({ show, onClose, file, downloadUrl }: {
         const ext = file.original_name.split('.').pop()?.toLowerCase();
         const url = downloadUrl || route('drive.download', file.id);
 
-        if (mime.includes('pdf') || mime.includes('image') || mime.includes('text/plain') || ext === 'pdf') {
+        if (mime.includes('image')) {
+            setContent('image');
+            setLoading(false);
+        } else if (mime.includes('pdf') || mime.includes('text/plain') || ext === 'pdf') {
             // Can be previewed natively in iframe
             setContent('native');
             setLoading(false);
@@ -105,7 +108,7 @@ export default function FilePreviewModal({ show, onClose, file, downloadUrl }: {
                     leaveFrom="opacity-100 translate-y-0 sm:scale-100"
                     leaveTo="opacity-0 translate-y-full sm:translate-y-4 sm:translate-y-0 sm:scale-95"
                 >
-                    <DialogPanel className="transform overflow-hidden bg-white dark:bg-slate-800 shadow-xl transition-all w-full h-[100dvh] sm:h-auto sm:max-h-[90vh] sm:mx-auto sm:rounded-lg sm:max-w-4xl flex flex-col">
+                    <DialogPanel className="transform overflow-hidden bg-white dark:bg-slate-800 shadow-xl transition-all w-full h-[100dvh] sm:h-[90vh] sm:mx-auto sm:rounded-lg sm:max-w-5xl flex flex-col">
                         <div className="flex justify-between items-center p-4 border-b dark:border-slate-700 bg-slate-50 dark:bg-slate-900 sticky top-0 z-10 shrink-0">
                             <div className="flex items-center gap-3 overflow-hidden">
                                 <button onClick={onClose} className="sm:hidden p-2 -ml-2 text-slate-500 hover:bg-slate-200 rounded-full">
@@ -140,14 +143,32 @@ export default function FilePreviewModal({ show, onClose, file, downloadUrl }: {
                                     <a href={(downloadUrl || route('drive.download', file.id)) + '&download=1'} className="px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium shadow hover:bg-indigo-700">Unduh File</a>
                                 </div>
                             )}
-                            {content === 'native' && !loading && !error && (
-                                <iframe 
-                                    src={downloadUrl || route('drive.download', file.id)} 
-                                    className="w-full h-full border-0 bg-white" 
-                                    title="Preview"
-                                />
+                            {content === 'image' && !loading && !error && (
+                                <div className="w-full h-full flex items-center justify-center p-4">
+                                    <img src={downloadUrl || route('drive.download', file.id)} alt={file.original_name} className="max-w-full max-h-full object-contain drop-shadow-md" />
+                                </div>
                             )}
-                            {content && content !== 'native' && !loading && !error && (
+                            {content === 'native' && !loading && !error && (
+                                <div className="w-full h-full flex flex-col">
+                                    {/* Mobile Fallback */}
+                                    <div className="sm:hidden flex-1 flex flex-col items-center justify-center p-6 text-center gap-4">
+                                        <div className="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center">
+                                            <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" /></svg>
+                                        </div>
+                                        <p className="text-slate-600 dark:text-slate-300 text-sm font-medium">Pratinjau dokumen ini mungkin tidak didukung di browser HP.</p>
+                                        <a href={downloadUrl || route('drive.download', file.id)} target="_blank" className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium shadow-md transition-transform active:scale-95">
+                                            Buka di Tab Baru
+                                        </a>
+                                    </div>
+                                    {/* Desktop Iframe */}
+                                    <iframe 
+                                        src={downloadUrl || route('drive.download', file.id)} 
+                                        className="hidden sm:block w-full h-full border-0 bg-white" 
+                                        title="Preview"
+                                    />
+                                </div>
+                            )}
+                            {content && content !== 'native' && content !== 'image' && !loading && !error && (
                                 <div 
                                     className="bg-white p-4 sm:p-8 shadow-sm min-h-full overflow-auto text-slate-800 prose max-w-none text-sm sm:text-base w-full"
                                     dangerouslySetInnerHTML={{ __html: content }}
