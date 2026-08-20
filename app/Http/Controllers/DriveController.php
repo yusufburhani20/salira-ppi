@@ -14,10 +14,30 @@ class DriveController extends Controller
     {
         $user = $request->user() ?? auth('student')->user();
 
-        // Files owned by the user
-        $myFiles = $user->driveFiles()->latest()->get();
+        // 1. Dapatkan breadcrumbs
+        $breadcrumbs = [];
+        $currentFolder = null;
 
-        // Files shared with the user
+        // Root level: My folders and shared root folders
+        $folders = \App\Models\DriveFolder::where('owner_type', get_class($user))
+            ->where('owner_id', $user->id)
+            ->whereNull('parent_id')
+            ->get();
+
+        // Include root shared folders
+        $sharedFolderIds = \App\Models\DriveFolderShare::where('shared_to_type', get_class($user))
+            ->where('shared_to_id', $user->id)
+            ->pluck('drive_folder_id');
+        
+        if ($sharedFolderIds->isNotEmpty()) {
+            $sharedFolders = \App\Models\DriveFolder::whereIn('id', $sharedFolderIds)->get();
+            $folders = $folders->merge($sharedFolders)->unique('id')->values();
+        }
+
+        // Root files (My files only for now, since shared files could be anywhere)
+        $files = $user->driveFiles()->whereNull('folder_id')->latest()->get();
+
+        // Files shared with the user (for the "Shared With Me" tab)
         $sharedFiles = $user->sharedDriveFiles()->with('driveFile.owner')->latest()->get()->map(function ($share) {
             return $share->driveFile;
         });
@@ -34,7 +54,8 @@ class DriveController extends Controller
         $shareableUsers = $users->merge($students)->values();
 
         return Inertia::render('Drive/Index', [
-            'myFiles' => $myFiles,
+            'initialFolders' => $folders,
+            'initialFiles' => $files,
             'sharedFiles' => $sharedFiles,
             'shareableUsers' => $shareableUsers,
         ]);
@@ -50,6 +71,7 @@ class DriveController extends Controller
                     $fail('File type not allowed.');
                 }
             }],
+            'folder_id' => 'nullable|exists:drive_folders,id',
         ]);
 
         $user = $request->user() ?? auth('student')->user();
@@ -66,6 +88,7 @@ class DriveController extends Controller
             'file_path' => $path,
             'file_size' => $file->getSize(),
             'mime_type' => $file->getMimeType(),
+            'folder_id' => $request->folder_id,
         ]);
 
         return redirect()->back()->with('success', 'File uploaded successfully.');
@@ -74,13 +97,25 @@ class DriveController extends Controller
     public function download(Request $request, $id)
     {
         $user = $request->user() ?? auth('student')->user();
-        $file = DriveFile::findOrFail($id);
+        $file = DriveFile::with('folder')->findOrFail($id);
 
         // Check if user is owner
         $isOwner = $file->owner_type === get_class($user) && $file->owner_id === $user->id;
         
-        // Check if shared to user
+        // Check if file is shared to user directly
         $isShared = $file->shares()->where('shared_to_type', get_class($user))->where('shared_to_id', $user->id)->exists();
+
+        // Check if parent folder (or grand-parent) is shared to user
+        if (!$isOwner && !$isShared && $file->folder_id) {
+            $checkFolder = $file->folder;
+            while ($checkFolder) {
+                if ($checkFolder->shares()->where('shared_to_type', get_class($user))->where('shared_to_id', $user->id)->exists()) {
+                    $isShared = true;
+                    break;
+                }
+                $checkFolder = $checkFolder->parent;
+            }
+        }
 
         if (!$isOwner && !$isShared) {
             abort(403, 'Unauthorized access to this file.');
@@ -90,7 +125,19 @@ class DriveController extends Controller
             abort(404, 'File not found on disk.');
         }
 
-        return Storage::disk('local')->download($file->file_path, $file->original_name);
+        // Always use inline for PDF and images, attachment for others (unless forced by query string)
+        $mime = $file->mime_type;
+        $isViewable = str_contains($mime, 'pdf') || str_contains($mime, 'image') || str_contains($mime, 'text');
+        
+        // Force attachment if requested, or if not natively viewable
+        $disposition = ($isViewable && !$request->has('download')) ? 'inline' : 'attachment';
+
+        $headers = [
+            'Content-Type' => $file->mime_type,
+            'Content-Disposition' => $disposition . '; filename="' . $file->original_name . '"',
+        ];
+
+        return Storage::disk('local')->response($file->file_path, $file->original_name, $headers);
     }
 
     public function update(Request $request, $id)

@@ -389,6 +389,17 @@ Route::middleware(['auth:web,student'])->group(function () {
         Route::put('/{id}', [\App\Http\Controllers\DriveController::class, 'update'])->name('update');
         Route::delete('/{id}', [\App\Http\Controllers\DriveController::class, 'destroy'])->name('destroy');
         
+        // Drive Folders
+        Route::prefix('folders')->name('folders.')->group(function () {
+            Route::get('/{id?}', [\App\Http\Controllers\DriveFolderController::class, 'index'])->name('index');
+            Route::post('/', [\App\Http\Controllers\DriveFolderController::class, 'store'])->name('store');
+            Route::put('/{id}', [\App\Http\Controllers\DriveFolderController::class, 'update'])->name('update');
+            Route::post('/{id}/move', [\App\Http\Controllers\DriveFolderController::class, 'move'])->name('move');
+            Route::delete('/{id}', [\App\Http\Controllers\DriveFolderController::class, 'destroy'])->name('destroy');
+            Route::post('/{id}/share', [\App\Http\Controllers\DriveFolderShareController::class, 'store'])->name('share.store');
+            Route::delete('/{id}/share/{shareId}', [\App\Http\Controllers\DriveFolderShareController::class, 'destroy'])->name('share.destroy');
+        });
+
         // Drive Shares & Public Links
         Route::post('/{id}/share', [\App\Http\Controllers\DriveShareController::class, 'store'])->name('share.store');
         Route::delete('/{id}/share/{shareId}', [\App\Http\Controllers\DriveShareController::class, 'destroy'])->name('share.destroy');
