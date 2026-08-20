@@ -36,11 +36,14 @@ class DriveController extends Controller
 
         // Root files (My files only for now, since shared files could be anywhere)
         $files = $user->driveFiles()->whereNull('folder_id')->latest()->get();
+        // Alias for backwards compatibility with old frontend (in case build fails)
+        $myFiles = $user->driveFiles()->latest()->get();
 
         // Files shared with the user (for the "Shared With Me" tab)
+        // Add filter() to remove nulls in case the original file was deleted but the share record remained
         $sharedFiles = $user->sharedDriveFiles()->with('driveFile.owner')->latest()->get()->map(function ($share) {
             return $share->driveFile;
-        });
+        })->filter()->values();
 
         // Also fetch all users and students to allow sharing
         $users = \App\Models\User::select('id', 'name')->get()->map(function ($u) {
@@ -54,6 +57,7 @@ class DriveController extends Controller
         $shareableUsers = $users->merge($students)->values();
 
         return Inertia::render('Drive/Index', [
+            'myFiles' => $myFiles,
             'initialFolders' => $folders,
             'initialFiles' => $files,
             'sharedFiles' => $sharedFiles,

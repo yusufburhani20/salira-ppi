@@ -255,7 +255,7 @@ export default function DriveIndex({ auth, initialFolders, initialFiles, sharedF
                                     <tbody className="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
                                         
                                         {/* Render Folders */}
-                                        {folders.map((folder: any) => (
+                                        {folders?.filter(Boolean).map((folder: any) => (
                                             <tr key={`folder-${folder.id}`} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer">
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900 dark:text-slate-100 flex items-center gap-2" onClick={() => loadFolder(folder.id)}>
                                                     <svg className="w-5 h-5 text-indigo-500" fill="currentColor" viewBox="0 0 20 20"><path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" /></svg>
@@ -276,7 +276,7 @@ export default function DriveIndex({ auth, initialFolders, initialFiles, sharedF
                                         ))}
 
                                         {/* Render Files */}
-                                        {files.map((file: any) => (
+                                        {files?.filter(Boolean).map((file: any) => (
                                             <tr key={`file-${file.id}`} className="hover:bg-slate-50 dark:hover:bg-slate-700/50">
                                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900 dark:text-slate-100 flex items-center gap-2 cursor-pointer" onClick={() => openPreview(file)}>
                                                     <svg className="w-5 h-5 text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" /></svg>
@@ -305,7 +305,7 @@ export default function DriveIndex({ auth, initialFolders, initialFiles, sharedF
                                             </tr>
                                         ))}
 
-                                        {folders.length === 0 && files.length === 0 && (
+                                        {(folders?.length === 0 || !folders) && (files?.length === 0 || !files) && (
                                             <tr>
                                                 <td colSpan={4} className="px-6 py-4 text-center text-slate-500">Folder ini kosong.</td>
                                             </tr>
@@ -332,7 +332,7 @@ export default function DriveIndex({ auth, initialFolders, initialFiles, sharedF
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white dark:bg-slate-800 divide-y divide-slate-200 dark:divide-slate-700">
-                                    {sharedFiles.map((file: any) => (
+                                    {sharedFiles?.filter(Boolean).map((file: any) => (
                                         <tr key={file.id}>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900 dark:text-slate-100 flex items-center gap-2 cursor-pointer" onClick={() => openPreview(file)}>
                                                 <svg className="w-5 h-5 text-slate-400" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clipRule="evenodd" /></svg>
@@ -345,7 +345,7 @@ export default function DriveIndex({ auth, initialFolders, initialFiles, sharedF
                                             </td>
                                         </tr>
                                     ))}
-                                    {sharedFiles.length === 0 && (
+                                    {(sharedFiles?.length === 0 || !sharedFiles) && (
                                         <tr>
                                             <td colSpan={4} className="px-6 py-4 text-center text-slate-500">Belum ada file yang dibagikan kepada Anda.</td>
                                         </tr>
