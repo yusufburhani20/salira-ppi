@@ -1026,7 +1026,7 @@
     ]
   },
   "resources/js/Pages/Drive/Components/FilePreviewModal.tsx": {
-    "file": "assets/FilePreviewModal-B3JwoEr3.js",
+    "file": "assets/FilePreviewModal-DOijbO6O.js",
     "name": "FilePreviewModal",
     "src": "resources/js/Pages/Drive/Components/FilePreviewModal.tsx",
     "isDynamicEntry": true,
@@ -1049,7 +1049,7 @@
     ]
   },
   "resources/js/Pages/Drive/Index.tsx": {
-    "file": "assets/Index-q6KcB-Na.js",
+    "file": "assets/Index-MP1-E3Td.js",
     "name": "Index",
     "src": "resources/js/Pages/Drive/Index.tsx",
     "isDynamicEntry": true,
@@ -1068,7 +1068,7 @@
     ]
   },
   "resources/js/Pages/Drive/PublicFolder.tsx": {
-    "file": "assets/PublicFolder-nykhbr6H.js",
+    "file": "assets/PublicFolder-D_z99uB7.js",
     "name": "PublicFolder",
     "src": "resources/js/Pages/Drive/PublicFolder.tsx",
     "isDynamicEntry": true,
@@ -1596,7 +1596,7 @@
     ]
   },
   "resources/js/app.tsx": {
-    "file": "assets/app-C9a1j6e8.js",
+    "file": "assets/app-CzdB3Dft.js",
     "name": "app",
     "src": "resources/js/app.tsx",
     "isEntry": true,
@@ -1688,7 +1688,7 @@
       "resources/js/Pages/Welcome.tsx"
     ],
     "css": [
-      "assets/app-Bdo3JYWi.css"
+      "assets/app-DG8Az_tO.css"
     ]
   }
 }
