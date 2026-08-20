@@ -25,10 +25,15 @@ class AuthenticatedSessionController extends Controller
             return redirect()->route('portal.dashboard');
         }
 
-        $activeEvents = Event::where('is_active', true)
-            ->orderBy('date', 'desc')
-            ->orderBy('start_time', 'desc')
-            ->get(['id', 'name', 'date', 'start_time', 'end_time']);
+        try {
+            $activeEvents = Event::where('is_active', true)
+                ->orderBy('date', 'desc')
+                ->orderBy('start_time', 'desc')
+                ->get(['id', 'name', 'date', 'start_time', 'end_time']);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Failed to fetch events for login page: ' . $e->getMessage());
+            $activeEvents = collect();
+        }
 
         $users = User::where('status', UserStatus::active)
             ->orderBy('name', 'asc')

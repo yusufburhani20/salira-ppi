@@ -133,13 +133,18 @@ class PortalController extends Controller
         }
 
         // 6. Announcements
-        $announcements = Announcement::where('is_active', true)
-            ->where(function($q) {
-                $q->whereNull('expires_at')->orWhere('expires_at', '>', Carbon::now());
-            })
-            ->whereIn('target', ['all', 'students'])
-            ->latest()
-            ->get();
+        try {
+            $announcements = Announcement::where('is_active', true)
+                ->where(function($q) {
+                    $q->whereNull('expires_at')->orWhere('expires_at', '>', Carbon::now());
+                })
+                ->whereIn('target', ['all', 'students'])
+                ->latest()
+                ->get();
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Portal dashboard announcements failed: ' . $e->getMessage());
+            $announcements = collect();
+        }
 
         return Inertia::render('Portal/Dashboard', [
             'student'            => $student,

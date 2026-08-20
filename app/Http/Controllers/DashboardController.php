@@ -38,27 +38,37 @@ class DashboardController extends Controller
 
         // Cache stats selama 5 menit — data absensi tidak berubah setiap detik
         $statsCacheKey = 'dashboard_stats_' . $today->toDateString() . '_class_' . ($classId ?: 'all');
-        $stats = Cache::remember($statsCacheKey, 300, function () use ($studentsQuery, $consultationQuery) {
-            $todayAttendances = (clone $studentsQuery)->get()->groupBy('student_id');
-            
-            $presentCount = 0;
-            $permitCount = 0;
-            foreach ($todayAttendances as $studentId => $dayEntries) {
-                $status = \App\Models\StudentAttendance::getDailyStatusFromAttendances($dayEntries);
-                if ($status === 'hadir' || $status === 'terlambat') {
-                    $presentCount++;
-                } elseif ($status === 'izin' || $status === 'sakit') {
-                    $permitCount++;
+        try {
+            $stats = Cache::remember($statsCacheKey, 300, function () use ($studentsQuery, $consultationQuery) {
+                $todayAttendances = (clone $studentsQuery)->get()->groupBy('student_id');
+                
+                $presentCount = 0;
+                $permitCount = 0;
+                foreach ($todayAttendances as $studentId => $dayEntries) {
+                    $status = \App\Models\StudentAttendance::getDailyStatusFromAttendances($dayEntries);
+                    if ($status === 'hadir' || $status === 'terlambat') {
+                        $presentCount++;
+                    } elseif ($status === 'izin' || $status === 'sakit') {
+                        $permitCount++;
+                    }
                 }
-            }
 
-            return [
-                'students_present'      => $presentCount,
-                'students_permit'       => $permitCount,
-                'consultations_pending' => $consultationQuery->count(),
-                'items_borrowed'        => InventoryItem::where('status', 'dipinjam')->count(),
+                return [
+                    'students_present'      => $presentCount,
+                    'students_permit'       => $permitCount,
+                    'consultations_pending' => $consultationQuery->count(),
+                    'items_borrowed'        => InventoryItem::where('status', 'dipinjam')->count(),
+                ];
+            });
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Dashboard stats failed: ' . $e->getMessage());
+            $stats = [
+                'students_present'      => 0,
+                'students_permit'       => 0,
+                'consultations_pending' => 0,
+                'items_borrowed'        => 0,
             ];
-        });
+        }
 
         // Resolve active semester
         $activeSemester = \App\Models\Semester::where('is_active', true)
@@ -109,138 +119,171 @@ class DashboardController extends Controller
             $diffInDays = 30;
         }
 
-        $allAttendances = StudentAttendance::whereBetween('date', [$startDate->toDateString(), $endDate->toDateString()])
-            ->when($classId, fn($q) => $q->where('academic_class_id', $classId))
-            ->get()
-            ->groupBy([
-                function ($val) {
-                    return Carbon::parse($val->date)->format('Y-m-d');
-                },
-                'student_id'
-            ]);
+        try {
+            $allAttendances = StudentAttendance::whereBetween('date', [$startDate->toDateString(), $endDate->toDateString()])
+                ->when($classId, fn($q) => $q->where('academic_class_id', $classId))
+                ->get()
+                ->groupBy([
+                    function ($val) {
+                        return Carbon::parse($val->date)->format('Y-m-d');
+                    },
+                    'student_id'
+                ]);
 
-        $presentCounts = [];
-        foreach ($allAttendances as $dateStr => $students) {
-            $presentToday = 0;
-            foreach ($students as $studentId => $dayEntries) {
-                $dailyStatus = \App\Models\StudentAttendance::getDailyStatusFromAttendances($dayEntries);
-                if ($dailyStatus === 'hadir' || $dailyStatus === 'terlambat') {
-                    $presentToday++;
+            $presentCounts = [];
+            foreach ($allAttendances as $dateStr => $students) {
+                $presentToday = 0;
+                foreach ($students as $studentId => $dayEntries) {
+                    $dailyStatus = \App\Models\StudentAttendance::getDailyStatusFromAttendances($dayEntries);
+                    if ($dailyStatus === 'hadir' || $dailyStatus === 'terlambat') {
+                        $presentToday++;
+                    }
                 }
+                $presentCounts[$dateStr] = $presentToday;
             }
-            $presentCounts[$dateStr] = $presentToday;
-        }
 
-        $chartData = [];
-        for ($i = $diffInDays; $i >= 0; $i--) {
-            $date = (clone $endDate)->subDays($i);
-            $dateStr = $date->toDateString();
-            $presentCount = $presentCounts[$dateStr] ?? 0;
-            $percentage = round(($presentCount / $totalStudents) * 100);
-            
-            $chartData[] = [
-                'label' => $date->isToday() ? 'Hari ini' : 'H-'.$i,
-                'height' => $percentage,
-                'date' => $date->format('d/m'),
-                'present' => $presentCount,
-                'total' => $totalStudents,
-            ];
+            $chartData = [];
+            for ($i = $diffInDays; $i >= 0; $i--) {
+                $date = (clone $endDate)->subDays($i);
+                $dateStr = $date->toDateString();
+                $presentCount = $presentCounts[$dateStr] ?? 0;
+                $percentage = round(($presentCount / $totalStudents) * 100);
+                
+                $chartData[] = [
+                    'label' => $date->isToday() ? 'Hari ini' : 'H-'.$i,
+                    'height' => $percentage,
+                    'date' => $date->format('d/m'),
+                    'present' => $presentCount,
+                    'total' => $totalStudents,
+                ];
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Dashboard chartData failed: ' . $e->getMessage());
+            $chartData = [];
         }
 
         // 3. Leaderboards / Rankings
         // a. Attendance Ranking (Top 5)
-        $subquery = \Illuminate\Support\Facades\DB::table('student_attendances')
-            ->select('student_id', 'date')
-            ->when($classId, fn($q) => $q->where('academic_class_id', $classId))
-            ->when($activeSemester, fn($q) => $q->whereBetween('date', [$activeSemester->start_date, $activeSemester->end_date]))
-            ->groupBy('student_id', 'date')
-            ->havingRaw("SUM(CASE WHEN status IN ('hadir', 'terlambat') THEN 1 ELSE 0 END) > 0")
-            ->havingRaw("SUM(CASE WHEN status IN ('sakit', 'izin') THEN 1 ELSE 0 END) = 0")
-            ->havingRaw("SUM(CASE WHEN status = 'alpha' THEN 1 ELSE 0 END) < 3");
+        try {
+            $subquery = \Illuminate\Support\Facades\DB::table('student_attendances')
+                ->select('student_id', 'date')
+                ->when($classId, fn($q) => $q->where('academic_class_id', $classId))
+                ->when($activeSemester, fn($q) => $q->whereBetween('date', [$activeSemester->start_date, $activeSemester->end_date]))
+                ->groupBy('student_id', 'date')
+                ->havingRaw("SUM(CASE WHEN status IN ('hadir', 'terlambat') THEN 1 ELSE 0 END) > 0")
+                ->havingRaw("SUM(CASE WHEN status IN ('sakit', 'izin') THEN 1 ELSE 0 END) = 0")
+                ->havingRaw("SUM(CASE WHEN status = 'alpha' THEN 1 ELSE 0 END) < 3");
 
-        $attRankingQuery = \Illuminate\Support\Facades\DB::table(\Illuminate\Support\Facades\DB::raw("({$subquery->toSql()}) as daily_presence"))
-            ->mergeBindings($subquery)
-            ->select('student_id', \Illuminate\Support\Facades\DB::raw('count(*) as total'))
-            ->groupBy('student_id')
-            ->orderByDesc('total');
+            $attRankingQuery = \Illuminate\Support\Facades\DB::table(\Illuminate\Support\Facades\DB::raw("({$subquery->toSql()}) as daily_presence"))
+                ->mergeBindings($subquery)
+                ->select('student_id', \Illuminate\Support\Facades\DB::raw('count(*) as total'))
+                ->groupBy('student_id')
+                ->orderByDesc('total');
 
-        $topAttendanceItems = $attRankingQuery->limit(5)->get();
-        $topAttendanceStudentIds = $topAttendanceItems->pluck('student_id');
-        $topAttendanceStudents = Student::with('academicClasses')
-            ->whereIn('id', $topAttendanceStudentIds)
-            ->get()
-            ->keyBy('id');
+            $topAttendanceItems = $attRankingQuery->limit(5)->get();
+            $topAttendanceStudentIds = $topAttendanceItems->pluck('student_id');
+            $topAttendanceStudents = Student::with('academicClasses')
+                ->whereIn('id', $topAttendanceStudentIds)
+                ->get()
+                ->keyBy('id');
 
-        $attendanceRanking = $topAttendanceItems->map(function($item) use ($topAttendanceStudents) {
-            $student = $topAttendanceStudents->get($item->student_id);
-            $className = $student && $student->academic_class ? $student->academic_class->name : '';
-            return [
-                'name' => $student->name ?? 'Unknown',
-                'class_name' => $className,
-                'value' => (int) $item->total,
-                'avatar' => $student->avatar ?? null,
-            ];
-        });
+            $attendanceRanking = $topAttendanceItems->map(function($item) use ($topAttendanceStudents) {
+                $student = $topAttendanceStudents->get($item->student_id);
+                $className = $student && $student->academic_class ? $student->academic_class->name : '';
+                return [
+                    'name' => $student->name ?? 'Unknown',
+                    'class_name' => $className,
+                    'value' => (int) $item->total,
+                    'avatar' => $student->avatar ?? null,
+                ];
+            });
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Dashboard attendanceRanking failed: ' . $e->getMessage());
+            $attendanceRanking = collect();
+        }
 
         // b. Assessment Ranking (Top 5)
-        $scoreRankingQuery = \App\Models\StudentScore::query()
-            ->join('students', 'student_scores.student_id', '=', 'students.id')
-            ->join('daily_assessments', 'student_scores.daily_assessment_id', '=', 'daily_assessments.id')
-            ->select('student_scores.student_id', \Illuminate\Support\Facades\DB::raw('AVG(score) as average'))
-            ->groupBy('student_scores.student_id')
-            ->orderByDesc('average')
-            ->with('student.academicClasses');
+        try {
+            $scoreRankingQuery = \App\Models\StudentScore::query()
+                ->join('students', 'student_scores.student_id', '=', 'students.id')
+                ->join('daily_assessments', 'student_scores.daily_assessment_id', '=', 'daily_assessments.id')
+                ->select('student_scores.student_id', \Illuminate\Support\Facades\DB::raw('AVG(score) as average'))
+                ->groupBy('student_scores.student_id')
+                ->orderByDesc('average')
+                ->with('student.academicClasses');
 
-        if ($activeSemester) {
-            $scoreRankingQuery->whereBetween('daily_assessments.date', [$activeSemester->start_date, $activeSemester->end_date]);
+            if ($activeSemester) {
+                $scoreRankingQuery->whereBetween('daily_assessments.date', [$activeSemester->start_date, $activeSemester->end_date]);
+            }
+
+            if ($classId) {
+                $scoreRankingQuery->where('daily_assessments.academic_class_id', $classId);
+            }
+
+            $assessmentRanking = $scoreRankingQuery->limit(5)->get()->map(function($item) {
+                $student = $item->student;
+                $className = $student && $student->academic_class ? $student->academic_class->name : '';
+                return [
+                    'name' => $student->name ?? 'Unknown',
+                    'class_name' => $className,
+                    'value' => round($item->average, 1),
+                    'avatar' => $student->avatar ?? null,
+                ];
+            });
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Dashboard assessmentRanking failed: ' . $e->getMessage());
+            $assessmentRanking = collect();
         }
-
-        if ($classId) {
-            $scoreRankingQuery->where('daily_assessments.academic_class_id', $classId);
-        }
-
-        $assessmentRanking = $scoreRankingQuery->limit(5)->get()->map(function($item) {
-            $student = $item->student;
-            $className = $student && $student->academic_class ? $student->academic_class->name : '';
-            return [
-                'name' => $student->name ?? 'Unknown',
-                'class_name' => $className,
-                'value' => round($item->average, 1),
-                'avatar' => $student->avatar ?? null,
-            ];
-        });
 
         // 4. User Monitoring & Personal Attendance
-        $activeUsers = User::whereHas('sessions', function($q) {
-            $q->where('last_activity', '>=', now()->subMinutes(5)->getTimestamp());
-        })->select('id', 'name', 'email', 'avatar')->get();
+        try {
+            $activeUsers = User::whereHas('sessions', function($q) {
+                $q->where('last_activity', '>=', now()->subMinutes(5)->getTimestamp());
+            })->select('id', 'name', 'email', 'avatar')->get();
 
-        $lastLogins = User::whereNotNull('last_login_at')
-            ->latest('last_login_at')
-            ->select('id', 'name', 'email', 'avatar', 'last_login_at')
-            ->limit(5)->get()
-            ->map(function($user) {
-                $user->time_ago = $user->last_login_at->diffForHumans();
-                return $user;
-            });
+            $lastLogins = User::whereNotNull('last_login_at')
+                ->latest('last_login_at')
+                ->select('id', 'name', 'email', 'avatar', 'last_login_at')
+                ->limit(5)->get()
+                ->map(function($user) {
+                    $user->time_ago = $user->last_login_at->diffForHumans();
+                    return $user;
+                });
 
-        $todayAttendance = Attendance::where('user_id', $request->user()->id)
-            ->whereDate('date', $today)->first();
+            $todayAttendance = Attendance::where('user_id', $request->user()->id)
+                ->whereDate('date', $today)->first();
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Dashboard activeUsers/lastLogins/todayAttendance failed: ' . $e->getMessage());
+            $activeUsers = collect();
+            $lastLogins = collect();
+            $todayAttendance = null;
+        }
 
         // 5. Inventory Summary — 1 query GROUP BY, bukan 5 query terpisah
-        $invGrouped = Cache::remember('inventory_stats', 300, function () {
-            return InventoryBarcode::select('status', DB::raw('count(*) as total'))
-                ->groupBy('status')
-                ->pluck('total', 'status')
-                ->toArray();
-        });
-        $inventoryStats = [
-            'total'     => array_sum($invGrouped),
-            'tersedia'  => $invGrouped['tersedia'] ?? 0,
-            'dipinjam'  => $invGrouped['dipinjam'] ?? 0,
-            'perbaikan' => $invGrouped['perbaikan'] ?? 0,
-            'dihapus'   => $invGrouped['dihapus'] ?? 0,
-        ];
+        try {
+            $invGrouped = Cache::remember('inventory_stats', 300, function () {
+                return InventoryBarcode::select('status', DB::raw('count(*) as total'))
+                    ->groupBy('status')
+                    ->pluck('total', 'status')
+                    ->toArray();
+            });
+            $inventoryStats = [
+                'total'     => array_sum($invGrouped),
+                'tersedia'  => $invGrouped['tersedia'] ?? 0,
+                'dipinjam'  => $invGrouped['dipinjam'] ?? 0,
+                'perbaikan' => $invGrouped['perbaikan'] ?? 0,
+                'dihapus'   => $invGrouped['dihapus'] ?? 0,
+            ];
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Dashboard inventoryStats failed: ' . $e->getMessage());
+            $inventoryStats = [
+                'total'     => 0,
+                'tersedia'  => 0,
+                'dipinjam'  => 0,
+                'perbaikan' => 0,
+                'dihapus'   => 0,
+            ];
+        }
 
         return Inertia::render('Dashboard', [
             'stats' => $stats,
