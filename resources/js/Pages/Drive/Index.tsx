@@ -267,7 +267,8 @@ export default function DriveIndex({ auth, initialFolders, initialFiles, sharedF
                             {isLoadingFolder ? (
                                 <div className="p-10 text-center text-slate-500">Memuat...</div>
                             ) : (
-                                <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
+                                <div className="overflow-x-auto">
+                                    <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
                                     <thead className="bg-slate-50 dark:bg-slate-900/50">
                                         <tr>
                                             <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Nama</th>
@@ -344,6 +345,7 @@ export default function DriveIndex({ auth, initialFolders, initialFiles, sharedF
                                         )}
                                     </tbody>
                                 </table>
+                                </div>
                             )}
                         </div>
                     )}
@@ -354,6 +356,7 @@ export default function DriveIndex({ auth, initialFolders, initialFiles, sharedF
                             <div className="p-4 bg-slate-50 text-sm text-slate-500">
                                 (Hanya menampilkan file yang dibagikan secara spesifik kepada Anda. Folder yang dibagikan dapat dilihat di tab "File Saya" pada Root).
                             </div>
+                            <div className="overflow-x-auto">
                             <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
                                 <thead className="bg-slate-50 dark:bg-slate-900/50">
                                     <tr>
@@ -384,6 +387,7 @@ export default function DriveIndex({ auth, initialFolders, initialFiles, sharedF
                                     )}
                                 </tbody>
                             </table>
+                            </div>
                         </div>
                     )}
                 </div>
