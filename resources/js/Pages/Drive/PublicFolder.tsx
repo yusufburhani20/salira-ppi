@@ -23,7 +23,7 @@ export default function PublicFolder({ sharedFolder, currentFolder, subfolders, 
             <div className="py-6">
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
                     
-                    <div className="bg-white dark:bg-slate-800 shadow-sm sm:rounded-lg overflow-hidden flex flex-col">
+                    <div className="bg-white dark:bg-slate-800 shadow-sm sm:rounded-lg flex flex-col">
                         
                         <div className="p-4 bg-indigo-50 dark:bg-indigo-900/30 border-b border-indigo-100 flex justify-between items-center">
                             <div>

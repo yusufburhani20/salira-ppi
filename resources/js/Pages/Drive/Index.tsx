@@ -255,7 +255,7 @@ export default function DriveIndex({ auth, initialFolders, initialFiles, sharedF
 
                     {/* Tab Content: My Files */}
                     {activeTab === 'my-files' && (
-                        <div className="bg-white dark:bg-slate-800 shadow-sm sm:rounded-lg overflow-hidden flex flex-col">
+                        <div className="bg-white dark:bg-slate-800 shadow-sm sm:rounded-lg flex flex-col">
                             
                             {/* Breadcrumbs */}
                             <div className="p-4 bg-slate-50 dark:bg-slate-900 border-b flex items-center gap-2 overflow-x-auto whitespace-nowrap hidden md:flex">
@@ -501,7 +501,7 @@ export default function DriveIndex({ auth, initialFolders, initialFiles, sharedF
 
                     {/* Tab Content: Shared with Me */}
                     {activeTab === 'shared' && (
-                        <div className="bg-white dark:bg-slate-800 shadow-sm sm:rounded-lg overflow-hidden">
+                        <div className="bg-white dark:bg-slate-800 shadow-sm sm:rounded-lg">
                             <div className="p-4 bg-slate-50 text-sm text-slate-500">
                                 (Hanya menampilkan file yang dibagikan secara spesifik kepada Anda. Folder yang dibagikan dapat dilihat di tab "File Saya" pada Root).
                             </div>
