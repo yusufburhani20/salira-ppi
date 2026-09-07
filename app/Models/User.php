@@ -8,9 +8,17 @@ use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 use App\Enums\UserStatus;
 
+use Laravel\Sanctum\HasApiTokens;
+
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, HasRoles;
+    use HasApiTokens, HasFactory, Notifiable, HasRoles;
+
+    /**
+     * Override Spatie's hasRole to provide a standardized wrapper
+     * (Optional, since Spatie already has hasRole, we can just use the trait's method directly, 
+     * but we will add explicit context checkers below).
+     */
 
     protected $guarded = ['id'];
     protected $hidden = ['password', 'remember_token'];
@@ -94,5 +102,49 @@ class User extends Authenticatable
     public function sharedDriveFiles()
     {
         return $this->morphMany(DriveFileShare::class, 'shared_to');
+    }
+
+    /**
+     * Relasi Pivot untuk Role Wali Kelas
+     * Mengembalikan kelas-kelas yang mana user ini menjadi wali kelasnya.
+     */
+    public function classTeacherContexts()
+    {
+        return $this->belongsToMany(AcademicClass::class, 'class_teachers', 'user_id', 'academic_class_id')
+                    ->withoutGlobalScope('active_year')
+                    ->withTimestamps();
+    }
+
+    /**
+     * Relasi Pivot untuk Role Kepala Program Keahlian
+     * Mengembalikan program-program yang mana user ini menjadi kepalanya.
+     */
+    public function programHeadContexts()
+    {
+        // Karena model Program belum ada, kita pakai referensi langsung atau biarkan kosong sementara
+        // Return BelongsToMany jika Model Program sudah dibuat.
+        // Asumsi model Program ada di App\Models\Program
+        return $this->belongsToMany(\App\Models\Program::class, 'program_heads', 'user_id', 'program_id')->withTimestamps();
+    }
+
+    /**
+     * Helper untuk cek apakah user adalah wali kelas dari kelas spesifik
+     */
+    public function isClassTeacherOf($classId)
+    {
+        return $this->classTeacherContexts()->where('academic_class_id', $classId)->exists();
+    }
+
+    /**
+     * Helper untuk cek apakah user adalah kepala program dari program spesifik
+     */
+    public function isProgramHeadOf($programId)
+    {
+        return $this->programHeadContexts()->where('program_id', $programId)->exists();
+    }
+    
+    public function deviceTokens()
+    {
+        return $this->morphMany(DeviceToken::class, 'tokenable');
     }
 }

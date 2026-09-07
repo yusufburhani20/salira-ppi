@@ -13,6 +13,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Enums\Gender;
 use App\Enums\StudentStatus;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Hash;
 
 class StudentController extends Controller
 {
@@ -65,7 +66,9 @@ class StudentController extends Controller
             $studentData['photo'] = $this->processAndStorePhoto($request->file('photo'));
         }
 
-        $student = Student::create($studentData);
+        $student = Student::create(array_merge($studentData, [
+            'password' => Hash::make($validated['nisn']),
+        ]));
 
         if (!empty($validated['academic_class_id'])) {
             $student->academicClasses()->attach($validated['academic_class_id'], ['is_active' => true]);

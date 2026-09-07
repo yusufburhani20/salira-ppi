@@ -6,10 +6,11 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use App\Enums\Gender;
 use App\Enums\StudentStatus;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
 class Student extends Authenticatable
 {
-    use Notifiable;
+    use HasApiTokens, Notifiable;
 
     protected $guarded = ['id'];
     protected $casts = [
@@ -69,5 +70,10 @@ class Student extends Authenticatable
     public function sharedDriveFiles()
     {
         return $this->morphMany(DriveFileShare::class, 'shared_to');
+    }
+
+    public function deviceTokens()
+    {
+        return $this->morphMany(DeviceToken::class, 'tokenable');
     }
 }

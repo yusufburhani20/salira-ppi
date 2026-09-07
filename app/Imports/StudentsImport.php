@@ -11,6 +11,7 @@ use PhpOffice\PhpSpreadsheet\Cell\Cell;
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\Cell\DefaultValueBinder;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Hash;
 
 class StudentsImport extends DefaultValueBinder implements ToCollection, WithHeadingRow, WithCustomValueBinder
 {
@@ -98,7 +99,9 @@ class StudentsImport extends DefaultValueBinder implements ToCollection, WithHea
             if ($student) {
                 $student->update($updateData);
             } else {
-                $student = Student::create($updateData);
+                $student = Student::create(array_merge($updateData, [
+                    'password' => Hash::make($nisn),
+                ]));
             }
 
             if ($classId) {
