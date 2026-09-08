@@ -101,8 +101,9 @@ class AgendaController extends Controller
     public function getStudents($id)
     {
         $agenda = ClassAgenda::where('teacher_id', Auth::id())->findOrFail($id);
-        $students = Student::where('academic_class_id', $agenda->academic_class_id)
-            ->orderBy('name')->get(['id', 'name', 'nisn']);
+        $students = Student::whereHas('academicClasses', function ($q) use ($agenda) {
+            $q->where('class_id', $agenda->academic_class_id)->where('is_active', true);
+        })->orderBy('name')->get(['students.id', 'students.name', 'students.nisn']);
 
         // Get existing attendance for this date
         $existingAttendances = StudentAttendance::where('date', $agenda->date)

@@ -84,8 +84,9 @@ class AssessmentController extends Controller
 
     public function getStudents($classId)
     {
-        $students = Student::where('academic_class_id', $classId)
-            ->orderBy('name')->get(['id', 'name', 'nisn']);
+        $students = Student::whereHas('academicClasses', function ($q) use ($classId) {
+            $q->where('class_id', $classId)->where('is_active', true);
+        })->orderBy('name')->get(['students.id', 'students.name', 'students.nisn']);
         return response()->json(['data' => $students]);
     }
 
