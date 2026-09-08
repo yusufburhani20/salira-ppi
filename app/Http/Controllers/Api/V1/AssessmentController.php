@@ -1,0 +1,124 @@
+<?php
+
+namespace App\Http\Controllers\Api\V1;
+
+use App\Http\Controllers\Controller;
+use App\Models\DailyAssessment;
+use App\Models\StudentScore;
+use App\Models\AcademicClass;
+use App\Models\Subject;
+use App\Models\Student;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+
+class AssessmentController extends Controller
+{
+    public function index(Request $request)
+    {
+        $query = DailyAssessment::with(['academicClass', 'subject', 'scores'])
+            ->where('teacher_id', Auth::id());
+
+        if ($request->academic_class_id) {
+            $query->where('academic_class_id', $request->academic_class_id);
+        }
+        if ($request->subject_id) {
+            $query->where('subject_id', $request->subject_id);
+        }
+
+        $assessments = $query->latest()->paginate(20);
+
+        return response()->json([
+            'data' => $assessments->map(fn($a) => $this->formatAssessment($a)),
+            'meta' => [
+                'current_page' => $assessments->currentPage(),
+                'last_page'    => $assessments->lastPage(),
+                'total'        => $assessments->total(),
+            ],
+        ]);
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'academic_class_id' => 'required|exists:academic_classes,id',
+            'subject_id'        => 'required|exists:subjects,id',
+            'date'              => 'required|date',
+            'type'              => 'required|string',
+            'title'             => 'required|string|max:255',
+            'kkm'               => 'nullable|integer|min:0|max:100',
+            'scores'            => 'required|array|min:1',
+            'scores.*.student_id' => 'required|exists:students,id',
+            'scores.*.score'      => 'required|numeric|min:0|max:100',
+            'scores.*.notes'      => 'nullable|string',
+        ]);
+
+        DB::beginTransaction();
+        try {
+            $assessment = DailyAssessment::create([
+                'teacher_id'        => Auth::id(),
+                'academic_class_id' => $validated['academic_class_id'],
+                'subject_id'        => $validated['subject_id'],
+                'date'              => $validated['date'],
+                'type'              => $validated['type'],
+                'title'             => $validated['title'],
+                'kkm'               => $validated['kkm'] ?? null,
+            ]);
+
+            foreach ($validated['scores'] as $s) {
+                StudentScore::create([
+                    'daily_assessment_id' => $assessment->id,
+                    'student_id'          => $s['student_id'],
+                    'score'               => $s['score'],
+                    'notes'               => $s['notes'] ?? null,
+                ]);
+            }
+
+            DB::commit();
+            return response()->json(['message' => 'Penilaian berhasil disimpan', 'data' => $this->formatAssessment($assessment->load(['academicClass', 'subject', 'scores']))], 201);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'Gagal: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function getStudents($classId)
+    {
+        $students = Student::where('academic_class_id', $classId)
+            ->orderBy('name')->get(['id', 'name', 'nisn']);
+        return response()->json(['data' => $students]);
+    }
+
+    public function getFormData()
+    {
+        return response()->json([
+            'classes'  => AcademicClass::all(['id', 'name']),
+            'subjects' => Subject::orderBy('name')->get(['id', 'name']),
+            'types'    => ['Tugas', 'Ulangan Harian', 'Kuis', 'Praktik', 'Lainnya'],
+        ]);
+    }
+
+    public function destroy($id)
+    {
+        $assessment = DailyAssessment::where('teacher_id', Auth::id())->findOrFail($id);
+        $assessment->delete();
+        return response()->json(['message' => 'Penilaian berhasil dihapus']);
+    }
+
+    private function formatAssessment(DailyAssessment $a): array
+    {
+        return [
+            'id'                => $a->id,
+            'date'              => $a->date,
+            'title'             => $a->title,
+            'type'              => $a->type,
+            'kkm'               => $a->kkm,
+            'class_name'        => $a->academicClass?->name,
+            'subject_name'      => $a->subject?->name,
+            'academic_class_id' => $a->academic_class_id,
+            'subject_id'        => $a->subject_id,
+            'scores_count'      => $a->scores?->count() ?? 0,
+            'average_score'     => $a->scores?->avg('score') ? round($a->scores->avg('score'), 1) : null,
+        ];
+    }
+}
