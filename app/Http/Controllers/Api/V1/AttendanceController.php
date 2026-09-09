@@ -7,11 +7,43 @@ use App\Http\Resources\AttendanceResource;
 use App\Http\Resources\StudentAttendanceResource;
 use App\Models\Attendance;
 use App\Models\StudentAttendance;
+use App\Models\Geofence;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
 class AttendanceController extends Controller
 {
+    private function getDistance($lat1, $lon1, $lat2, $lon2)
+    {
+        $earth_radius = 6371000;
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLon = deg2rad($lon2 - $lon1);
+        $a = sin($dLat / 2) * sin($dLat / 2) + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLon / 2) * sin($dLon / 2);
+        $c = 2 * asin(sqrt($a));
+        return $earth_radius * $c;
+    }
+
+    private function verifyGeofence($lat, $lon)
+    {
+        $geofences = Geofence::where('is_active', true)->get();
+        if ($geofences->isEmpty()) {
+            return ['valid' => true, 'notes' => 'No active geofences configured', 'geofence' => null];
+        }
+
+        foreach ($geofences as $geofence) {
+            $dist = $this->getDistance($lat, $lon, $geofence->latitude, $geofence->longitude);
+            if ($dist <= $geofence->radius) {
+                return [
+                    'valid' => true, 
+                    'notes' => "Inside " . $geofence->name . " (Distance: " . round($dist) . "m)",
+                    'geofence' => $geofence
+                ];
+            }
+        }
+
+        return ['valid' => false, 'notes' => 'Outside all geofence zones', 'geofence' => null];
+    }
+
     public function index(Request $request)
     {
         $user = $request->user();
@@ -70,6 +102,15 @@ class AttendanceController extends Controller
             'notes' => 'nullable|string',
             'photo' => 'nullable|image|max:2048',
         ]);
+
+        if ($request->latitude && $request->longitude) {
+            $geoCheck = $this->verifyGeofence($request->latitude, $request->longitude);
+            if (!$geoCheck['valid']) {
+                return response()->json(['message' => 'Anda berada di luar radius lokasi yang diizinkan.'], 403);
+            }
+        } else {
+            return response()->json(['message' => 'Koordinat lokasi (GPS) diperlukan untuk absensi.'], 400);
+        }
 
         $today = Carbon::today()->toDateString();
         $attendance = Attendance::firstOrCreate(
