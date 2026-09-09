@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Models\Permission as LeavePermission;
+use App\Models\PermissionRequest as LeavePermission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -62,11 +62,11 @@ class LeaveController extends Controller
     {
         return [
             'id'         => $l->id,
-            'type'       => $l->type,
+            'type'       => $l->type->value ?? $l->type,
             'start_date' => $l->start_date,
             'end_date'   => $l->end_date,
             'reason'     => $l->reason,
-            'status'     => $l->status,
+            'status'     => $l->status->value ?? $l->status,
             'created_at' => $l->created_at?->toDateString(),
         ];
     }

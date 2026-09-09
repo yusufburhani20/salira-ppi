@@ -71,7 +71,7 @@ export const useAttendance = () => {
         }
     };
 
-    const submitCheckIn = async (locationData?: { latitude?: number; longitude?: number; notes?: string }) => {
+    const submitCheckIn = async (locationData?: { latitude?: number; longitude?: number; notes?: string; photoUri?: string }) => {
         try {
             const { checkIn } = await import('../services/api/attendance');
             await checkIn(locationData || {});

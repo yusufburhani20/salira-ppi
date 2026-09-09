@@ -15,6 +15,7 @@ import DashboardScreen from '../screens/dashboard/DashboardScreen';
 import AttendanceScreen from '../screens/attendance/AttendanceScreen';
 import AgendaScreen from '../screens/agenda/AgendaScreen';
 import AssessmentScreen from '../screens/assessment/AssessmentScreen';
+import CounselingScreen from '../screens/counseling/CounselingScreen';
 import NotificationScreen from '../screens/notification/NotificationScreen';
 
 // Stack screens (pushed from tabs)
@@ -60,6 +61,7 @@ function MainTabs() {
                         Presensi:   { focused: 'finger-print',      outline: 'finger-print-outline' },
                         Jurnal:     { focused: 'book',              outline: 'book-outline' },
                         Penilaian:  { focused: 'clipboard',         outline: 'clipboard-outline' },
+                        Bimbingan:  { focused: 'chatbubbles',       outline: 'chatbubbles-outline' },
                         Notifikasi: { focused: 'notifications',     outline: 'notifications-outline' },
                     };
                     const icon = icons[route.name];
@@ -68,7 +70,7 @@ function MainTabs() {
                             alignItems: 'center', 
                             justifyContent: 'center',
                             backgroundColor: focused ? '#eff6ff' : 'transparent',
-                            width: 40,
+                            width: 32,
                             height: 32,
                             borderRadius: 16,
                             marginTop: 4
@@ -83,10 +85,13 @@ function MainTabs() {
             <Tab.Screen name="Presensi" component={AttendanceScreen} />
             <Tab.Screen name="Jurnal" component={AgendaScreen} />
             <Tab.Screen name="Penilaian" component={AssessmentScreen} />
+            <Tab.Screen name="Bimbingan" component={CounselingScreen} />
             <Tab.Screen name="Notifikasi" component={NotificationScreen} />
         </Tab.Navigator>
     );
 }
+
+import AttendanceHistoryScreen from '../screens/attendance/AttendanceHistoryScreen';
 
 function AuthenticatedStack() {
     return (
@@ -95,6 +100,7 @@ function AuthenticatedStack() {
             <Stack.Screen name="Profile" component={ProfileScreen} />
             <Stack.Screen name="Leave" component={LeaveScreen} />
             <Stack.Screen name="Attendance" component={AttendanceScreen} />
+            <Stack.Screen name="AttendanceHistory" component={AttendanceHistoryScreen} />
         </Stack.Navigator>
     );
 }

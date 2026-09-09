@@ -21,9 +21,25 @@ export const getAttendanceHistory = async (page: number = 1): Promise<Attendance
     }
 };
 
-export const checkIn = async (data: { latitude?: number; longitude?: number; notes?: string }): Promise<{ message: string; data: AttendanceData }> => {
+export const checkIn = async (data: { latitude?: number; longitude?: number; notes?: string; photoUri?: string }): Promise<{ message: string; data: AttendanceData }> => {
     try {
-        const response = await api.post('/attendance/check-in', data);
+        const formData = new FormData();
+        if (data.latitude) formData.append('latitude', String(data.latitude));
+        if (data.longitude) formData.append('longitude', String(data.longitude));
+        if (data.notes) formData.append('notes', data.notes);
+        
+        if (data.photoUri) {
+            const filename = data.photoUri.split('/').pop() || 'photo.jpg';
+            const match = /\.(\w+)$/.exec(filename);
+            const type = match ? `image/${match[1]}` : `image/jpeg`;
+            formData.append('photo', { uri: data.photoUri, name: filename, type } as any);
+        }
+
+        const response = await api.post('/attendance/check-in', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        });
         return response.data;
     } catch (error) {
         console.error('Error checking in', error);

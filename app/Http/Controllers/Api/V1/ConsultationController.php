@@ -102,8 +102,11 @@ class ConsultationController extends Controller
     public function getStudents($classId)
     {
         $students = Student::whereHas('academicClasses', function ($q) use ($classId) {
-            $q->where('class_id', $classId)->where('is_active', true);
-        })->orderBy('name')->get(['students.id', 'students.name', 'students.nisn']);
+            $q->where('class_members.class_id', $classId)->where('class_members.is_active', true);
+        })->orderBy('name')->get(['students.id', 'students.name', 'students.nisn', 'students.photo']);
+        
+        $students->each->setAppends(['photo_url']);
+        
         return response()->json(['data' => $students]);
     }
 
