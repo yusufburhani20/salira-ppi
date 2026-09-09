@@ -83,13 +83,28 @@ class AttendanceController extends Controller
             ]
         );
 
-        if ($request->hasFile('photo') && !$attendance->photo_path) {
-            $path = $request->file('photo')->store('attendances', 'public');
-            $attendance->update(['photo_path' => $path]);
+        if ($attendance->wasRecentlyCreated) {
+            // Ini adalah check-in
+            if ($request->hasFile('photo')) {
+                $path = $request->file('photo')->store('attendances', 'public');
+                $attendance->update(['photo_path' => $path]);
+            }
+        } else {
+            // Ini adalah check-out (absen kedua di hari yang sama)
+            $updateData = [
+                'check_out' => Carbon::now()->toTimeString()
+            ];
+            
+            if ($request->hasFile('photo')) {
+                $path = $request->file('photo')->store('attendances/checkout', 'public');
+                $updateData['checkout_photo_path'] = $path;
+            }
+            
+            $attendance->update($updateData);
         }
 
         return response()->json([
-            'message' => 'Check-in berhasil',
+            'message' => $attendance->wasRecentlyCreated ? 'Check-in berhasil' : 'Check-out berhasil',
             'data' => new AttendanceResource($attendance)
         ]);
     }
