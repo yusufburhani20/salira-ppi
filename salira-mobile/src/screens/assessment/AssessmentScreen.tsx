@@ -8,6 +8,7 @@ import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { assessmentService } from '../../services/api/assessment';
 import { Assessment, AcademicClass, Subject, Student } from '../../types';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const colors = {
     primary: '#006194',
@@ -170,6 +171,10 @@ export default function AssessmentScreen() {
         setShowForm(true);
     };
 
+    const totalCount = assessments.length;
+    const avgScore = assessments.reduce((acc, curr) => acc + (curr.average_score || 0), 0) / (totalCount || 1);
+    const totalParticipants = assessments.reduce((acc, curr) => acc + (curr.scores_count || 0), 0);
+
     const renderItem = ({ item }: { item: Assessment }) => (
         <View style={styles.card}>
             <View style={styles.cardHeader}>
@@ -212,24 +217,55 @@ export default function AssessmentScreen() {
                 </View>
             </SafeAreaView>
 
-            {loading ? (
-                <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
-            ) : (
-                <FlatList
-                    data={assessments}
-                    keyExtractor={item => item.id.toString()}
-                    renderItem={renderItem}
-                    contentContainerStyle={styles.list}
-                    refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); loadData(); }} colors={[colors.primary]} />}
-                    ListEmptyComponent={
-                        <View style={styles.empty}>
-                            <MaterialIcons name="fact-check" size={56} color={colors.outlineVariant} />
-                            <Text style={styles.emptyTitle}>Belum ada penilaian</Text>
-                            <Text style={styles.emptyText}>Tap tombol Buat Nilai untuk memasukkan nilai santri.</Text>
+            <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); loadData(); }} colors={[colors.primary]} />} showsVerticalScrollIndicator={false}>
+                <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
+                    <LinearGradient
+                        colors={[colors.primary, colors.primaryContainer]}
+                        start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                        style={styles.banner}
+                    >
+                        <View style={styles.bannerHeader}>
+                            <View>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                                    <MaterialIcons name="assignment-ind" size={16} color={colors.surface} />
+                                    <Text style={styles.bannerSub}>GURU MAPEL</Text>
+                                </View>
+                                <Text style={styles.bannerTitle}>Penilaian Kelas</Text>
+                                <Text style={styles.bannerDesc}>Input dan pantau hasil evaluasi belajar siswa dengan mudah.</Text>
+                            </View>
                         </View>
-                    }
-                />
-            )}
+                        
+                        <View style={styles.statsRow}>
+                            <View style={styles.statBox}>
+                                <Text style={styles.statBoxLabel}>Total Penilaian</Text>
+                                <Text style={styles.statBoxVal}>{totalCount}</Text>
+                            </View>
+                            <View style={styles.statBox}>
+                                <Text style={styles.statBoxLabel}>Rata-rata Kelas</Text>
+                                <Text style={[styles.statBoxVal, { color: '#ffb95f' }]}>{avgScore.toFixed(1)}</Text>
+                            </View>
+                            <View style={styles.statBox}>
+                                <Text style={styles.statBoxLabel}>Partisipasi</Text>
+                                <Text style={[styles.statBoxVal, { color: '#6ffbbe' }]}>{totalParticipants} Siswa</Text>
+                            </View>
+                        </View>
+                    </LinearGradient>
+                </View>
+
+                {loading ? (
+                    <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
+                ) : assessments.length === 0 ? (
+                    <View style={styles.empty}>
+                        <MaterialIcons name="fact-check" size={56} color={colors.outlineVariant} />
+                        <Text style={styles.emptyTitle}>Belum ada penilaian</Text>
+                        <Text style={styles.emptyText}>Tap tombol Buat Nilai untuk memasukkan nilai santri.</Text>
+                    </View>
+                ) : (
+                    <View style={styles.list}>
+                        {assessments.map(item => <React.Fragment key={item.id}>{renderItem({ item })}</React.Fragment>)}
+                    </View>
+                )}
+            </ScrollView>
 
             <Modal visible={showForm} animationType="slide" transparent={false}>
                 <SafeAreaView style={{ flex: 1, backgroundColor: colors.surface }}>
@@ -345,6 +381,17 @@ const styles = StyleSheet.create({
     addBtnText: { color: colors.onPrimary, fontWeight: 'bold', fontSize: 14 },
     list: { padding: 16, paddingBottom: 100 },
     
+    // Banner
+    banner: { borderRadius: 16, padding: 16, elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 8, marginBottom: 16 },
+    bannerHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+    bannerSub: { fontSize: 10, fontWeight: 'bold', color: '#cce5ff', letterSpacing: 0.5 },
+    bannerTitle: { fontSize: 22, fontWeight: 'bold', color: '#ffffff', marginBottom: 4 },
+    bannerDesc: { fontSize: 12, color: '#cce5ff', maxWidth: '85%' },
+    statsRow: { flexDirection: 'row', gap: 8, marginTop: 16, paddingTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.15)' },
+    statBox: { flex: 1, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 8, padding: 8, alignItems: 'center' },
+    statBoxLabel: { fontSize: 10, color: '#cce5ff', marginBottom: 2 },
+    statBoxVal: { fontSize: 18, fontWeight: 'bold', color: '#ffffff' },
+
     card: { backgroundColor: colors.surfaceContainerLowest, borderRadius: 16, padding: 16, marginBottom: 16, elevation: 2, shadowColor: '#0f172a', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8 },
     cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
     typeBadge: { backgroundColor: colors.primaryFixed, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },

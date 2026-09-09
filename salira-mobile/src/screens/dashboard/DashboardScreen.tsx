@@ -39,7 +39,7 @@ const colors = {
 const AKSI_CEPAT = [
     { label: 'Jurnal KBM', icon: 'event-note', color: colors.primary, bg: colors.primaryFixed, tab: 'Jurnal' },
     { label: 'Asesmen', icon: 'fact-check', color: colors.onSecondaryContainer, bg: colors.secondaryContainer, tab: 'Penilaian' },
-    { label: 'Konseling', icon: 'support-agent', color: colors.tertiary, bg: colors.tertiaryFixed },
+    { label: 'Konseling', icon: 'support-agent', color: colors.tertiary, bg: colors.tertiaryFixed, tab: 'Bimbingan' },
     { label: 'Halaqah', icon: 'bedtime', color: colors.primary, bg: colors.surfaceContainerHighest },
     { label: 'Izin Cuti', icon: 'assignment', color: colors.onSurfaceVariant, bg: colors.surfaceContainer, screen: 'Leave' },
 ];

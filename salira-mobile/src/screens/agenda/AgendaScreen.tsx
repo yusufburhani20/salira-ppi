@@ -252,6 +252,10 @@ export default function AgendaScreen() {
         Alpha: students.filter(s => s.status === 'Alpha').length,
     };
 
+    const totalCount = agendas.length;
+    const uniqueClasses = new Set(agendas.map(a => a.academic_class_id)).size;
+    const totalJp = agendas.reduce((acc, curr) => acc + (curr.lesson_hour_end - curr.lesson_hour_start + 1), 0);
+
     const renderAgenda = ({ item }: { item: Agenda }) => (
         <View style={styles.card}>
             <View style={styles.cardHeader}>
@@ -279,26 +283,55 @@ export default function AgendaScreen() {
                 </View>
             </SafeAreaView>
 
-            {loading ? (
-                <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
-            ) : (
-                <FlatList
-                    data={agendas}
-                    keyExtractor={item => item.id.toString()}
-                    renderItem={renderAgenda}
-                    contentContainerStyle={styles.list}
-                    refreshControl={
-                        <RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} colors={[colors.primary]} />
-                    }
-                    ListEmptyComponent={
-                        <View style={styles.empty}>
-                            <MaterialIcons name="menu-book" size={56} color={colors.outlineVariant} />
-                            <Text style={styles.emptyTitle}>Belum ada jurnal</Text>
-                            <Text style={styles.emptyText}>Tap tombol Buat Jurnal untuk mencatat jurnal mengajar hari ini.</Text>
+            <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); load(); }} colors={[colors.primary]} />} showsVerticalScrollIndicator={false}>
+                <View style={{ paddingHorizontal: 16, paddingTop: 16 }}>
+                    <LinearGradient
+                        colors={[colors.primary, colors.primaryContainer]}
+                        start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                        style={styles.banner}
+                    >
+                        <View style={styles.bannerHeader}>
+                            <View>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                                    <MaterialIcons name="assignment-ind" size={16} color={colors.surface} />
+                                    <Text style={styles.bannerSub}>GURU MAPEL</Text>
+                                </View>
+                                <Text style={styles.bannerTitle}>Jurnal KBM</Text>
+                                <Text style={styles.bannerDesc}>Catat agenda dan aktivitas mengajar harian secara praktis.</Text>
+                            </View>
                         </View>
-                    }
-                />
-            )}
+                        
+                        <View style={styles.statsRow}>
+                            <View style={styles.statBox}>
+                                <Text style={styles.statBoxLabel}>Total Jurnal</Text>
+                                <Text style={styles.statBoxVal}>{totalCount}</Text>
+                            </View>
+                            <View style={styles.statBox}>
+                                <Text style={styles.statBoxLabel}>Kelas Aktif</Text>
+                                <Text style={[styles.statBoxVal, { color: colors.tertiaryFixed }]}>{uniqueClasses}</Text>
+                            </View>
+                            <View style={styles.statBox}>
+                                <Text style={styles.statBoxLabel}>Total JP</Text>
+                                <Text style={[styles.statBoxVal, { color: colors.secondaryContainer }]}>{totalJp}</Text>
+                            </View>
+                        </View>
+                    </LinearGradient>
+                </View>
+
+                {loading ? (
+                    <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
+                ) : agendas.length === 0 ? (
+                    <View style={styles.empty}>
+                        <MaterialIcons name="menu-book" size={56} color={colors.outlineVariant} />
+                        <Text style={styles.emptyTitle}>Belum ada jurnal</Text>
+                        <Text style={styles.emptyText}>Tap tombol Buat Jurnal untuk mencatat jurnal mengajar hari ini.</Text>
+                    </View>
+                ) : (
+                    <View style={styles.list}>
+                        {agendas.map(item => <React.Fragment key={item.id}>{renderAgenda({ item })}</React.Fragment>)}
+                    </View>
+                )}
+            </ScrollView>
 
             {/* ─── Add Journal Modal Form ─── */}
             <Modal visible={showForm} animationType="slide" transparent={false}>
@@ -610,6 +643,18 @@ const styles = StyleSheet.create({
     },
     addBtnText: { color: colors.onPrimary, fontWeight: 'bold', fontSize: 14 },
     list: { padding: 16, paddingBottom: 100 },
+    
+    // Banner
+    banner: { borderRadius: 16, padding: 16, elevation: 4, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 8, marginBottom: 16 },
+    bannerHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+    bannerSub: { fontSize: 10, fontWeight: 'bold', color: '#cce5ff', letterSpacing: 0.5 },
+    bannerTitle: { fontSize: 22, fontWeight: 'bold', color: '#ffffff', marginBottom: 4 },
+    bannerDesc: { fontSize: 12, color: '#cce5ff', maxWidth: '85%' },
+    statsRow: { flexDirection: 'row', gap: 8, marginTop: 16, paddingTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.15)' },
+    statBox: { flex: 1, backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 8, padding: 8, alignItems: 'center' },
+    statBoxLabel: { fontSize: 10, color: '#cce5ff', marginBottom: 2 },
+    statBoxVal: { fontSize: 18, fontWeight: 'bold', color: '#ffffff' },
+
     card: {
         backgroundColor: colors.surfaceContainerLowest, borderRadius: 16, padding: 16, marginBottom: 16,
         elevation: 2, shadowColor: '#0f172a', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8,
