@@ -42,7 +42,6 @@ export const checkIn = async (data: { latitude?: number; longitude?: number; not
         });
         return response.data;
     } catch (error) {
-        console.error('Error checking in', error);
         throw error;
     }
 };

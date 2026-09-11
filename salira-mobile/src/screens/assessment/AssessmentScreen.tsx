@@ -6,7 +6,10 @@ import {
 } from 'react-native';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { assessmentService } from '../../services/api/assessment';
+import { finalAssessmentService } from '../../services/api/finalAssessment';
 import { Assessment, AcademicClass, Subject, Student } from '../../types';
+
+type ActiveTab = 'daily' | 'final';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -91,12 +94,15 @@ function SelectorModal({ visible, title, items, selectedId, onSelect, onClose }:
 }
 
 export default function AssessmentScreen() {
+    const [activeTab, setActiveTab] = useState<ActiveTab>('daily');
     const [assessments, setAssessments] = useState<Assessment[]>([]);
+    const [finalAssessments, setFinalAssessments] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [showForm, setShowForm] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [errorMsg, setErrorMsg] = useState('');
+    const [editItem, setEditItem] = useState<any | null>(null);
 
     const [classes, setClasses] = useState<AcademicClass[]>([]);
     const [subjects, setSubjects] = useState<Subject[]>([]);
@@ -111,17 +117,23 @@ export default function AssessmentScreen() {
     const [aKkm, setAKkm] = useState('');
     const [scores, setScores] = useState<{ student_id: number; name: string; score: string }[]>([]);
 
+    // Final Assessment specific
+    const [fType, setFType] = useState<'ASAS' | 'ASAT'>('ASAS');
+
     const [showClassModal, setShowClassModal] = useState(false);
     const [showSubjectModal, setShowSubjectModal] = useState(false);
     const [showTypeModal, setShowTypeModal] = useState(false);
+    const [showFTypeModal, setShowFTypeModal] = useState(false);
 
     const loadData = useCallback(async () => {
         try {
-            const [res, form] = await Promise.all([
+            const [res, finalRes, form] = await Promise.all([
                 assessmentService.getAll(),
+                finalAssessmentService.getAll(),
                 assessmentService.getFormData()
             ]);
             setAssessments(res.data);
+            setFinalAssessments(finalRes.data);
             setClasses(form.classes || []);
             setSubjects(form.subjects || []);
         } catch (e) { console.error(e); }
@@ -252,18 +264,94 @@ export default function AssessmentScreen() {
                     </LinearGradient>
                 </View>
 
+                {/* Tab Bar */}
+                <View style={{ flexDirection: 'row', marginHorizontal: 16, marginTop: 12, backgroundColor: colors.surfaceContainerLow, borderRadius: 10, padding: 4 }}>
+                    {(['daily', 'final'] as ActiveTab[]).map(t => (
+                        <TouchableOpacity
+                            key={t}
+                            onPress={() => setActiveTab(t)}
+                            style={{
+                                flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: 'center',
+                                backgroundColor: activeTab === t ? colors.primary : 'transparent',
+                            }}>
+                            <Text style={{ fontSize: 13, fontWeight: '600', color: activeTab === t ? '#fff' : colors.onSurfaceVariant }}>
+                                {t === 'daily' ? 'Harian' : 'Ujian Akhir'}
+                            </Text>
+                        </TouchableOpacity>
+                    ))}
+                </View>
+
                 {loading ? (
                     <ActivityIndicator size="large" color={colors.primary} style={{ marginTop: 40 }} />
-                ) : assessments.length === 0 ? (
-                    <View style={styles.empty}>
-                        <MaterialIcons name="fact-check" size={56} color={colors.outlineVariant} />
-                        <Text style={styles.emptyTitle}>Belum ada penilaian</Text>
-                        <Text style={styles.emptyText}>Tap tombol Buat Nilai untuk memasukkan nilai santri.</Text>
-                    </View>
+                ) : activeTab === 'daily' ? (
+                    assessments.length === 0 ? (
+                        <View style={styles.empty}>
+                            <MaterialIcons name="fact-check" size={56} color={colors.outlineVariant} />
+                            <Text style={styles.emptyTitle}>Belum ada penilaian harian</Text>
+                            <Text style={styles.emptyText}>Tap tombol Buat Nilai untuk memasukkan nilai santri.</Text>
+                        </View>
+                    ) : (
+                        <View style={styles.list}>
+                            {assessments.map(item => <React.Fragment key={item.id}>{renderItem({ item })}</React.Fragment>)}
+                        </View>
+                    )
                 ) : (
-                    <View style={styles.list}>
-                        {assessments.map(item => <React.Fragment key={item.id}>{renderItem({ item })}</React.Fragment>)}
-                    </View>
+                    finalAssessments.length === 0 ? (
+                        <View style={styles.empty}>
+                            <MaterialIcons name="assignment-turned-in" size={56} color={colors.outlineVariant} />
+                            <Text style={styles.emptyTitle}>Belum ada penilaian akhir</Text>
+                            <Text style={styles.emptyText}>Tap tombol Buat Nilai untuk menginput nilai ujian semester (ASAS/ASAT).</Text>
+                        </View>
+                    ) : (
+                        <View style={styles.list}>
+                            {finalAssessments.map(item => (
+                                <View key={item.id} style={[styles.card, { borderLeftColor: '#d97706' }]}>
+                                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
+                                        <View style={{ flexDirection: 'row', gap: 6 }}>
+                                            <View style={{ backgroundColor: '#fffbeb', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}>
+                                                <Text style={{ color: '#d97706', fontWeight: '700', fontSize: 12 }}>{item.type}</Text>
+                                            </View>
+                                        </View>
+                                        <Text style={styles.cardDate}>{item.date}</Text>
+                                    </View>
+                                    <Text style={styles.cardTitle}>{item.title}</Text>
+                                    <Text style={styles.cardMeta}>{item.class_name} · {item.subject_name}</Text>
+                                    <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
+                                        <Text style={styles.cardMeta}>📊 {item.scores_count} siswa</Text>
+                                        {item.average_score && <Text style={styles.cardMeta}>Rata-rata: {item.average_score}</Text>}
+                                        {item.kkm && <Text style={styles.cardMeta}>KKM: {item.kkm}</Text>}
+                                    </View>
+                                    <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
+                                        <TouchableOpacity
+                                            style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#fffbeb', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6 }}
+                                            onPress={async () => {
+                                                setEditItem(item);
+                                                setADate(item.date);
+                                                setATitle(item.title);
+                                                setAKkm(item.kkm?.toString() || '');
+                                                setFType(item.type);
+                                                if (item.scores) {
+                                                    setScores(item.scores.map((s: any) => ({ student_id: s.student_id, name: s.student_name || '', score: s.score?.toString() || '' })));
+                                                }
+                                                setActiveTab('final');
+                                                setShowForm(true);
+                                            }}>
+                                            <Ionicons name="pencil-outline" size={14} color="#d97706" />
+                                            <Text style={{ color: '#d97706', fontSize: 12, fontWeight: '600' }}>Edit</Text>
+                                        </TouchableOpacity>
+                                        <TouchableOpacity
+                                            style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#fef2f2', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6 }}
+                                            onPress={() => {
+                                                finalAssessmentService.delete(item.id).then(loadData);
+                                            }}>
+                                            <Ionicons name="trash-outline" size={14} color="#dc2626" />
+                                            <Text style={{ color: '#dc2626', fontSize: 12, fontWeight: '600' }}>Hapus</Text>
+                                        </TouchableOpacity>
+                                    </View>
+                                </View>
+                            ))}
+                        </View>
+                    )
                 )}
             </ScrollView>
 

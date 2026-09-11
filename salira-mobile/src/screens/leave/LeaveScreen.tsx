@@ -94,6 +94,11 @@ export default function LeaveScreen() {
         </View>
     );
 
+    // compute resume stats
+    const pendingCount   = leaves.filter(l => l.status === 'pending').length;
+    const approvedCount  = leaves.filter(l => l.status === 'approved').length;
+    const rejectedCount  = leaves.filter(l => l.status === 'rejected').length;
+
     return (
         <View style={styles.container}>
             <View style={styles.header}>
@@ -103,13 +108,41 @@ export default function LeaveScreen() {
                             <Ionicons name="arrow-back" size={24} color="#fff" />
                         </TouchableOpacity>
                     )}
-                    <Text style={styles.headerTitle}>Perizinan</Text>
+                    <View>
+                        <Text style={styles.headerTitle}>Perizinan</Text>
+                        <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 11 }}>Kelola izin & cuti Anda</Text>
+                    </View>
                 </View>
                 <TouchableOpacity style={styles.addBtn} onPress={() => setShowForm(true)}>
                     <Ionicons name="add" size={20} color="#fff" />
                     <Text style={styles.addBtnText}>Ajukan</Text>
                 </TouchableOpacity>
             </View>
+
+            {/* ─── Resume Card ─── */}
+            {!loading && (
+                <View style={styles.resumeCard}>
+                    <Text style={styles.resumeTitle}>Ringkasan Perizinan Tahun Ini</Text>
+                    <View style={styles.resumeRow}>
+                        <View style={[styles.resumeItem, { backgroundColor: '#fffbeb' }]}>
+                            <Text style={[styles.resumeNum, { color: '#d97706' }]}>{pendingCount}</Text>
+                            <Text style={styles.resumeLabel}>⏳ Menunggu</Text>
+                        </View>
+                        <View style={[styles.resumeItem, { backgroundColor: '#ecfdf5' }]}>
+                            <Text style={[styles.resumeNum, { color: '#059669' }]}>{approvedCount}</Text>
+                            <Text style={styles.resumeLabel}>✅ Disetujui</Text>
+                        </View>
+                        <View style={[styles.resumeItem, { backgroundColor: '#fef2f2' }]}>
+                            <Text style={[styles.resumeNum, { color: '#dc2626' }]}>{rejectedCount}</Text>
+                            <Text style={styles.resumeLabel}>❌ Ditolak</Text>
+                        </View>
+                        <View style={[styles.resumeItem, { backgroundColor: '#f0f9ff' }]}>
+                            <Text style={[styles.resumeNum, { color: '#0891b2' }]}>{leaves.length}</Text>
+                            <Text style={styles.resumeLabel}>📋 Total</Text>
+                        </View>
+                    </View>
+                </View>
+            )}
 
             {loading ? (
                 <ActivityIndicator size="large" color="#2563eb" style={{ marginTop: 40 }} />
@@ -124,6 +157,7 @@ export default function LeaveScreen() {
                         <View style={styles.empty}>
                             <Ionicons name="document-text-outline" size={48} color="#d1d5db" />
                             <Text style={styles.emptyText}>Belum ada perizinan</Text>
+                            <Text style={{ color: '#9ca3af', fontSize: 12, marginTop: 4 }}>Tap tombol "Ajukan" di atas untuk membuat permohonan.</Text>
                         </View>
                     }
                 />
@@ -233,4 +267,15 @@ const styles = StyleSheet.create({
     textArea: { height: 100, textAlignVertical: 'top' },
     submitBtn: { backgroundColor: '#2563eb', borderRadius: 10, padding: 14, alignItems: 'center', marginTop: 16, marginBottom: 8 },
     submitBtnTxt: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
+    resumeCard: {
+        backgroundColor: '#fff', marginHorizontal: 16, marginTop: 12, marginBottom: 4,
+        borderRadius: 14, padding: 14,
+        elevation: 1, shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.06, shadowRadius: 6,
+    },
+    resumeTitle: { fontSize: 13, fontWeight: '700', color: '#374151', marginBottom: 10 },
+    resumeRow: { flexDirection: 'row', gap: 8 },
+    resumeItem: { flex: 1, alignItems: 'center', borderRadius: 10, paddingVertical: 10 },
+    resumeNum: { fontSize: 22, fontWeight: 'bold', marginBottom: 2 },
+    resumeLabel: { fontSize: 10, color: '#6b7280', fontWeight: '600' },
 });

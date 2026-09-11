@@ -3,20 +3,34 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
-use App\Models\DailyAssessment;
-use App\Models\StudentScore;
+use App\Models\FinalAssessment;
+use App\Models\FinalAssessmentScore;
 use App\Models\AcademicClass;
 use App\Models\Subject;
 use App\Models\Student;
+use App\Models\Semester;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
-class AssessmentController extends Controller
+class FinalAssessmentController extends Controller
 {
+    private function getActiveSemesterId()
+    {
+        $activeSemester = Semester::where('is_active', true)
+            ->whereHas('academicYear', fn($q) => $q->where('is_active', true))
+            ->first();
+
+        if (!$activeSemester) {
+            $activeSemester = Semester::where('is_active', true)->first();
+        }
+
+        return $activeSemester?->id;
+    }
+
     public function index(Request $request)
     {
-        $query = DailyAssessment::with(['academicClass', 'subject', 'scores'])
+        $query = FinalAssessment::with(['academicClass', 'subject', 'scores'])
             ->where('teacher_id', Auth::id());
 
         if ($request->academic_class_id) {
@@ -24,6 +38,11 @@ class AssessmentController extends Controller
         }
         if ($request->subject_id) {
             $query->where('subject_id', $request->subject_id);
+        }
+        if ($request->semester_id) {
+            $query->where('semester_id', $request->semester_id);
+        } else {
+            $query->where('semester_id', $this->getActiveSemesterId());
         }
 
         $assessments = $query->latest()->paginate(20);
@@ -40,11 +59,16 @@ class AssessmentController extends Controller
 
     public function store(Request $request)
     {
+        $semesterId = $this->getActiveSemesterId();
+        if (!$semesterId) {
+            return response()->json(['message' => 'Tidak ada semester aktif. Hubungi administrator.'], 400);
+        }
+
         $validated = $request->validate([
             'academic_class_id' => 'required|exists:academic_classes,id',
             'subject_id'        => 'required|exists:subjects,id',
             'date'              => 'required|date',
-            'type'              => 'required|string',
+            'type'              => 'required|in:ASAS,ASAT',
             'title'             => 'required|string|max:255',
             'kkm'               => 'nullable|integer|min:0|max:100',
             'scores'            => 'required|array|min:1',
@@ -55,8 +79,9 @@ class AssessmentController extends Controller
 
         DB::beginTransaction();
         try {
-            $assessment = DailyAssessment::create([
+            $assessment = FinalAssessment::create([
                 'teacher_id'        => Auth::id(),
+                'semester_id'       => $semesterId,
                 'academic_class_id' => $validated['academic_class_id'],
                 'subject_id'        => $validated['subject_id'],
                 'date'              => $validated['date'],
@@ -66,8 +91,8 @@ class AssessmentController extends Controller
             ]);
 
             foreach ($validated['scores'] as $s) {
-                StudentScore::create([
-                    'daily_assessment_id' => $assessment->id,
+                FinalAssessmentScore::create([
+                    'final_assessment_id' => $assessment->id,
                     'student_id'          => $s['student_id'],
                     'score'               => $s['score'],
                     'notes'               => $s['notes'] ?? null,
@@ -75,11 +100,64 @@ class AssessmentController extends Controller
             }
 
             DB::commit();
-            return response()->json(['message' => 'Penilaian berhasil disimpan', 'data' => $this->formatAssessment($assessment->load(['academicClass', 'subject', 'scores']))], 201);
+            return response()->json(['message' => 'Penilaian akhir berhasil disimpan', 'data' => $this->formatAssessment($assessment->load(['academicClass', 'subject', 'scores']))], 201);
         } catch (\Exception $e) {
             DB::rollBack();
             return response()->json(['message' => 'Gagal: ' . $e->getMessage()], 500);
         }
+    }
+
+    public function update(Request $request, $id)
+    {
+        $assessment = FinalAssessment::where('teacher_id', Auth::id())->findOrFail($id);
+
+        $validated = $request->validate([
+            'date'              => 'required|date',
+            'type'              => 'required|in:ASAS,ASAT',
+            'title'             => 'required|string|max:255',
+            'kkm'               => 'nullable|integer|min:0|max:100',
+            'scores'            => 'required|array|min:1',
+            'scores.*.student_id' => 'required|exists:students,id',
+            'scores.*.score'      => 'required|numeric|min:0|max:100',
+            'scores.*.notes'      => 'nullable|string',
+        ]);
+
+        DB::beginTransaction();
+        try {
+            $assessment->update([
+                'date'  => $validated['date'],
+                'type'  => $validated['type'],
+                'title' => $validated['title'],
+                'kkm'   => $validated['kkm'] ?? null,
+            ]);
+
+            // Sync scores
+            // Delete existing scores
+            FinalAssessmentScore::where('final_assessment_id', $assessment->id)->delete();
+            
+            // Insert new scores
+            foreach ($validated['scores'] as $s) {
+                FinalAssessmentScore::create([
+                    'final_assessment_id' => $assessment->id,
+                    'student_id'          => $s['student_id'],
+                    'score'               => $s['score'],
+                    'notes'               => $s['notes'] ?? null,
+                ]);
+            }
+
+            DB::commit();
+            return response()->json(['message' => 'Penilaian akhir berhasil diperbarui', 'data' => $this->formatAssessment($assessment->load(['academicClass', 'subject', 'scores']))]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'Gagal: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function destroy($id)
+    {
+        $assessment = FinalAssessment::where('teacher_id', Auth::id())->findOrFail($id);
+        $assessment->delete();
+        return response()->json(['message' => 'Penilaian akhir berhasil dihapus']);
     }
 
     public function getStudents($classId)
@@ -98,62 +176,11 @@ class AssessmentController extends Controller
         return response()->json([
             'classes'  => AcademicClass::all(['id', 'name']),
             'subjects' => Subject::orderBy('name')->get(['id', 'name']),
-            'types'    => ['Tugas', 'Ulangan Harian', 'Kuis', 'Praktik', 'Lainnya'],
+            'types'    => ['ASAS', 'ASAT'],
         ]);
     }
 
-    public function update(Request $request, $id)
-    {
-        $assessment = DailyAssessment::where('teacher_id', Auth::id())->findOrFail($id);
-
-        $validated = $request->validate([
-            'date'              => 'required|date',
-            'type'              => 'required|string',
-            'title'             => 'required|string|max:255',
-            'kkm'               => 'nullable|integer|min:0|max:100',
-            'scores'            => 'nullable|array',
-            'scores.*.student_id' => 'required|exists:students,id',
-            'scores.*.score'      => 'required|numeric|min:0|max:100',
-            'scores.*.notes'      => 'nullable|string',
-        ]);
-
-        DB::beginTransaction();
-        try {
-            $assessment->update([
-                'date'  => $validated['date'],
-                'type'  => $validated['type'],
-                'title' => $validated['title'],
-                'kkm'   => $validated['kkm'] ?? null,
-            ]);
-
-            if (!empty($validated['scores'])) {
-                StudentScore::where('daily_assessment_id', $assessment->id)->delete();
-                foreach ($validated['scores'] as $s) {
-                    StudentScore::create([
-                        'daily_assessment_id' => $assessment->id,
-                        'student_id'          => $s['student_id'],
-                        'score'               => $s['score'],
-                        'notes'               => $s['notes'] ?? null,
-                    ]);
-                }
-            }
-
-            DB::commit();
-            return response()->json(['message' => 'Penilaian berhasil diperbarui', 'data' => $this->formatAssessment($assessment->load(['academicClass', 'subject', 'scores']))]);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json(['message' => 'Gagal: ' . $e->getMessage()], 500);
-        }
-    }
-
-    public function destroy($id)
-    {
-        $assessment = DailyAssessment::where('teacher_id', Auth::id())->findOrFail($id);
-        $assessment->delete();
-        return response()->json(['message' => 'Penilaian berhasil dihapus']);
-    }
-
-    private function formatAssessment(DailyAssessment $a): array
+    private function formatAssessment(FinalAssessment $a): array
     {
         return [
             'id'                => $a->id,
@@ -165,6 +192,11 @@ class AssessmentController extends Controller
             'subject_name'      => $a->subject?->name,
             'academic_class_id' => $a->academic_class_id,
             'subject_id'        => $a->subject_id,
+            'scores'            => $a->scores?->map(fn($s) => [
+                'student_id' => $s->student_id,
+                'score'      => $s->score,
+                'notes'      => $s->notes
+            ]),
             'scores_count'      => $a->scores?->count() ?? 0,
             'average_score'     => $a->scores?->avg('score') ? round($a->scores->avg('score'), 1) : null,
         ];

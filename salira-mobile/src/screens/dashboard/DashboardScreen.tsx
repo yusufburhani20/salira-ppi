@@ -34,14 +34,19 @@ const colors = {
     onSurface: '#131b2e',
     onSurfaceVariant: '#3f4850',
     outline: '#707881',
+    outlineVariant: '#bfc7d2',
 };
 
+// ─── Aksi Cepat — gunakan MaterialIcons ──────────────────────
 const AKSI_CEPAT = [
-    { label: 'Jurnal KBM', icon: 'event-note', color: colors.primary, bg: colors.primaryFixed, tab: 'Jurnal' },
-    { label: 'Asesmen', icon: 'fact-check', color: colors.onSecondaryContainer, bg: colors.secondaryContainer, tab: 'Penilaian' },
-    { label: 'Konseling', icon: 'support-agent', color: colors.tertiary, bg: colors.tertiaryFixed, tab: 'Bimbingan' },
-    { label: 'Halaqah', icon: 'bedtime', color: colors.primary, bg: colors.surfaceContainerHighest },
-    { label: 'Izin Cuti', icon: 'assignment', color: colors.onSurfaceVariant, bg: colors.surfaceContainer, screen: 'Leave' },
+    { label: 'Presensi',     icon: 'fingerprint',     color: colors.primary,              bg: colors.primaryFixed,             tab: 'Presensi' },
+    { label: 'Jurnal KBM',   icon: 'event-note',      color: colors.primary,              bg: colors.surfaceContainerLow,      tab: 'Jurnal' },
+    { label: 'Penilaian',    icon: 'fact-check',      color: colors.onSecondaryContainer, bg: colors.secondaryContainer,       tab: 'Penilaian' },
+    { label: 'Konsultasi',   icon: 'support-agent',   color: colors.tertiary,             bg: colors.tertiaryFixed,            tab: 'Penilaian' },
+    { label: 'Belajar Malam',icon: 'bedtime',         color: '#5b21b6',                   bg: '#ede9fe',                       screen: 'EveningStudy' },
+    { label: 'Perizinan',    icon: 'assignment',      color: colors.onSurfaceVariant,     bg: colors.surfaceContainer,         screen: 'Leave' },
+    { label: 'Notifikasi',   icon: 'notifications',   color: colors.error,                bg: '#ffdad6',                       tab: 'Notifikasi' },
+    { label: 'Semua Menu',   icon: 'apps',            color: colors.primary,              bg: colors.surfaceContainerHighest,  screen: 'AllMenu' },
 ];
 
 export default function DashboardScreen() {
@@ -265,12 +270,12 @@ export default function DashboardScreen() {
                     </View>
                 </View>
 
-                {/* Aksi Cepat Guru */}
+                {/* ─── Aksi Cepat Guru (Fixed) ─── */}
                 <View style={styles.aksiSection}>
                     <View style={styles.sectionHeader}>
                         <Text style={styles.sectionTitle}>Aksi Cepat Guru</Text>
-                        <TouchableOpacity>
-                            <Text style={styles.sectionLink}>Semua Menu</Text>
+                        <TouchableOpacity onPress={() => navigation.navigate('AllMenu')}>
+                            <Text style={styles.sectionLink}>Semua Menu →</Text>
                         </TouchableOpacity>
                     </View>
 
@@ -282,13 +287,13 @@ export default function DashboardScreen() {
                                 onPress={() => {
                                     if (item.tab) navigation.navigate('MainTabs', { screen: item.tab });
                                     else if (item.screen) navigation.navigate(item.screen as any);
-                                    else alert('Fitur segera hadir');
                                 }}
+                                activeOpacity={0.7}
                             >
                                 <View style={[styles.aksiIconBox, { backgroundColor: item.bg }]}>
-                                    <MaterialIcons name={item.icon as any} size={24} color={item.color} />
+                                    <MaterialIcons name={item.icon as any} size={26} color={item.color} />
                                 </View>
-                                <Text style={styles.aksiBtnTxt}>{item.label}</Text>
+                                <Text style={styles.aksiBtnTxt} numberOfLines={2}>{item.label}</Text>
                             </TouchableOpacity>
                         ))}
                     </View>
@@ -381,6 +386,8 @@ export default function DashboardScreen() {
     );
 }
 
+const AKSI_ITEM_W = (width - 32 - 24) / 4; // 4 columns, 16px side padding each, 8px gap × 3
+
 const styles = StyleSheet.create({
     container: {
         flex: 1,
@@ -399,7 +406,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginTop: 32, // approx statusbar height if translucent
+        marginTop: 32,
     },
     headerLeft: {
         flexDirection: 'row',
@@ -504,7 +511,7 @@ const styles = StyleSheet.create({
     },
     scrollContent: {
         paddingTop: 16,
-        paddingBottom: 100, // For bottom nav
+        paddingBottom: 100,
     },
     greetingSection: {
         paddingHorizontal: 16,
@@ -635,7 +642,7 @@ const styles = StyleSheet.create({
         marginBottom: 24,
     },
     statCard: {
-        width: (width - 42) / 2, // 32 for paddings, 10 for gap
+        width: (width - 42) / 2,
         backgroundColor: colors.surfaceContainerLowest,
         borderRadius: 16,
         padding: 12,
@@ -757,15 +764,17 @@ const styles = StyleSheet.create({
         fontWeight: '500',
         marginTop: 2,
     },
+
+    // ─── Aksi Cepat (Fixed) ────────────────────────────────────
     aksiSection: {
         marginBottom: 24,
+        paddingHorizontal: 16,
     },
     sectionHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        paddingHorizontal: 16,
-        marginBottom: 12,
+        marginBottom: 14,
     },
     sectionTitle: {
         fontSize: 18,
@@ -773,22 +782,23 @@ const styles = StyleSheet.create({
         color: colors.onSurface,
     },
     sectionLink: {
-        fontSize: 10,
+        fontSize: 12,
         fontWeight: 'bold',
         color: colors.primary,
     },
     aksiGrid: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
-        paddingHorizontal: 16,
+        flexWrap: 'wrap',
+        gap: 8,
     },
     aksiBtn: {
+        width: AKSI_ITEM_W,
         alignItems: 'center',
-        width: 60,
+        marginBottom: 4,
     },
     aksiIconBox: {
-        width: 48,
-        height: 48,
+        width: 54,
+        height: 54,
         borderRadius: 16,
         justifyContent: 'center',
         alignItems: 'center',
@@ -796,20 +806,24 @@ const styles = StyleSheet.create({
         elevation: 1,
         shadowColor: '#0f172a',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 4,
+        shadowOpacity: 0.06,
+        shadowRadius: 6,
     },
     aksiBtnTxt: {
-        fontSize: 11,
+        fontSize: 10,
+        fontWeight: '600',
         color: colors.onSurface,
         textAlign: 'center',
+        lineHeight: 13,
     },
+
+    // ─── Ranking ───────────────────────────────────────────────
     rankingCard: {
         backgroundColor: colors.surfaceContainerLowest,
         marginHorizontal: 16,
         borderRadius: 16,
         padding: 16,
-        marginBottom: 24,
+        marginBottom: 16,
         elevation: 1,
         shadowColor: '#0f172a',
         shadowOffset: { width: 0, height: 2 },
@@ -823,15 +837,15 @@ const styles = StyleSheet.create({
         marginBottom: 12,
     },
     rankingIconBox: {
-        width: 28,
-        height: 28,
-        borderRadius: 8,
+        width: 32,
+        height: 32,
+        borderRadius: 12,
         backgroundColor: colors.tertiaryFixed,
         justifyContent: 'center',
         alignItems: 'center',
     },
     rankingTitle: {
-        fontSize: 14,
+        fontSize: 13,
         fontWeight: 'bold',
         color: colors.onSurface,
     },
@@ -840,157 +854,66 @@ const styles = StyleSheet.create({
         color: colors.onSurfaceVariant,
     },
     rankingLink: {
-        fontSize: 10,
+        fontSize: 11,
         fontWeight: 'bold',
         color: colors.primary,
     },
-    rankingList: {
-        gap: 8,
-    },
+    rankingList: { gap: 4 },
     rankItem: {
         flexDirection: 'row',
+        alignItems: 'center',
         justifyContent: 'space-between',
-        alignItems: 'center',
-        backgroundColor: colors.surfaceContainerLow,
-        borderRadius: 12,
-        padding: 10,
+        paddingVertical: 8,
+        borderBottomWidth: 1,
+        borderBottomColor: colors.surfaceContainerLow,
     },
-    rankItemLeft: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 10,
-        flex: 1,
-    },
-    rankNumber1: {
-        width: 24,
-        height: 24,
-        borderRadius: 12,
-        backgroundColor: colors.tertiary,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    rankNumberTxt: {
-        fontSize: 11,
-        fontWeight: 'bold',
-        color: colors.onTertiary,
-    },
-    rankAvatar1: {
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-        backgroundColor: colors.primaryFixed,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    rankAvatarTxt1: {
-        fontSize: 12,
-        fontWeight: 'bold',
-        color: colors.primary,
-    },
-    rankName: {
-        fontSize: 12,
-        fontWeight: 'bold',
-        color: colors.onSurface,
-    },
-    rankClass: {
-        fontSize: 10,
-        fontWeight: '600',
-        color: colors.primary,
-    },
-    rankItemRight: {
-        alignItems: 'flex-end',
-    },
-    rankDays: {
-        fontSize: 12,
-        fontWeight: 'bold',
-        color: colors.secondary,
-    },
-    rankStatus: {
-        fontSize: 10,
-        color: colors.onSurfaceVariant,
-    },
-    rankNumber2: {
-        width: 24,
-        height: 24,
-        borderRadius: 12,
-        backgroundColor: colors.outline,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    rankNumberTxt2: {
-        fontSize: 11,
-        fontWeight: 'bold',
-        color: colors.onPrimary,
-    },
-    rankAvatar2: {
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-        backgroundColor: colors.secondaryContainer,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    rankAvatarTxt2: {
-        fontSize: 12,
-        fontWeight: 'bold',
-        color: colors.onSecondaryContainer,
-    },
-    rankNumber3: {
-        width: 24,
-        height: 24,
-        borderRadius: 12,
-        backgroundColor: colors.tertiaryFixedDim,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    rankNumberTxt3: {
-        fontSize: 11,
-        fontWeight: 'bold',
-        color: colors.onTertiaryFixed,
-    },
-    rankAvatar3: {
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-        backgroundColor: colors.primaryFixedDim,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    rankAvatarTxt3: {
-        fontSize: 12,
-        fontWeight: 'bold',
-        color: colors.onPrimaryFixed,
-    },
+    rankItemLeft: { flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 },
+    rankItemRight: { alignItems: 'flex-end' },
+    rankNumber1: { width: 22, height: 22, borderRadius: 6, backgroundColor: '#ffd700', justifyContent: 'center', alignItems: 'center' },
+    rankNumber2: { width: 22, height: 22, borderRadius: 6, backgroundColor: '#c0c0c0', justifyContent: 'center', alignItems: 'center' },
+    rankNumber3: { width: 22, height: 22, borderRadius: 6, backgroundColor: '#cd7f32', justifyContent: 'center', alignItems: 'center' },
+    rankNumberTxt: { fontSize: 11, fontWeight: 'bold', color: '#fff' },
+    rankNumberTxt2: { fontSize: 11, fontWeight: 'bold', color: '#fff' },
+    rankNumberTxt3: { fontSize: 11, fontWeight: 'bold', color: '#fff' },
+    rankAvatar1: { width: 32, height: 32, borderRadius: 10, backgroundColor: '#fef9c3', justifyContent: 'center', alignItems: 'center' },
+    rankAvatar2: { width: 32, height: 32, borderRadius: 10, backgroundColor: '#f1f5f9', justifyContent: 'center', alignItems: 'center' },
+    rankAvatar3: { width: 32, height: 32, borderRadius: 10, backgroundColor: '#fef3c7', justifyContent: 'center', alignItems: 'center' },
+    rankAvatarTxt1: { fontSize: 14, fontWeight: 'bold', color: '#d97706' },
+    rankAvatarTxt2: { fontSize: 14, fontWeight: 'bold', color: '#64748b' },
+    rankAvatarTxt3: { fontSize: 14, fontWeight: 'bold', color: '#b45309' },
+    rankName: { fontSize: 12, fontWeight: '600', color: colors.onSurface },
+    rankClass: { fontSize: 10, color: colors.onSurfaceVariant },
+    rankDays: { fontSize: 12, fontWeight: 'bold', color: colors.onSurface },
+    rankStatus: { fontSize: 10, color: colors.secondary, fontWeight: '600' },
+
+    // ─── Audit Log ─────────────────────────────────────────────
     auditCard: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        backgroundColor: colors.surfaceContainerLow,
+        backgroundColor: colors.surfaceContainerLowest,
         marginHorizontal: 16,
         borderRadius: 16,
-        padding: 16,
+        padding: 14,
+        marginBottom: 16,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        elevation: 1,
+        shadowColor: '#0f172a',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.04,
+        shadowRadius: 6,
     },
     auditIconBox: {
         width: 32,
         height: 32,
-        borderRadius: 16,
-        backgroundColor: colors.surfaceContainerHighest,
+        borderRadius: 10,
+        backgroundColor: colors.surfaceContainerLow,
         justifyContent: 'center',
         alignItems: 'center',
     },
-    auditTitle: {
-        fontSize: 12,
-        fontWeight: 'bold',
-        color: colors.onSurface,
-    },
-    auditSubtitle: {
-        fontSize: 11,
-        color: colors.onSurfaceVariant,
-    },
+    auditTitle: { fontSize: 12, fontWeight: 'bold', color: colors.onSurface },
+    auditSubtitle: { fontSize: 10, color: colors.onSurfaceVariant, marginTop: 1 },
     auditDot: {
-        width: 10,
-        height: 10,
-        borderRadius: 5,
+        width: 10, height: 10, borderRadius: 5,
         backgroundColor: colors.secondary,
     },
 });

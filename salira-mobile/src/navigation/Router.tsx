@@ -21,6 +21,8 @@ import NotificationScreen from '../screens/notification/NotificationScreen';
 // Stack screens (pushed from tabs)
 import ProfileScreen from '../screens/profile/ProfileScreen';
 import LeaveScreen from '../screens/leave/LeaveScreen';
+import EveningStudyScreen from '../screens/evening-study/EveningStudyScreen';
+import AllMenuScreen from '../screens/all-menu/AllMenuScreen';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -101,6 +103,8 @@ function AuthenticatedStack() {
             <Stack.Screen name="Leave" component={LeaveScreen} />
             <Stack.Screen name="Attendance" component={AttendanceScreen} />
             <Stack.Screen name="AttendanceHistory" component={AttendanceHistoryScreen} />
+            <Stack.Screen name="EveningStudy" component={EveningStudyScreen} />
+            <Stack.Screen name="AllMenu" component={AllMenuScreen} />
         </Stack.Navigator>
     );
 }

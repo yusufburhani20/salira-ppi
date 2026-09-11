@@ -128,6 +128,29 @@ class AgendaController extends Controller
         return response()->json(['classes' => $classes, 'subjects' => $subjects]);
     }
 
+    public function update(Request $request, $id)
+    {
+        $agenda = ClassAgenda::where('teacher_id', Auth::id())->findOrFail($id);
+
+        $validated = $request->validate([
+            'date'              => 'required|date',
+            'lesson_hour_start' => 'required|integer|min:1',
+            'lesson_hour_end'   => 'required|integer|min:1',
+            'topic'             => 'required|string|max:255',
+            'notes'             => 'nullable|string',
+        ]);
+
+        $agenda->update([
+            'date'              => $validated['date'],
+            'lesson_hour_start' => $validated['lesson_hour_start'],
+            'lesson_hour_end'   => $validated['lesson_hour_end'],
+            'topic'             => $validated['topic'],
+            'notes'             => $validated['notes'] ?? null,
+        ]);
+
+        return response()->json(['message' => 'Jurnal berhasil diperbarui', 'data' => $this->formatAgenda($agenda->load(['academicClass', 'subject']))]);
+    }
+
     public function destroy($id)
     {
         $agenda = ClassAgenda::where('teacher_id', Auth::id())->findOrFail($id);
