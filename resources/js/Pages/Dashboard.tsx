@@ -5,6 +5,7 @@ import Card, { CardHeader } from '@/Components/Card';
 import { 
     DocumentChartBarIcon, 
     UserIcon, 
+    UsersIcon,
     AcademicCapIcon, 
     TrophyIcon, 
     FunnelIcon,
@@ -26,6 +27,7 @@ export default function Dashboard({
     assessmentRanking,
     inventoryStats,
     classes,
+    studentsPerClass,
     filters,
     activeSemester
 }: any) {
@@ -211,6 +213,131 @@ export default function Dashboard({
                         colorClass="bg-emerald-100 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400"
                     />
                 </div>
+
+                {/* ── SECTION 2b: Data Siswa Per Kelas ── */}
+                {studentsPerClass && studentsPerClass.length > 0 && (
+                    <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg shadow-slate-200/60 dark:shadow-none border border-slate-100 dark:border-slate-700/50 overflow-hidden">
+                        <div className="px-6 pt-5 pb-4 border-b border-slate-100 dark:border-slate-700/50 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 bg-violet-100 dark:bg-violet-900/30 rounded-xl flex items-center justify-center shrink-0">
+                                    <UsersIcon className="w-5 h-5 text-violet-600 dark:text-violet-400" />
+                                </div>
+                                <div>
+                                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">Data Siswa Per Kelas</h3>
+                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Distribusi siswa aktif & rekap absen hari ini</p>
+                                </div>
+                            </div>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{studentsPerClass.length} Kelas</span>
+                        </div>
+                        <div className="p-4 overflow-x-auto custom-scrollbar">
+                            <div className="flex gap-3" style={{ minWidth: Math.max(studentsPerClass.length * 160, 400) + 'px' }}>
+                                {studentsPerClass.map((cls: any, i: number) => {
+                                    const maxStudents = Math.max(...studentsPerClass.map((c: any) => c.student_count), 1);
+                                    const isActive = String(classId) === String(cls.id);
+                                    const colors = [
+                                        'from-violet-500 to-violet-400',
+                                        'from-indigo-500 to-indigo-400',
+                                        'from-blue-500 to-blue-400',
+                                        'from-sky-500 to-sky-400',
+                                        'from-cyan-500 to-cyan-400',
+                                        'from-teal-500 to-teal-400',
+                                        'from-emerald-500 to-emerald-400',
+                                        'from-rose-500 to-rose-400',
+                                    ];
+                                    const color = colors[i % colors.length];
+
+
+                                    return (
+                                        <button
+                                            key={cls.id}
+                                            onClick={() => handleFilterChange(isActive ? '' : String(cls.id), startDate, endDate)}
+                                            className={`flex-1 min-w-[148px] max-w-[180px] rounded-xl border-2 p-4 text-left transition-all duration-200 cursor-pointer group ${
+                                                isActive
+                                                    ? `bg-gradient-to-br ${color.replace('from-', 'from-').replace('to-', 'to-')} border-transparent shadow-lg scale-[1.02]`
+                                                    : 'bg-slate-50 dark:bg-slate-900/40 border-slate-100 dark:border-slate-700/50 hover:border-slate-300 dark:hover:border-slate-600 hover:shadow-md hover:scale-[1.01]'
+                                            }`}
+                                        >
+                                            {/* Class name */}
+                                            <p className={`text-[11px] font-black uppercase tracking-wide truncate mb-2 ${
+                                                isActive ? 'text-white' : 'text-slate-500 dark:text-slate-400'
+                                            }`}>{cls.name}</p>
+
+                                            {/* Student count */}
+                                            <div className="flex items-end gap-1 mb-3">
+                                                <span className={`text-3xl font-black leading-none ${
+                                                    isActive ? 'text-white' : 'text-slate-800 dark:text-slate-100'
+                                                }`}>{cls.student_count}</span>
+                                                <span className={`text-[10px] font-bold mb-0.5 ${
+                                                    isActive ? 'text-white/70' : 'text-slate-400'
+                                                }`}>siswa</span>
+                                            </div>
+
+                                            {/* Progress bar: student count relative to max */}
+                                            <div className="w-full h-1.5 bg-black/10 dark:bg-white/10 rounded-full mb-3 overflow-hidden">
+                                                <div
+                                                    className={`h-full rounded-full transition-all duration-700 bg-gradient-to-r ${
+                                                        isActive ? 'from-white/60 to-white/40' : color
+                                                    }`}
+                                                    style={{ width: `${Math.round((cls.student_count / maxStudents) * 100)}%` }}
+                                                />
+                                            </div>
+
+                                            {/* Attendance recap */}
+                                            <div className="space-y-1">
+                                                <div className="flex items-center justify-between">
+                                                    <span className={`text-[9px] font-bold flex items-center gap-1 ${
+                                                        isActive ? 'text-white/80' : 'text-emerald-600 dark:text-emerald-400'
+                                                    }`}>
+                                                        <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-white/80' : 'bg-emerald-500'}`}></span>
+                                                        Hadir
+                                                    </span>
+                                                    <span className={`text-[9px] font-black ${
+                                                        isActive ? 'text-white' : 'text-emerald-600 dark:text-emerald-400'
+                                                    }`}>{cls.hadir}</span>
+                                                </div>
+                                                <div className="flex items-center justify-between">
+                                                    <span className={`text-[9px] font-bold flex items-center gap-1 ${
+                                                        isActive ? 'text-white/80' : 'text-amber-600 dark:text-amber-400'
+                                                    }`}>
+                                                        <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-white/80' : 'bg-amber-500'}`}></span>
+                                                        Izin/Sakit
+                                                    </span>
+                                                    <span className={`text-[9px] font-black ${
+                                                        isActive ? 'text-white' : 'text-amber-600 dark:text-amber-400'
+                                                    }`}>{cls.izin}</span>
+                                                </div>
+                                                <div className="flex items-center justify-between">
+                                                    <span className={`text-[9px] font-bold flex items-center gap-1 ${
+                                                        isActive ? 'text-white/80' : 'text-rose-600 dark:text-rose-400'
+                                                    }`}>
+                                                        <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-white/80' : 'bg-rose-500'}`}></span>
+                                                        Alpha
+                                                    </span>
+                                                    <span className={`text-[9px] font-black ${
+                                                        isActive ? 'text-white' : 'text-rose-600 dark:text-rose-400'
+                                                    }`}>{cls.alpha}</span>
+                                                </div>
+                                                {cls.belum_absen > 0 && (
+                                                    <div className="flex items-center justify-between">
+                                                        <span className={`text-[9px] font-bold flex items-center gap-1 ${
+                                                            isActive ? 'text-white/60' : 'text-slate-400'
+                                                        }`}>
+                                                            <span className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-white/40' : 'bg-slate-400'}`}></span>
+                                                            Belum absen
+                                                        </span>
+                                                        <span className={`text-[9px] font-black ${
+                                                            isActive ? 'text-white/80' : 'text-slate-400'
+                                                        }`}>{cls.belum_absen}</span>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* ── SECTION 3: Chart + Active Users + Last Logins ── */}
                 <div className="flex flex-col lg:flex-row gap-6 lg:items-stretch">

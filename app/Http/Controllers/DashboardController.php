@@ -28,6 +28,45 @@ class DashboardController extends Controller
 
         // 0. Classes for Filter
         $classes = \App\Models\AcademicClass::all();
+
+        // 0b. Students Per Class with today's attendance recap
+        try {
+            $allClasses = \App\Models\AcademicClass::with([
+                'students' => fn($q) => $q->wherePivot('is_active', true)->select('students.id'),
+            ])->get();
+
+            // Get today's attendance grouped by class and student
+            $todayAttendancesByClass = \App\Models\StudentAttendance::whereDate('date', $today)
+                ->get()
+                ->groupBy('academic_class_id');
+
+            $studentsPerClass = $allClasses->map(function ($class) use ($todayAttendancesByClass) {
+                $totalStudents = $class->students->count();
+                $todayEntries = $todayAttendancesByClass->get($class->id, collect());
+                $byStudent = $todayEntries->groupBy('student_id');
+
+                $hadir = 0; $izin = 0; $alpha = 0;
+                foreach ($byStudent as $studentId => $entries) {
+                    $status = \App\Models\StudentAttendance::getDailyStatusFromAttendances($entries);
+                    if ($status === 'hadir' || $status === 'terlambat') $hadir++;
+                    elseif ($status === 'izin' || $status === 'sakit') $izin++;
+                    elseif ($status === 'alpha') $alpha++;
+                }
+
+                return [
+                    'id'             => $class->id,
+                    'name'           => $class->name,
+                    'student_count'  => $totalStudents,
+                    'hadir'          => $hadir,
+                    'izin'           => $izin,
+                    'alpha'          => $alpha,
+                    'belum_absen'    => max(0, $totalStudents - $hadir - $izin - $alpha),
+                ];
+            })->sortBy('name')->values();
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Dashboard studentsPerClass failed: ' . $e->getMessage());
+            $studentsPerClass = collect();
+        }
         
         // 1. Basic Stats (Filtered by Class if selected)
         $studentsQuery = StudentAttendance::whereDate('date', $today);
@@ -295,6 +334,7 @@ class DashboardController extends Controller
             'assessmentRanking' => $assessmentRanking,
             'inventoryStats' => $inventoryStats,
             'classes' => $classes,
+            'studentsPerClass' => $studentsPerClass,
             'activeSemester' => $activeSemester,
             'filters' => [
                 'academic_class_id' => $request->academic_class_id,
