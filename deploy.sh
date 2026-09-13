@@ -74,8 +74,47 @@ echo "$LOG_PREFIX 🗄️  Menjalankan migrasi database..."
 
 # 5. Build Aset Frontend (React/Vite)
 echo "$LOG_PREFIX 🏗️  Membangun aset frontend (npm run build)..."
-npm install --legacy-peer-deps 2>&1 || echo "$LOG_PREFIX ⚠️  Peringatan: npm install gagal atau npm tidak ditemukan di PATH aaPanel. Build frontend mungkin terlewat."
-npm run build 2>&1 || echo "$LOG_PREFIX ⚠️  Peringatan: npm run build gagal."
+
+# Auto-detect npm di aaPanel / nvm
+NPM_BIN=""
+
+# Coba load nvm jika tersedia
+if [ -f "$HOME/.nvm/nvm.sh" ]; then
+    export NVM_DIR="$HOME/.nvm"
+    # shellcheck disable=SC1090
+    . "$NVM_DIR/nvm.sh" --no-use 2>/dev/null
+    NPM_BIN="$(nvm which current 2>/dev/null | sed 's|/node$|/npm|')"
+fi
+
+# Fallback: cari npm di lokasi umum aaPanel & sistem
+if [ -z "$NPM_BIN" ] || [ ! -x "$NPM_BIN" ]; then
+    for candidate in \
+        /www/server/nodejs/v22*/bin/npm \
+        /www/server/nodejs/v20*/bin/npm \
+        /www/server/nodejs/v18*/bin/npm \
+        /www/server/nodejs/v16*/bin/npm \
+        /root/.nvm/versions/node/*/bin/npm \
+        /usr/local/bin/npm \
+        /usr/bin/npm; do
+        # Ekspand glob dan ambil yang pertama
+        for f in $candidate; do
+            if [ -x "$f" ]; then
+                NPM_BIN="$f"
+                break 2
+            fi
+        done
+    done
+fi
+
+if [ -z "$NPM_BIN" ]; then
+    die "npm tidak ditemukan! Install Node.js di aaPanel dulu (Software Store → Node.js), lalu jalankan ulang deploy."
+fi
+
+echo "$LOG_PREFIX ✅ npm ditemukan: $NPM_BIN (versi: $("$NPM_BIN" --version 2>/dev/null))"
+
+"$NPM_BIN" install --legacy-peer-deps 2>&1 || die "npm install GAGAL!"
+"$NPM_BIN" run build 2>&1 || die "npm run build GAGAL! Cek output di atas untuk detail error."
+
 
 # 6. Membersihkan Cache Laravel
 echo "$LOG_PREFIX 🧹 Membersihkan cache sistem..."
