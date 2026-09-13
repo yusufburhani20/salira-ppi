@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Dialog, DialogPanel, Transition, TransitionChild } from '@headlessui/react';
-import * as mammoth from 'mammoth';
 import * as XLSX from 'xlsx';
+
 
 interface DriveFile {
     id: number;
@@ -39,24 +39,25 @@ export default function FilePreviewModal({ show, onClose, file, downloadUrl }: {
             setContent('native');
             setLoading(false);
         } else if (ext === 'docx') {
-            // Use mammoth
+            // Use mammoth via dynamic import (Node.js-only lib, avoid static bundling)
             fetch(url)
                 .then(res => res.arrayBuffer())
-                .then(buffer => {
-                    mammoth.convertToHtml({ arrayBuffer: buffer })
-                        .then(result => {
-                            setContent(result.value);
-                            setLoading(false);
-                        })
-                        .catch(err => {
-                            setError('Gagal memproses file Word.');
-                            setLoading(false);
-                        });
+                .then(async buffer => {
+                    try {
+                        const mammoth = await import('mammoth');
+                        const result = await mammoth.convertToHtml({ arrayBuffer: buffer });
+                        setContent(result.value);
+                    } catch (err) {
+                        setError('Gagal memproses file Word.');
+                    } finally {
+                        setLoading(false);
+                    }
                 })
-                .catch(err => {
+                .catch(() => {
                     setError('Gagal mengunduh file untuk preview.');
                     setLoading(false);
                 });
+
         } else if (ext === 'xlsx' || ext === 'xls' || ext === 'csv') {
             // Use xlsx
             fetch(url)

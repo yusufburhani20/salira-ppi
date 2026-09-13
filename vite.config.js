@@ -19,5 +19,6 @@ export default defineConfig({
     },
     optimizeDeps: {
         include: ['recharts', 'react-is'],
+        exclude: ['mammoth'],
     },
 });

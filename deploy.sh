@@ -112,8 +112,15 @@ fi
 
 echo "$LOG_PREFIX ✅ npm ditemukan: $NPM_BIN (versi: $("$NPM_BIN" --version 2>/dev/null))"
 
-"$NPM_BIN" install --legacy-peer-deps --cache /tmp/.npm-cache-salira 2>&1 || die "npm install GAGAL!"
-"$NPM_BIN" run build --cache /tmp/.npm-cache-salira 2>&1 || die "npm run build GAGAL! Cek output di atas untuk detail error."
+# Fix permission cache npm (sering jadi root-owned di aaPanel)
+chown -R "$(id -u):$(id -g)" /www/server/nodejs/cache 2>/dev/null || true
+
+# Gunakan env var npm_config_cache agar log & cache semuanya dialihkan ke /tmp
+export npm_config_cache="/tmp/.npm-cache-salira"
+mkdir -p "$npm_config_cache"
+
+"$NPM_BIN" install --legacy-peer-deps 2>&1 || die "npm install GAGAL!"
+"$NPM_BIN" run build 2>&1 || die "npm run build GAGAL! Cek output di atas untuk detail error."
 
 
 # 6. Membersihkan Cache Laravel
